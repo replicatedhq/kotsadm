@@ -34,7 +34,6 @@ const ShipInitCompleted = lazy(() => import("./components/ShipInitCompleted"));
 const WatchDetailPage = lazy(() => import("./components/watches/WatchDetailPage"));
 const ClusterScope = lazy(() => import("./components/clusterscope/ClusterScope"));
 const UnsupportedBrowser = lazy(() => import("./components/static/UnsupportedBrowser"));
-const ComingSoon = lazy(() => import("./components/ComingSoon"));
 const NotFound = lazy(() => import("./components/static/NotFound"));
 
 const INIT_SESSION_ID_STORAGE_KEY = "initSessionId";
@@ -163,7 +162,6 @@ class Root extends React.Component {
                       <Route exact path="/signup" component={Signup} />
                       <Route path="/auth/github" component={GitHubAuth} />
                       <Route path="/install/github" component={GitHubInstall} />
-                      <Route exact path="/coming-soon" component={ComingSoon} />
                       <Route path="/clusterscope" component={ClusterScope} />
                       <Route path="/unsupported" component={UnsupportedBrowser} />
                       <ProtectedRoute path="/clusters" render={(props) => <Clusters {...props} />} />
