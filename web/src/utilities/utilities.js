@@ -59,18 +59,10 @@ export function getApplicationType(watch) {
   }
 }
 
- /** 
- * @param {String} - 
- * @return {Object} - 
- */
-export function getAppData(metadata) {
-  return JSON.parse(metadata);
-}
-
 /**
- * 
- * @param {String} - 
- * @return {String} - 
+ *
+ * @param {String} -
+ * @return {String} -
  */
 export function getReadableLicenseType(type) {
   let readableType = "Development";
@@ -80,6 +72,14 @@ export function getReadableLicenseType(type) {
     readableType = "Trial"
   }
   return readableType;
+}
+
+ /**
+ * @param {String} -
+ * @return {Object} -
+ */
+export function getAppData(metadata) {
+  return JSON.parse(metadata);
 }
 
 export const Utilities = {

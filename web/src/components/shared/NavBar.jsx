@@ -45,17 +45,6 @@ export class NavBar extends PureComponent {
     }
   }
 
-  handleGoToWatches = () => {
-    if (this.props.location.pathname === "/watches") {
-      this.props.client.query({
-        query: listWatches,
-        fetchPolicy: "network-only",
-      });
-    } else {
-      this.props.history.push("/watches");
-    }
-  }
-
   handleGoToClusters = () => {
     if (this.props.location.pathname === "/clusters") {
       this.props.client.query({
@@ -96,15 +85,12 @@ export class NavBar extends PureComponent {
           <div className="flex1 justifyContent--flexStart">
             <div className="flex1 flex u-height--full">
               <div className="flex flex-auto">
-                <div className="HeaderLogo-wrapper flex alignItems--center flex1 flex-verticalCenter u-position--relative">
+                <div className="flex alignItems--center flex1 flex-verticalCenter u-position--relative u-marginRight--20">
                   <div className="HeaderLogo">
                     <Link to={isClusterScope ? "/clusterscope" : "/"} tabIndex="-1">
                       {logo
                         ? <img className="watch-logo clickable" src={logo} />
                         : <span className="logo icon clickable" />
-                      }
-                      {isClusterScope &&
-                        <span className="text u-color--tuna flex-column justifyContent--center">ClusterScope</span>
                       }
                     </Link>
                   </div>
