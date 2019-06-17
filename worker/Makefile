@@ -56,7 +56,7 @@ vet: lint
 
 .PHONY: test
 test:
-	time go test ./pkg/...
+	time go test ./pkg/... | grep -v '?'
 
 .PHONY: bin/ship-cluster-worker
 bin/ship-cluster-worker: $(SRC)
