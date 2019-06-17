@@ -34,7 +34,8 @@ type Backup struct {
 }
 
 type K8sBackups struct {
-	PVCNames []string `yaml:"pvc_names" json:"pvc_names"`
+	PVCNames      []string `yaml:"pvc_names" json:"pvc_names"`
+	SharedFSPaths []string `yaml:"shared_fs_paths" json:"shared_fs_paths"`
 }
 
 type SwarmBackups struct {

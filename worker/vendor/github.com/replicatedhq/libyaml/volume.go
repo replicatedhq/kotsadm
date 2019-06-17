@@ -13,6 +13,7 @@ type ContainerVolume struct {
 	HostPath             string   `yaml:"host_path" json:"host_path" validate:"required"`
 	ContainerPath        string   `yaml:"container_path" json:"container_path" validate:"required,absolutepath"`
 	Options              []string `yaml:"options" json:"options" validate:"volumeoptions"`
+	When                 string   `yaml:"when" json:"when"`
 	Permission           string   `yaml:"permission" json:"permission"`                           // TODO: deprecate
 	Owner                string   `yaml:"owner" json:"owner"`                                     // TODO: deprecate
 	IsEphemeral          string   `yaml:"is_ephemeral" json:"is_ephemeral"`                       // TODO: deprecate

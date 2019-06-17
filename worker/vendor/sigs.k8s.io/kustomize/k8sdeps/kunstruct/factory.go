@@ -1,18 +1,5 @@
-/*
-Copyright 2018 The Kubernetes Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2019 The Kubernetes Authors.
+// SPDX-License-Identifier: Apache-2.0
 
 package kunstruct
 
@@ -31,15 +18,20 @@ import (
 
 // KunstructuredFactoryImpl hides construction using apimachinery types.
 type KunstructuredFactoryImpl struct {
-	cmFactory     *configmapandsecret.ConfigMapFactory
-	secretFactory *configmapandsecret.SecretFactory
+	hasher *kustHash
 }
 
 var _ ifc.KunstructuredFactory = &KunstructuredFactoryImpl{}
 
 // NewKunstructuredFactoryImpl returns a factory.
 func NewKunstructuredFactoryImpl() ifc.KunstructuredFactory {
-	return &KunstructuredFactoryImpl{}
+	return &KunstructuredFactoryImpl{hasher: NewKustHash()}
+}
+
+// Hasher returns a kunstructured hasher
+// input: kunstructured; output: string hash.
+func (kf *KunstructuredFactoryImpl) Hasher() ifc.KunstructuredHasher {
+	return kf.hasher
 }
 
 // SliceFromBytes returns a slice of Kunstructured.
@@ -79,27 +71,29 @@ func (kf *KunstructuredFactoryImpl) FromMap(
 }
 
 // MakeConfigMap returns an instance of Kunstructured for ConfigMap
-func (kf *KunstructuredFactoryImpl) MakeConfigMap(args *types.ConfigMapArgs, options *types.GeneratorOptions) (ifc.Kunstructured, error) {
-	cm, err := kf.cmFactory.MakeConfigMap(args, options)
+func (kf *KunstructuredFactoryImpl) MakeConfigMap(
+	ldr ifc.Loader,
+	options *types.GeneratorOptions,
+	args *types.ConfigMapArgs) (ifc.Kunstructured, error) {
+	o, err := configmapandsecret.NewFactory(
+		ldr, options).MakeConfigMap(args)
 	if err != nil {
 		return nil, err
 	}
-	return NewKunstructuredFromObject(cm)
+	return NewKunstructuredFromObject(o)
 }
 
 // MakeSecret returns an instance of Kunstructured for Secret
-func (kf *KunstructuredFactoryImpl) MakeSecret(args *types.SecretArgs, options *types.GeneratorOptions) (ifc.Kunstructured, error) {
-	sec, err := kf.secretFactory.MakeSecret(args, options)
+func (kf *KunstructuredFactoryImpl) MakeSecret(
+	ldr ifc.Loader,
+	options *types.GeneratorOptions,
+	args *types.SecretArgs) (ifc.Kunstructured, error) {
+	o, err := configmapandsecret.NewFactory(
+		ldr, options).MakeSecret(args)
 	if err != nil {
 		return nil, err
 	}
-	return NewKunstructuredFromObject(sec)
-}
-
-// Set sets loader
-func (kf *KunstructuredFactoryImpl) Set(ldr ifc.Loader) {
-	kf.cmFactory = configmapandsecret.NewConfigMapFactory(ldr)
-	kf.secretFactory = configmapandsecret.NewSecretFactory(ldr)
+	return NewKunstructuredFromObject(o)
 }
 
 // validate validates that u has kind and name

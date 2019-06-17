@@ -27,8 +27,9 @@ type RootConfig struct {
 	ConfigGroups       []*ConfigGroup      `yaml:"config" json:"config" validate:"dive,exists"`
 	AdminCommands      []*AdminCommand     `yaml:"admin_commands" json:"admin_commands" validate:"dive,exists"`
 	CustomMetrics      []*CustomMetric     `yaml:"custom_metrics" json:"custom_metrics" validate:"dive"`
-	Graphite           Graphite            `yaml:"graphite" json:"graphite" validate:"dive"`
 	StatsD             StatsD              `yaml:"statsd" json:"statsd" validate:"dive"`
+	Graphite           Graphite            `yaml:"graphite" json:"graphite" validate:"dive"`
+	Carbon             Carbon              `yaml:"carbon" json:"carbon" validate:"dive"`
 	Localization       *Localization       `yaml:"localization,omitempty" json:"localization,omitempty" validate:"omitempty,dive"`
 
 	// Support api version >= 2.10.0
