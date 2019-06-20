@@ -37,7 +37,6 @@ class SideBar extends Component {
    */
   static getDerivedStateFromProps(props, state) {
     const { items, aggressive, loading } = props;
-    const { items: currentItems } = state;
 
     // This approach only runs when the component is set to aggressive mode
     if (aggressive) {
