@@ -3,7 +3,7 @@ import React from "react";
 export default function WatchLicense(/*props*/) {
 
   return (
-    <div className="flex justifyContent--center">
+    <div className="flex justifyContent--center u-paddingTop--20">
       <div className="LicenseDetails--wrapper u-textAlign--left u-paddingRight--20 u-paddingLeft--20">
         <p className="u-fontWeight--bold u-color--tuna u-fontSize--larger u-marginBottom--20 u-paddingBottom--5 u-lineHeight--normal">License details</p>
         <div className="u-color--tundora u-fontSize--normal u-fontWeight--medium">
