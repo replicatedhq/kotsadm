@@ -1,5 +1,5 @@
 import React from "react";
-import { shallow } from "enzyme";
+import { shallow, mount } from "enzyme";
 
 import SideBar from "./SideBar";
 
@@ -69,24 +69,26 @@ describe("<SideBar> tests", () => {
   });
 
   it("Does not display the loader subsequently if aggressive mode is turned on", () =>{
-    const wrapper = shallow(
+    const items = dummyData.map((person, idx) => (
+      <div key={idx} className="card">
+        <span className="card-name">{person.name}</span>
+        <span className="card-job">{person.occupation}</span>
+      </div>
+    ));
+    const wrapper = mount(
       <SideBar
         loading={true}
         aggressive={true}
-        items={dummyData.map((person, idx) => (
-          <div key={idx} className="card">
-            <span className="card-name">{person.name}</span>
-            <span className="card-job">{person.occupation}</span>
-          </div>
-        ))}
+        items={[]}
       />
     );
+
     expect(wrapper.find("Loader")).toHaveLength(1);
 
-    wrapper.setProps({ loading: false });
+    wrapper.setProps({ loading: false, items });
     expect(wrapper.find(".card")).toHaveLength(2);
 
-    wrapper.setProps({ loading: true });
+    wrapper.setProps({ loading: true, items: [] });
 
     expect(wrapper.find("Loader")).toHaveLength(0);
     expect(wrapper.find(".card")).toHaveLength(2);
