@@ -168,10 +168,10 @@ class WatchDetailPage extends Component {
       }
       return centeredLoader;
     }
-    const pendingInits = listPendingInitQuery?.listPendingInitSessions;
-    const helmCharts = listHelmChartsQuery?.listHelmCharts;
-    const watches = listWatchesQuery?.listWatches;
-    const allWatches = watches?.concat(pendingInits, helmCharts);
+    // const pendingInits = listPendingInitQuery?.listPendingInitSessions;
+    // const helmCharts = listHelmChartsQuery?.listHelmCharts;
+    // const watches = listWatchesQuery?.listWatches;
+    // const allWatches = watches?.concat(pendingInits, helmCharts);
 
     return (
       <div className="WatchDetailPage--wrapper flex-column flex1 u-overflow--auto">
@@ -315,18 +315,6 @@ export default compose(
           slug: `${owner}/${slug}`
         }
       }
-    }
-  }),
-  graphql(listPendingInit, {
-    name: "listPendingInitQuery",
-    options: {
-      fetchPolicy: "cache-and-network"
-    }
-  }),
-  graphql(listHelmCharts, {
-    name: "listHelmChartsQuery",
-    options: {
-      fetchPolicy: "cache-and-network"
     }
   }),
   graphql(createUpdateSession, {
