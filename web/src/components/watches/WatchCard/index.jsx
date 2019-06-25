@@ -10,14 +10,14 @@ export default class WatchCard extends React.Component {
     item: PropTypes.object.isRequired,
     onEditContributorsClick: PropTypes.func.isRequired,
     onCardActionClick: PropTypes.func.isRequired,
-    onEditApplication: PropTypes.func.isRequired,
-  }
-
-  state = {
-    loadingEdit: false,
+    onEditApplication: PropTypes.func.isRequired
   };
 
-  parseNotifications = (notifications) => {
+  state = {
+    loadingEdit: false
+  };
+
+  parseNotifications = notifications => {
     let parsed = {
       webhook: [],
       email: []
@@ -29,7 +29,7 @@ export default class WatchCard extends React.Component {
       if (n.email) {
         parsed.email.push(n.email);
       }
-    })
+    });
 
     return parsed;
   };
@@ -63,22 +63,29 @@ export default class WatchCard extends React.Component {
         expirationDate = null;
       }
 
-      cardHeader = <CardHeaderReplicatedApp
-        watchIntegrations={integrations}
-        watch={item}
-        onEditApplication={onEditApplication}
-        expirationDate={expirationDate}
-      />;
+      cardHeader = (
+        <CardHeaderReplicatedApp
+          watchIntegrations={integrations}
+          watch={item}
+          onEditApplication={onEditApplication}
+          expirationDate={expirationDate}
+        />
+      );
     } else {
-      cardHeader = <CardHeader
-        watchIntegrations={integrations}
-        watch={item}
-        onEditApplication={onEditApplication}
-        />;
+      cardHeader = (
+        <CardHeader
+          watchIntegrations={integrations}
+          watch={item}
+          onEditApplication={onEditApplication}
+        />
+      );
     }
 
     return (
-      <div data-qa={`WatchCard--${item.id}`} className="installed-watch flex-column u-width--full">
+      <div
+        data-qa={`WatchCard--${item.id}`}
+        className="installed-watch flex-column u-width--full"
+      >
         {cardHeader}
         <div className="installed-watch-body flex">
           <DeploymentClusters

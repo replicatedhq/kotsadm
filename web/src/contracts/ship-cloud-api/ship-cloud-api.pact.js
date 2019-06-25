@@ -15,18 +15,17 @@ import duplicateSlugCheck from "./contracts/duplicate-slug-check";
 // import getWatchVersionGitOps from "./contracts/get-watch-version-gitops-cluster";
 
 describe("ShipAPI GraphQL Pact", () => {
-
-  describe("solo-account:listClusters", () => listClusters() );
-  describe("solo-account:createShipCluster", () => createShipCluster() );
-  describe("solo-account:createGitOpsCluster", () => createGitOpsCluster() );
-  describe("solo-account:createMidstreamWatch", () => createMidstreamWatch() );
-  describe("solo-account:createInitSession", () => createInitSession() );
-  describe("solo-account:getWatchVersion", () => getWatchVersion() );
-  describe("duplicate-slug-check", () => duplicateSlugCheck() );
+  describe("solo-account:listClusters", () => listClusters());
+  describe("solo-account:createShipCluster", () => createShipCluster());
+  describe("solo-account:createGitOpsCluster", () => createGitOpsCluster());
+  describe("solo-account:createMidstreamWatch", () => createMidstreamWatch());
+  describe("solo-account:createInitSession", () => createInitSession());
+  describe("solo-account:getWatchVersion", () => getWatchVersion());
+  describe("duplicate-slug-check", () => duplicateSlugCheck());
 
   // describe("solo-account:listImageWatches", () => listImageWatches() );
 
-  describe("single-user:updateWatch", () => updateWatch() );
+  describe("single-user:updateWatch", () => updateWatch());
   // describe("single-user:deleteWatch", () => deleteWatch() );
 
   // describe("ship-cluster-account:listWatches", () => listWatchesShipCluster() );

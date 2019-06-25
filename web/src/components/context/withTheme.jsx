@@ -8,5 +8,5 @@ export default function withTheme(Component) {
         {values => <Component {...values} {...props} />}
       </ThemeContext.Consumer>
     );
-  }
+  };
 }

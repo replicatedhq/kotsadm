@@ -9,13 +9,13 @@ import { createNewWatchRaw } from "../../../mutations/WatchMutations";
 chai.use(chaiAsPromised);
 
 export default () => {
-  it("creates a watch that will default to a duplicate slug", async (done) => {
+  it("creates a watch that will default to a duplicate slug", async done => {
     await global.provider.addInteraction(createDuplicateSlugInteraction);
     const result = await getShipClient("duplicate-slug-account-session-1").mutate({
-        mutation: createNewWatch,
-        variables: {
-          owner: "duplicate-slug-account",
-          stateJSON: `{
+      mutation: createNewWatch,
+      variables: {
+        owner: "duplicate-slug-account",
+        stateJSON: `{
   "v1": {
     "config": {},
     "releaseName": "factorio",
@@ -32,11 +32,11 @@ export default () => {
     "contentSHA": "126fa6eb8f09171050751c65a386f41aef4fe9ebe00c8b1e66f2c4e60319ec4e"
   }
 }`
-        },
+      }
     });
     global.provider.verify().then(() => done());
   });
-}
+};
 
 const createDuplicateSlugInteraction = new Pact.GraphQLInteraction()
   .uponReceiving("a mutation to create a watch that will default to a duplicate slug")
@@ -44,8 +44,8 @@ const createDuplicateSlugInteraction = new Pact.GraphQLInteraction()
     path: "/graphql",
     method: "POST",
     headers: {
-      "Authorization": createSessionToken("duplicate-slug-account-session-1"),
-      "Content-Type": "application/json",
+      Authorization: createSessionToken("duplicate-slug-account-session-1"),
+      "Content-Type": "application/json"
     }
   })
   .withOperation("createWatch")
@@ -68,7 +68,7 @@ const createDuplicateSlugInteraction = new Pact.GraphQLInteraction()
     },
     "contentSHA": "126fa6eb8f09171050751c65a386f41aef4fe9ebe00c8b1e66f2c4e60319ec4e"
   }
-}`,
+}`
   })
   .willRespondWith({
     status: 200,
@@ -80,8 +80,8 @@ const createDuplicateSlugInteraction = new Pact.GraphQLInteraction()
           slug: "duplicate-slug-account/duplicate-slug-one-1",
           watchName: Matchers.like("generated"),
           createdOn: Matchers.like("generated"),
-          lastUpdated: null,
-        },
-      },
-    },
+          lastUpdated: null
+        }
+      }
+    }
   });

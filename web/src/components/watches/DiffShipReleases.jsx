@@ -15,42 +15,51 @@ class DiffShipReleases extends React.Component {
       editorValueTwo: "",
       firstDiff: {},
       secondDiff: {}
-    }
+    };
   }
 
-  getYamlForSequence = async (sequence) => {
-
-    const response = await fetch(`${window.env.SHIPDOWNLOAD_ENDPOINT}/${this.props.getWatch.getWatch.id}/${sequence}`, {
-      headers: new Headers({
-        "Authorization": Utilities.getToken(),
-      }),
-    })
+  getYamlForSequence = async sequence => {
+    const response = await fetch(
+      `${window.env.SHIPDOWNLOAD_ENDPOINT}/${this.props.getWatch.getWatch.id}/${sequence}`,
+      {
+        headers: new Headers({
+          Authorization: Utilities.getToken()
+        })
+      }
+    );
     const body = await response.text();
     return body;
-  }
-
+  };
 
   async componentDidMount() {
     if (this.props.getWatch.getWatch) {
       const params = this.props.match.params;
       const sequencesToDiff = [params.firstSeqNumber, params.secondSeqNumber];
-      sequencesToDiff.forEach((sequence) => {
-        this.props.client.query({
-          query: getWatchVersion,
-          variables: { id: this.props.getWatch.getWatch.id, sequence: parseInt(sequence) }
-        })
-          .then((res) => {
+      sequencesToDiff.forEach(sequence => {
+        this.props.client
+          .query({
+            query: getWatchVersion,
+            variables: {
+              id: this.props.getWatch.getWatch.id,
+              sequence: parseInt(sequence)
+            }
+          })
+          .then(res => {
             const result = res.data.getWatchVersion;
-            this.setState({ [`diff-${sequence}`]: result })
+            this.setState({ [`diff-${sequence}`]: result });
           })
           .catch();
-      })
+      });
     }
     if (this.props.getWatch.getWatch && this.props.getWatch.getWatch.id) {
       this.setState({
-        editorValueOne: await this.getYamlForSequence(this.props.match.params.firstSeqNumber),
-        editorValueTwo: await this.getYamlForSequence(this.props.match.params.secondSeqNumber)
-      })
+        editorValueOne: await this.getYamlForSequence(
+          this.props.match.params.firstSeqNumber
+        ),
+        editorValueTwo: await this.getYamlForSequence(
+          this.props.match.params.secondSeqNumber
+        )
+      });
     }
   }
 
@@ -59,21 +68,25 @@ class DiffShipReleases extends React.Component {
     if (getWatch !== lastProps.getWatch.getWatch && getWatch) {
       const params = this.props.match.params;
       const sequencesToDiff = [params.firstSeqNumber, params.secondSeqNumber];
-      sequencesToDiff.forEach((sequence) => {
-        this.props.client.query({
-          query: getWatchVersion,
-          variables: { id: this.props.getWatch.getWatch.id, sequence: parseInt(sequence) }
-        })
-          .then((res) => {
+      sequencesToDiff.forEach(sequence => {
+        this.props.client
+          .query({
+            query: getWatchVersion,
+            variables: {
+              id: this.props.getWatch.getWatch.id,
+              sequence: parseInt(sequence)
+            }
+          })
+          .then(res => {
             const result = res.data.getWatchVersion;
-            this.setState({ [`diff-${sequence}`]: result })
+            this.setState({ [`diff-${sequence}`]: result });
           })
           .catch();
-      })
+      });
       this.setState({
         editorValueOne: await this.getYamlForSequence(params.firstSeqNumber),
         editorValueTwo: await this.getYamlForSequence(params.secondSeqNumber)
-      })
+      });
     }
   }
 
@@ -87,7 +100,7 @@ class DiffShipReleases extends React.Component {
         <div className="flex-column flex1 alignItems--center justifyContent--center">
           <Loader size="60" />
         </div>
-      )
+      );
     }
 
     const firstDiff = this.state[`diff-${params.firstSeqNumber}`] || {};
@@ -96,33 +109,52 @@ class DiffShipReleases extends React.Component {
     return (
       <div className="flex1 flex-column u-position--relative container">
         <div className="diff-header-wrapper u-marginTop--30">
-          <p onClick={this.props.history.goBack} className="u-fontSize--normal u-fontWeight--medium u-color--chateauGreen u-textDecoration--underlineOnHover">
-            <span className="icon clickable backArrow-icon u-marginRight--10"></span>Versions
+          <p
+            onClick={this.props.history.goBack}
+            className="u-fontSize--normal u-fontWeight--medium u-color--chateauGreen u-textDecoration--underlineOnHover"
+          >
+            <span className="icon clickable backArrow-icon u-marginRight--10"></span>
+            Versions
           </p>
           <div className="diff-header u-marginTop--10">
             <div className="flex flex1 u-textAlign--center">
               <div className="flex-auto flex-column justifyContent--center">
-                {getWatch.getWatch.cluster ?
+                {getWatch.getWatch.cluster ? (
                   <span className="normal icon clusterType ship"></span>
-                :
+                ) : (
                   <div className="avatar-wrapper">
-                    <span style={{ backgroundImage: `url(${getWatch.getWatch.watchIcon})` }}></span>
+                    <span
+                      style={{ backgroundImage: `url(${getWatch.getWatch.watchIcon})` }}
+                    ></span>
                   </div>
-                }
+                )}
               </div>
               <div className="flex1 u-marginLeft--10 alignSelf--center">
-                <h2 className="u-fontSize--header2 u-fontWeight--bold u-color--tundora flex alignContent--center alignItems--center">{getWatch.getWatch.watchName}</h2>
+                <h2 className="u-fontSize--header2 u-fontWeight--bold u-color--tundora flex alignContent--center alignItems--center">
+                  {getWatch.getWatch.watchName}
+                </h2>
               </div>
             </div>
           </div>
           <div className=" u-marginTop--10">
-            <span className="u-fontSize--large u-color--dustyGray u-fontWeight--medium">Diff of <span className="u-fontSize--large u-color--doveGray u-fontWeight--bold ">{firstDiff.title}</span> from <span className="u-fontSize--large u-color--doveGray u-fontWeight--bold">{secondDiff.title}</span></span>
+            <span className="u-fontSize--large u-color--dustyGray u-fontWeight--medium">
+              Diff of{" "}
+              <span className="u-fontSize--large u-color--doveGray u-fontWeight--bold ">
+                {firstDiff.title}
+              </span>{" "}
+              from{" "}
+              <span className="u-fontSize--large u-color--doveGray u-fontWeight--bold">
+                {secondDiff.title}
+              </span>
+            </span>
           </div>
         </div>
         <div className="MonacoEditor--wrapper flex1 flex u-height--full u-width--full u-marginTop--20">
           <div className="flex1 flex-column u-width--full u-overflow--hidden">
             <MonacoDiffEditor
-              ref={(editor) => { this.monacoDiffEditor = editor }}
+              ref={editor => {
+                this.monacoDiffEditor = editor;
+              }}
               width="100%"
               height="100%"
               language="yaml"
@@ -145,14 +177,10 @@ class DiffShipReleases extends React.Component {
 export default compose(
   withRouter,
   withApollo,
-  graphql(
-    getWatch, {
-      name: "getWatch",
-      options: ({ match }) => ({
-        variables: { slug: `${match.params.owner}/${match.params.slug}` }
-      })
-    }
-  )
+  graphql(getWatch, {
+    name: "getWatch",
+    options: ({ match }) => ({
+      variables: { slug: `${match.params.owner}/${match.params.slug}` }
+    })
+  })
 )(DiffShipReleases);
-
-

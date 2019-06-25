@@ -24,7 +24,7 @@ describe("<SideBar> tests", () => {
   it("Renders a few items", () => {
     const wrapper = shallow(
       <SideBar
-        items={dummyData.map( (person, idx) => (
+        items={dummyData.map((person, idx) => (
           <div key={idx} className="card">
             <span className="card-name">{person.name}</span>
             <span className="card-job">{person.occupation}</span>
@@ -40,7 +40,7 @@ describe("<SideBar> tests", () => {
   it("Displays a loader if the loader prop is passed in", () => {
     const wrapper = shallow(
       <SideBar
-      loading={true}
+        loading={true}
         items={dummyData.map((person, idx) => (
           <div key={idx} className="card">
             <span className="card-name">{person.name}</span>

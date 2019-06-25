@@ -10,7 +10,7 @@ export function createSessionToken(sessionId) {
     {
       iat: new Date(Date.UTC(2019, 0, 1, 1, 0, 0)).getTime(),
       token: "not-checked",
-      sessionId,
+      sessionId
     },
     SESSION_KEY
   );
@@ -24,6 +24,8 @@ export function getShipClient(sessionId) {
       if (!sessionId) {
         return "";
       }
-      return createSessionToken(sessionId)
-    }, fetch);
+      return createSessionToken(sessionId);
+    },
+    fetch
+  );
 }

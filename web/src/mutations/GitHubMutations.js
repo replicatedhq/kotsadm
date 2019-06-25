@@ -19,4 +19,3 @@ export const logout = gql`
     logout
   }
 `;
-

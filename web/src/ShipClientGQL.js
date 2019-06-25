@@ -11,7 +11,7 @@ import fetch from "node-fetch";
 
 export function ShipClientGQL(graphqlEndpoint, restEndpoint, tokenFunction, fetcher) {
   const cache = new InMemoryCache({
-    addTypename: false,
+    addTypename: false
   });
 
   const stateLink = withClientState({
@@ -20,7 +20,7 @@ export function ShipClientGQL(graphqlEndpoint, restEndpoint, tokenFunction, fetc
 
   const httpLink = createHttpLink({
     uri: graphqlEndpoint,
-    fetch: fetcher ? fetcher : fetch,
+    fetch: fetcher ? fetcher : fetch
   });
 
   if (fetcher) {
@@ -30,9 +30,9 @@ export function ShipClientGQL(graphqlEndpoint, restEndpoint, tokenFunction, fetc
   const restLink = new RestLink({
     uri: `${restEndpoint}/v1`,
     endpoints: {
-      "v1": `${restEndpoint}/v1`,
+      v1: `${restEndpoint}/v1`
     },
-    customFetch: fetcher ? fetcher : undefined,
+    customFetch: fetcher ? fetcher : undefined
   });
 
   const authLink = setContext(async (_, { headers }) => {
@@ -40,15 +40,16 @@ export function ShipClientGQL(graphqlEndpoint, restEndpoint, tokenFunction, fetc
       headers: {
         ...headers,
         authorization: await tokenFunction(),
-        "X-Replicated-Client": "ship-cluster",
-      },
+        "X-Replicated-Client": "ship-cluster"
+      }
     };
   });
 
   const errorLink = onError(({ graphQLErrors, networkError }) => {
     if (graphQLErrors) {
       graphQLErrors.map(({ message, locations, path }) => {
-        const unauthorized = message === "Unauthorized" || message.includes("Unknown session type");
+        const unauthorized =
+          message === "Unauthorized" || message.includes("Unknown session type");
         if (unauthorized) {
           Utilities.logoutUser();
         } else if (message === "Forbidden") {
@@ -58,26 +59,25 @@ export function ShipClientGQL(graphqlEndpoint, restEndpoint, tokenFunction, fetc
           if (process.env.NODE_ENV === "development") {
             console.log(
               "[GraphQL error]:",
-              "Message:", message, "|",
-              "Location:", locations, "|",
-              "Path:", path
+              "Message:",
+              message,
+              "|",
+              "Location:",
+              locations,
+              "|",
+              "Path:",
+              path
             );
           }
         }
-      })
+      });
     }
     if (networkError) {
       console.log(`[Network error]: ${networkError}`);
     }
   });
 
-  const link = ApolloLink.from([
-    stateLink,
-    authLink,
-    restLink,
-    errorLink,
-    httpLink,
-  ]);
+  const link = ApolloLink.from([stateLink, authLink, restLink, errorLink, httpLink]);
 
   const client = new ApolloClient({
     link,

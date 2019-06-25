@@ -5,14 +5,13 @@ import { Utilities } from "../utilities/utilities";
 import TraditionalAuth from "./TraditionalAuth";
 
 class Signup extends React.Component {
-  
   state = {
     traditionalAuth: false
-  }
+  };
 
   componentDidMount() {
     if (!Utilities.localStorageEnabled()) {
-      this.props.history.push("/unsupported") 
+      this.props.history.push("/unsupported");
     }
 
     const { search } = this.props.location;
@@ -40,8 +39,16 @@ class Signup extends React.Component {
               <span className="icon ship-login-icon"></span>
               <p className="login-text u-color--tuna u-fontWeight--bold">Sign up</p>
             </div>
-            <button type="button" className={`btn auth traditional u-marginTop--20`} onClick={() => this.props.history.push("/login")}>
-              <span className="icon clickable backArrow-icon" style={{ verticalAlign: "0" }}></span> Use a different auth type
+            <button
+              type="button"
+              className={`btn auth traditional u-marginTop--20`}
+              onClick={() => this.props.history.push("/login")}
+            >
+              <span
+                className="icon clickable backArrow-icon"
+                style={{ verticalAlign: "0" }}
+              ></span>{" "}
+              Use a different auth type
             </button>
           </div>
           <TraditionalAuth context="signup" />

@@ -6,5 +6,5 @@ export default function WatchConfig() {
     <div className="flex-column flex1">
       <StateFileViewer />
     </div>
-  )
+  );
 }

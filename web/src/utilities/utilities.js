@@ -13,9 +13,7 @@ dayjs.extend(relativeTime);
  * @return {String} - "git" if a github deployment, otherwise "ship"
  */
 export function getClusterType(gitOpsRef) {
-  return gitOpsRef
-    ? "git"
-    : "ship";
+  return gitOpsRef ? "git" : "ship";
 }
 
 /**
@@ -54,7 +52,6 @@ export function getApplicationType(watch) {
     if (!metadata) return "";
     const parsedMetadata = JSON.parse(metadata);
     return parsedMetadata.applicationType;
-
   } catch (error) {
     console.error(error);
     return "Error fetching applicationType";
@@ -69,9 +66,9 @@ export function getApplicationType(watch) {
 export function getReadableLicenseType(type) {
   let readableType = "Development";
   if (type === "prod") {
-    readableType = "Production"
+    readableType = "Production";
   } else if (type === "trial") {
-    readableType = "Trial"
+    readableType = "Trial";
   }
   return readableType;
 }
@@ -99,7 +96,7 @@ export const Utilities = {
       localStorage.setItem(test, test);
       localStorage.removeItem(test);
       return true;
-    } catch(e) {
+    } catch (e) {
       return false;
     }
   },
@@ -118,11 +115,17 @@ export const Utilities = {
     if (!localize) {
       return dayjs.utc(date).format(format);
     }
-    return dayjs.utc(date).local().format(format);
+    return dayjs
+      .utc(date)
+      .local()
+      .format(format);
   },
 
   dateFromNow(date) {
-    return dayjs.utc(date).local().fromNow();
+    return dayjs
+      .utc(date)
+      .local()
+      .fromNow();
   },
 
   gqlUnauthorized(message) {
@@ -150,7 +153,7 @@ export const Utilities = {
 
   getNotificationType(item) {
     const keys = pick(item, ["email", "webhook", "pullRequest"]);
-    const filteredKeys = filter(keys, (o) => o);
+    const filteredKeys = filter(keys, o => o);
     if (filteredKeys[0] && filteredKeys[0].recipientAddress) {
       return "email";
     } else if (filteredKeys[0] && filteredKeys[0].uri) {
@@ -165,16 +168,37 @@ export const Utilities = {
   toTitleCase(word) {
     let i, j, str, lowers, uppers;
     const _word = typeof word === "string" ? word : this;
-    str = _word.replace(/([^\W_]+[^\s-]*) */g, (txt) => {
+    str = _word.replace(/([^\W_]+[^\s-]*) */g, txt => {
       return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
     });
 
     // Certain minor words should be left lowercase unless
     // they are the first or last words in the string
-    lowers = ["A", "An", "The", "And", "But", "Or", "For", "Nor", "As", "At",
-      "By", "For", "From", "In", "Into", "Near", "Of", "On", "Onto", "To", "With"];
+    lowers = [
+      "A",
+      "An",
+      "The",
+      "And",
+      "But",
+      "Or",
+      "For",
+      "Nor",
+      "As",
+      "At",
+      "By",
+      "For",
+      "From",
+      "In",
+      "Into",
+      "Near",
+      "Of",
+      "On",
+      "Onto",
+      "To",
+      "With"
+    ];
     for (i = 0, j = lowers.length; i < j; i++) {
-      str = str.replace(new RegExp("\\s" + lowers[i] + "\\s", "g"), (txt) => {
+      str = str.replace(new RegExp("\\s" + lowers[i] + "\\s", "g"), txt => {
         return txt.toLowerCase();
       });
     }
@@ -182,7 +206,10 @@ export const Utilities = {
     // Certain words such as initialisms or acronyms should be left uppercase
     uppers = ["Id", "Tv"];
     for (i = 0, j = uppers.length; i < j; i++) {
-      str = str.replace(new RegExp("\\b" + uppers[i] + "\\b", "g"), uppers[i].toUpperCase());
+      str = str.replace(
+        new RegExp("\\b" + uppers[i] + "\\b", "g"),
+        uppers[i].toUpperCase()
+      );
     }
 
     return str;
@@ -193,7 +220,9 @@ export const Utilities = {
     // TODO: for now we just remove the token,
     // this DOES NOT perform an actual logout of GitHub.
     if (token) {
-      if (client) {client.resetStore();}
+      if (client) {
+        client.resetStore();
+      }
       window.localStorage.removeItem("token");
       window.location = "/login";
     } else {
@@ -210,9 +239,9 @@ export const Utilities = {
   async handleDownload(id) {
     const response = await fetch(`${window.env.SHIPDOWNLOAD_ENDPOINT}/${id}`, {
       headers: new Headers({
-        "Authorization": Utilities.getToken(),
-      }),
-    })
+        Authorization: Utilities.getToken()
+      })
+    });
 
     if (response.ok) {
       const blob = await response.blob();
@@ -222,7 +251,7 @@ export const Utilities = {
 
       const contentDispositionHeader = response.headers.get("Content-Disposition");
       if (contentDispositionHeader) {
-        ([, filename] = contentDispositionHeader.split("filename="));
+        [, filename] = contentDispositionHeader.split("filename=");
       }
 
       download(blob, filename, response.headers.get("Content-Type"));

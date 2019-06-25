@@ -9,19 +9,19 @@ import { createShipOpsClusterRaw } from "../../../mutations/ClusterMutations";
 chai.use(chaiAsPromised);
 
 export default () => {
-  it("creates a ship cluster for solo dev", async (done) => {
+  it("creates a ship cluster for solo dev", async done => {
     await global.provider.addInteraction(createShipClusterInteraction);
     const result = await getShipClient("solo-account-session-1").mutate({
       mutation: createShipOpsCluster,
       variables: {
-        title: "FooBarBaz Cluster",
-      },
+        title: "FooBarBaz Cluster"
+      }
     });
     // expect(result.data.createShipOpsCluster).to.deep.equal({"id": "generated", "slug": "foobarbaz-cluster", "shipOpsRef": {"token": "generated"}})
     // createdClusterId = result.data.createShipOpsCluster.id;
     global.provider.verify().then(() => done());
   });
-}
+};
 
 const createShipClusterInteraction = new Pact.GraphQLInteraction()
   .uponReceiving("a mutation to create a ship cluster for solo dev")
@@ -29,14 +29,14 @@ const createShipClusterInteraction = new Pact.GraphQLInteraction()
     path: "/graphql",
     method: "POST",
     headers: {
-      "Authorization": createSessionToken("solo-account-session-1"),
-      "Content-Type": "application/json",
+      Authorization: createSessionToken("solo-account-session-1"),
+      "Content-Type": "application/json"
     }
   })
   .withOperation("createShipOpsCluster")
   .withQuery(createShipOpsClusterRaw)
   .withVariables({
-    title: "FooBarBaz Cluster",
+    title: "FooBarBaz Cluster"
   })
   .willRespondWith({
     status: 200,
@@ -47,9 +47,9 @@ const createShipClusterInteraction = new Pact.GraphQLInteraction()
           id: Matchers.like("generated"),
           slug: "foobarbaz-cluster",
           shipOpsRef: {
-            token: Matchers.like("generated"),
-          },
-        },
-      },
-    },
+            token: Matchers.like("generated")
+          }
+        }
+      }
+    }
   });

@@ -9,7 +9,7 @@ import { createGitOpsClusterRaw } from "../../../mutations/ClusterMutations";
 chai.use(chaiAsPromised);
 
 export default () => {
-  it("creates a gitops cluster for solo dev", async (done) => {
+  it("creates a gitops cluster for solo dev", async done => {
     await global.provider.addInteraction(createGitOpsClusterInteraction);
     const result = await getShipClient("solo-account-session-1").mutate({
       mutation: createGitOpsCluster,
@@ -19,15 +19,15 @@ export default () => {
         gitOpsRef: {
           owner: "me",
           repo: "myself",
-          branch: "i",
-        },
-      },
+          branch: "i"
+        }
+      }
     });
     // expect(result.data.createGitOpsCluster).to.deep.equal({"id": "generated", "slug": "foobargit-cluster"})
     // createdClusterId = result.data.createGitOpsCluster.id;
     global.provider.verify().then(() => done());
   });
-}
+};
 
 const createGitOpsClusterInteraction = new Pact.GraphQLInteraction()
   .uponReceiving("a mutation to create a gitops cluster for solo dev")
@@ -35,8 +35,8 @@ const createGitOpsClusterInteraction = new Pact.GraphQLInteraction()
     path: "/graphql",
     method: "POST",
     headers: {
-      "Authorization": createSessionToken("solo-account-session-1"),
-      "Content-Type": "application/json",
+      Authorization: createSessionToken("solo-account-session-1"),
+      "Content-Type": "application/json"
     }
   })
   .withOperation("createGitOpsCluster")
@@ -47,8 +47,8 @@ const createGitOpsClusterInteraction = new Pact.GraphQLInteraction()
     gitOpsRef: {
       owner: "me",
       repo: "myself",
-      branch: "i",
-    },
+      branch: "i"
+    }
   })
   .willRespondWith({
     status: 200,
@@ -57,9 +57,8 @@ const createGitOpsClusterInteraction = new Pact.GraphQLInteraction()
       data: {
         createGitOpsCluster: {
           id: Matchers.like("generated"),
-          slug: "foobargit-cluster",
-        },
-      },
-    },
+          slug: "foobargit-cluster"
+        }
+      }
+    }
   });
-

@@ -12,23 +12,24 @@ export default function SubNavBar(props) {
   return (
     <div className={classNames("details-subnav", className)}>
       <ul>
-        {navConfig.map( (link, idx) => {
-          const generatedMenuItem = (
-            <li
-              key={idx}
-              className={classNames({
-                "is-active": activeTab === link.tabName
-              })}>
-              <Link to={link.to(slug)}>
-                {link.displayName}
-              </Link>
-            </li>
-          );
-          if (link.displayRule) {
-            return link.displayRule(watch || {}) && generatedMenuItem;
-          }
-          return generatedMenuItem;
-        }).filter(Boolean)}
+        {navConfig
+          .map((link, idx) => {
+            const generatedMenuItem = (
+              <li
+                key={idx}
+                className={classNames({
+                  "is-active": activeTab === link.tabName
+                })}
+              >
+                <Link to={link.to(slug)}>{link.displayName}</Link>
+              </li>
+            );
+            if (link.displayRule) {
+              return link.displayRule(watch || {}) && generatedMenuItem;
+            }
+            return generatedMenuItem;
+          })
+          .filter(Boolean)}
       </ul>
     </div>
   );

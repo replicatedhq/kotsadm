@@ -7,13 +7,13 @@ import { getWatchById, getParentWatch } from "../queries/WatchQueries";
 import { Utilities } from "../utilities/utilities";
 import Loader from "./shared/Loader";
 
-import "../scss/components/ShipCompleted.scss"
+import "../scss/components/ShipCompleted.scss";
 
 export class ShipInitCompleted extends React.Component {
   static propTypes = {
     initSessionId: PropTypes.string,
-    onActiveInitSessionCompleted: PropTypes.func.isRequired,
-  }
+    onActiveInitSessionCompleted: PropTypes.func.isRequired
+  };
 
   state = {
     loadingWatch: true,
@@ -42,7 +42,7 @@ export class ShipInitCompleted extends React.Component {
       variables: { id: initSessionId },
       // TODO errors are thrown for nonexistent watch
       fetchPolicy: "network-only",
-      errorPolicy: "ignore",
+      errorPolicy: "ignore"
     });
 
     if (data.getWatch && data.getWatch.watchName) {
@@ -54,27 +54,33 @@ export class ShipInitCompleted extends React.Component {
           variables: { id: initSessionId },
           fetchPolicy: "network-only"
         });
-        return this.props.history.push(`/watch/${parentResult.data.getParentWatch.slug}/downstreams`);
+        return this.props.history.push(
+          `/watch/${parentResult.data.getParentWatch.slug}/downstreams`
+        );
       }
-      this.setState({ loadingWatch: false, watchSlug: data.getWatch.slug, watchId: initSessionId });
+      this.setState({
+        loadingWatch: false,
+        watchSlug: data.getWatch.slug,
+        watchId: initSessionId
+      });
     }
 
     return;
-  }
+  };
 
   handleDownload = async () => {
     const { initSessionId } = this.props;
     this.setState({ isLoading: true });
     await Utilities.handleDownload(initSessionId);
     this.setState({ isLoading: false });
-  }
+  };
 
   handleGotoWatches = () => {
     const { history, onActiveInitSessionCompleted } = this.props;
     const { watchSlug } = this.state;
     onActiveInitSessionCompleted();
     history.push(`/watch/${watchSlug}/downstreams`);
-  }
+  };
 
   render() {
     const { loadingWatch, isLoading } = this.state;
@@ -82,9 +88,12 @@ export class ShipInitCompleted extends React.Component {
     if (loadingWatch) {
       return (
         <div className="Login-wrapper container flex-column flex1 u-overflow--auto">
-          <ShipLoading headerText="Finalizing application" subText="Give us a second to cross the t's and dot the i's." />
+          <ShipLoading
+            headerText="Finalizing application"
+            subText="Give us a second to cross the t's and dot the i's."
+          />
         </div>
-      )
+      );
     }
 
     return (
@@ -92,8 +101,14 @@ export class ShipInitCompleted extends React.Component {
         <div className="flex-column flex1 alignItems--center justifyContent--center">
           <div className="init-complete-wrapper flex-auto">
             <div className="flex1 flex-column u-textAlign--center">
-              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--normal">Your application is ready to be deployed, what's next?</p>
-              <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginTop--5 u-marginBottom--30">Now that your yaml is ready to be deployed, you can configure PRs to be made automatically to GitHub so that you can easily deploy it. You can also download the rendered assets to deploy and test on your servers.</p>
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--normal">
+                Your application is ready to be deployed, what's next?
+              </p>
+              <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginTop--5 u-marginBottom--30">
+                Now that your yaml is ready to be deployed, you can configure PRs to be
+                made automatically to GitHub so that you can easily deploy it. You can
+                also download the rendered assets to deploy and test on your servers.
+              </p>
             </div>
 
             <div className="u-flexTabletReflow u-paddingBottom--20 ship-complete-integration-cards-wrapper justifyContent--center flexWrap--wrap">
@@ -101,21 +116,31 @@ export class ShipInitCompleted extends React.Component {
                 <div className="flex-column flex1 ship-complete-integration-card">
                   <div className="flex-column flex1 justifyContent--center alignItems--center">
                     <span className="icon ship-complete-yml-dl u-marginTop--10"></span>
-                    <p className="u-color--tundora u-fontWeight--bold u-textAlign--center u-fontSize--normal u-marginTop--20">Download YAML</p>
+                    <p className="u-color--tundora u-fontWeight--bold u-textAlign--center u-fontSize--normal u-marginTop--20">
+                      Download YAML
+                    </p>
                   </div>
                   <div className="u-marginTop--10">
-                    <p className="u-fontSize--small u-fontWeight--medium u-textAlign--center u-lineHeight--normal u-color--dustyGray">You can download the YAML generated by Replicated Ship to deploy &amp; test on your server.</p>
+                    <p className="u-fontSize--small u-fontWeight--medium u-textAlign--center u-lineHeight--normal u-color--dustyGray">
+                      You can download the YAML generated by Replicated Ship to deploy
+                      &amp; test on your server.
+                    </p>
                   </div>
                   <div className="button-wrapper flex">
-                    {isLoading ?
+                    {isLoading ? (
                       <div className="flex-column flex1 alignItems--center justifyContent--center">
                         <Loader size="60" />
                       </div>
-                      :
+                    ) : (
                       <div className="flex1 flex card-action-wrapper u-cursor--pointer u-textAlign--center">
-                        <span className="flex1 card-action u-color--astral u-fontSize--small u-fontWeight--medium" onClick={this.handleDownload}>Download deployment YAML</span>
+                        <span
+                          className="flex1 card-action u-color--astral u-fontSize--small u-fontWeight--medium"
+                          onClick={this.handleDownload}
+                        >
+                          Download deployment YAML
+                        </span>
                       </div>
-                    }
+                    )}
                   </div>
                 </div>
               </div>
@@ -127,12 +152,22 @@ export class ShipInitCompleted extends React.Component {
                     <span className="icon ship-medium-size"></span>
                   </div>
                   <div className="u-textAlign--center">
-                    <p className="u-color--tundora u-fontWeight--bold u-textAlign--center u-fontSize--normal u-marginTop--20">Deploy to a cluster</p>
-                    <p className="u-fontSize--small u-fontWeight--medium u-textAlign--center u-lineHeight--normal u-color--dustyGray u-marginTop--10">Select one of your existing clusters to get started with deployments.</p>
+                    <p className="u-color--tundora u-fontWeight--bold u-textAlign--center u-fontSize--normal u-marginTop--20">
+                      Deploy to a cluster
+                    </p>
+                    <p className="u-fontSize--small u-fontWeight--medium u-textAlign--center u-lineHeight--normal u-color--dustyGray u-marginTop--10">
+                      Select one of your existing clusters to get started with
+                      deployments.
+                    </p>
                   </div>
                   <div className="button-wrapper flex">
                     <div className="flex1 flex card-action-wrapper u-cursor--pointer u-textAlign--center">
-                      <span className="flex1 card-action u-color--astral u-fontSize--small u-fontWeight--medium" onClick={this.handleGotoWatches}>Add to a deployment cluster</span>
+                      <span
+                        className="flex1 card-action u-color--astral u-fontSize--small u-fontWeight--medium"
+                        onClick={this.handleGotoWatches}
+                      >
+                        Add to a deployment cluster
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -140,7 +175,13 @@ export class ShipInitCompleted extends React.Component {
             </div>
 
             <div className="u-textAlign--center">
-              <p className="u-fontSize--small u-color--dustyGray u-lineHeight--normal u-fontWeight--medium">Not sure what you want to do? You can <Link to="/watches" className="replicated-link">head back to your watches dashboard</Link> and decide later.</p>
+              <p className="u-fontSize--small u-color--dustyGray u-lineHeight--normal u-fontWeight--medium">
+                Not sure what you want to do? You can{" "}
+                <Link to="/watches" className="replicated-link">
+                  head back to your watches dashboard
+                </Link>{" "}
+                and decide later.
+              </p>
             </div>
           </div>
         </div>
@@ -151,5 +192,5 @@ export class ShipInitCompleted extends React.Component {
 
 export default compose(
   withRouter,
-  withApollo,
+  withApollo
 )(ShipInitCompleted);

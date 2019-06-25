@@ -10,8 +10,7 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 export default () => {
-
-  it("lists watches before one is deleted for single user", async (done) => {
+  it("lists watches before one is deleted for single user", async done => {
     await global.provider.addInteraction(listWatchesInteraction);
     const result = await getShipClient("single-user-delete-watch-session-1").query({
       query: gql(`
@@ -26,15 +25,19 @@ export default () => {
 
     expect(result.data.listWatches).to.have.lengthOf(2);
     expect(result.data.listWatches[0].id).to.equal("single-user-delete-watch-1");
-    expect(result.data.listWatches[0].watchName).to.equal("Single User Save This Watch");
+    expect(result.data.listWatches[0].watchName).to.equal(
+      "Single User Save This Watch"
+    );
 
     expect(result.data.listWatches[1].id).to.equal("single-user-delete-watch-2");
-    expect(result.data.listWatches[1].watchName).to.equal("Single User Delete This Watch");
-    
+    expect(result.data.listWatches[1].watchName).to.equal(
+      "Single User Delete This Watch"
+    );
+
     global.provider.verify().then(() => done());
   });
-  
-  it("deletes a watch for single user", async (done) => {
+
+  it("deletes a watch for single user", async done => {
     await global.provider.addInteraction(deleteWatchInteraction);
     await getShipClient("single-user-delete-watch-session-1").mutate({
       mutation: deleteWatch,
@@ -45,7 +48,7 @@ export default () => {
     global.provider.verify().then(() => done());
   });
 
-  it("lists watches after one has been deleted for single user", async (done) => {
+  it("lists watches after one has been deleted for single user", async done => {
     await global.provider.addInteraction(listWatchesAfterDeletionInteraction);
     const result = await getShipClient("single-user-delete-watch-session-1").query({
       query: gql(`
@@ -56,14 +59,16 @@ export default () => {
           }
         }
       `)
-    })
+    });
     expect(result.data.listWatches).to.have.lengthOf(1);
     expect(result.data.listWatches[0].id).to.equal("single-user-delete-watch-1");
-    expect(result.data.listWatches[0].watchName).to.equal("Single User Save This Watch");
+    expect(result.data.listWatches[0].watchName).to.equal(
+      "Single User Save This Watch"
+    );
 
     global.provider.verify().then(() => done());
   });
-}
+};
 
 const listWatchesInteraction = new Pact.GraphQLInteraction()
   .uponReceiving("a query to list watches for a single user")
@@ -71,18 +76,20 @@ const listWatchesInteraction = new Pact.GraphQLInteraction()
     path: "/graphql",
     method: "POST",
     headers: {
-      "Authorization": createSessionToken("single-user-delete-watch-session-1"),
-      "Content-Type": "application/json",
+      Authorization: createSessionToken("single-user-delete-watch-session-1"),
+      "Content-Type": "application/json"
     }
   })
-  .withQuery(`
+  .withQuery(
+    `
     query listWatchesBeforeDeletion {
       listWatches {
         id
         watchName
       }
     }
-  `)
+  `
+  )
   .withOperation("listWatchesBeforeDeletion")
   .withVariables({})
   .willRespondWith({
@@ -92,12 +99,12 @@ const listWatchesInteraction = new Pact.GraphQLInteraction()
       data: {
         listWatches: [
           {
-            "id": "single-user-delete-watch-1",
-            "watchName": "Single User Save This Watch"
+            id: "single-user-delete-watch-1",
+            watchName: "Single User Save This Watch"
           },
           {
-            "id": "single-user-delete-watch-2",
-            "watchName": "Single User Delete This Watch"
+            id: "single-user-delete-watch-2",
+            watchName: "Single User Delete This Watch"
           }
         ]
       }
@@ -110,14 +117,14 @@ const deleteWatchInteraction = new Pact.GraphQLInteraction()
     path: "/graphql",
     method: "POST",
     headers: {
-      "Authorization": createSessionToken("single-user-delete-watch-session-1"),
-      "Content-Type": "application/json",
+      Authorization: createSessionToken("single-user-delete-watch-session-1"),
+      "Content-Type": "application/json"
     }
   })
   .withOperation("deleteWatch")
   .withQuery(deleteWatchRaw)
   .withVariables({
-    watchId: "single-user-delete-watch-2",
+    watchId: "single-user-delete-watch-2"
   })
   .willRespondWith({
     status: 200,
@@ -125,28 +132,30 @@ const deleteWatchInteraction = new Pact.GraphQLInteraction()
     body: {
       data: {
         deleteWatch: true
-      },
-    },
+      }
+    }
   });
 
-  const listWatchesAfterDeletionInteraction = new Pact.GraphQLInteraction()
+const listWatchesAfterDeletionInteraction = new Pact.GraphQLInteraction()
   .uponReceiving("a query to list watches after a delete occurs for a single user")
   .withRequest({
     path: "/graphql",
     method: "POST",
     headers: {
-      "Authorization": createSessionToken("single-user-delete-watch-session-1"),
-      "Content-Type": "application/json",
+      Authorization: createSessionToken("single-user-delete-watch-session-1"),
+      "Content-Type": "application/json"
     }
   })
-  .withQuery(`
+  .withQuery(
+    `
     query listWatchesAfterDeletion {
       listWatches {
         id
         watchName
       }
     }
-  `)
+  `
+  )
   .withOperation("listWatchesAfterDeletion")
   .withVariables({})
   .willRespondWith({
@@ -156,8 +165,8 @@ const deleteWatchInteraction = new Pact.GraphQLInteraction()
       data: {
         listWatches: [
           {
-            "id": "single-user-delete-watch-1",
-            "watchName": "Single User Save This Watch"
+            id: "single-user-delete-watch-1",
+            watchName: "Single User Save This Watch"
           }
         ]
       }

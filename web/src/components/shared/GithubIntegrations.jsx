@@ -9,7 +9,7 @@ import { enableNotification } from "../../mutations/NotificationMutations";
 import GitHubIntegration from "../watches/GitHubIntegration";
 
 export class GitHubIntegrations extends React.Component {
-  static propTypes = {}
+  static propTypes = {};
 
   state = {
     integrationToManage: null,
@@ -49,30 +49,31 @@ export class GitHubIntegrations extends React.Component {
     const i = findIndex(nextState.gitHubIntegrations, { id });
     nextState.gitHubIntegrations[i].enabled = enabled;
     this.setState({ nextState });
-  }
+  };
 
   handleEnableToggle = (e, enabled) => {
     const { name } = e.target;
     const { id } = this.props.watch;
-    this.props.enableNotification(id, name, !enabled)
-      .then(async (data) => {
+    this.props
+      .enableNotification(id, name, !enabled)
+      .then(async data => {
         const { enabled } = data.enableNotification;
         this.refreshGithubIntegration(name, enabled);
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
-      })
-  }
+      });
+  };
 
   handleManageIntegration = (e, { id, org, repo, branch, rootPath }) => {
     const integrationToManage = { id, org, repo, branch, rootPath };
     this.setState({ integrationToManage });
     this.togglePRsModal();
-  }
+  };
 
   togglePRsModal = () => {
-    this.setState({ displayPRsModal: !this.state.displayPRsModal })
-  }
+    this.setState({ displayPRsModal: !this.state.displayPRsModal });
+  };
 
   toggleDeleteIntegrationModal = (id, path, pending) => {
     if (this.state.displayDeleteIntegrationModal) {
@@ -81,56 +82,73 @@ export class GitHubIntegrations extends React.Component {
         integrationToDeleteId: "",
         integrationPath: "",
         isPending: false
-      })
+      });
     } else {
       this.setState({
         integrationToDeleteId: id,
         integrationPath: path,
         displayDeleteIntegrationModal: true,
         isPending: pending
-      })
+      });
     }
-  }
+  };
 
   render() {
-    const { displayDeleteIntegrationModal, integrationToDeleteId, integrationPath  } = this.state;
+    const {
+      displayDeleteIntegrationModal,
+      integrationToDeleteId,
+      integrationPath
+    } = this.state;
     const { integrationCallback, className, title, watch } = this.props;
     const { gitHubIntegrations, isPending } = this.state;
 
     return (
-      <div className={`installed-watch-github flex-column u-width--full ${className || ""}`}>
-        {gitHubIntegrations.length && title ? <p className="uppercase-title">{title}</p> : null}
-        { gitHubIntegrations.length ?
+      <div
+        className={`installed-watch-github flex-column u-width--full ${className ||
+          ""}`}
+      >
+        {gitHubIntegrations.length && title ? (
+          <p className="uppercase-title">{title}</p>
+        ) : null}
+        {gitHubIntegrations.length ? (
           <div className="integrations u-overflow--auto flex flex1">
-            {gitHubIntegrations.length ? gitHubIntegrations.map((gi, i) => (
-              <GitHubIntegration
-                key={i}
-                {...gi}
-                handleEnableToggle={this.handleEnableToggle}
-                handleManage={this.handleManageIntegration}
-                toggleDeleteIntegrationModal={this.toggleDeleteIntegrationModal}
-                handleModalClose={this.props.handleModalClose}
-                slug={watch.slug}
-              />
-            )) : null}
-            <div className="add-new-integration u-position--relative flex flex-column alignItems--center justifyContent--center u-cursor--pointer" onClick={this.togglePRsModal}>
+            {gitHubIntegrations.length
+              ? gitHubIntegrations.map((gi, i) => (
+                  <GitHubIntegration
+                    key={i}
+                    {...gi}
+                    handleEnableToggle={this.handleEnableToggle}
+                    handleManage={this.handleManageIntegration}
+                    toggleDeleteIntegrationModal={this.toggleDeleteIntegrationModal}
+                    handleModalClose={this.props.handleModalClose}
+                    slug={watch.slug}
+                  />
+                ))
+              : null}
+            <div
+              className="add-new-integration u-position--relative flex flex-column alignItems--center justifyContent--center u-cursor--pointer"
+              onClick={this.togglePRsModal}
+            >
               <span className="icon integration-card-icon-github-add-new u-marginBottom--10 u-cursor--pointer"></span>
               <p className="u-fontSize--small replicated-link">Add More</p>
             </div>
-          </div> :
+          </div>
+        ) : (
           <CardEmptyState
             watchName={watch.watchName}
             watchSlug={watch.slug}
             toggleModal={this.togglePRsModal}
           />
-        }
-        <DeleteIntegrationModal 
+        )}
+        <DeleteIntegrationModal
           displayDeleteIntegrationModal={displayDeleteIntegrationModal}
           toggleDeleteIntegrationModal={this.toggleDeleteIntegrationModal}
           integrationToDeleteId={integrationToDeleteId}
           integrationToDeletePath={integrationPath}
           isPending={isPending}
-          submitCallback={() => { integrationCallback(); }}
+          submitCallback={() => {
+            integrationCallback();
+          }}
         />
       </div>
     );
@@ -142,7 +160,8 @@ export default compose(
   withApollo,
   graphql(enableNotification, {
     props: ({ mutate }) => ({
-      enableNotification: (watchId, notificationId, enabled) => mutate({ variables: { watchId, notificationId, enabled } })
+      enableNotification: (watchId, notificationId, enabled) =>
+        mutate({ variables: { watchId, notificationId, enabled } })
     })
   })
 )(GitHubIntegrations);

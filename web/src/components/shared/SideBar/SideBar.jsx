@@ -12,12 +12,11 @@ class SideBar extends Component {
 
     /** @type {Array<JSX>} array of JSX elements to render */
     items: PropTypes.array.isRequired
-
-  }
+  };
 
   static defaultProps = {
-    items: [],
-  }
+    items: []
+  };
 
   render() {
     const { className, items, loading } = this.props;
@@ -34,11 +33,7 @@ class SideBar extends Component {
       <div className={classNames("sidebar u-minHeight--full", className)}>
         <div className="flex-column u-width--full u-overflow--auto">
           {items?.map((jsx, idx) => {
-            return (
-              <Fragment key={idx}>
-                {jsx}
-              </Fragment>
-            );
+            return <Fragment key={idx}>{jsx}</Fragment>;
           })}
         </div>
       </div>

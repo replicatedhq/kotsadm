@@ -6,7 +6,6 @@ import GitHubAuthBegin from "./GitHubAuthBegin";
 import GitHubAuthCallback from "./GitHubAuthCallback";
 
 export default class GitHubAuth extends React.Component {
-
   render() {
     return (
       <div className="flex-column flex1 Login-wrapper">

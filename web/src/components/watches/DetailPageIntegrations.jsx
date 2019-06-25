@@ -22,10 +22,10 @@ class DetailPageIntegrations extends React.Component {
       displayWebhookModal: false,
       notificationId: null,
       hasData: false
-    }
+    };
   }
 
-  toggleEmailModal = (id) => {
+  toggleEmailModal = id => {
     const state = this.state;
     state.displayEmailModal = !state.displayEmailModal;
     state.notificationId = id || null;
@@ -34,18 +34,18 @@ class DetailPageIntegrations extends React.Component {
     }
 
     this.setState(state);
-  }
+  };
 
-  toggleWebhookModal = (id) => {
+  toggleWebhookModal = id => {
     const state = this.state;
     state.displayWebhookModal = !state.displayWebhookModal;
-    state.notificationId = id || null
+    state.notificationId = id || null;
     if (state.displayWebhookModal) {
       state.displayNotificationsModal = false;
     }
 
     this.setState(state);
-  }
+  };
 
   toggleNotificationsModal = () => {
     const state = this.state;
@@ -56,31 +56,32 @@ class DetailPageIntegrations extends React.Component {
     }
 
     this.setState(state);
-  }
+  };
 
   toggleEnable = (id, val) => {
     const { watch } = this.props;
-    const watchId = watch && watch.id || "";
+    const watchId = (watch && watch.id) || "";
     this.props.enableNotification(watchId, id, val);
-  }
+  };
 
   determineModalToOpen = (type, id) => {
     switch (type) {
-    case "webhook":
-      return this.toggleWebhookModal(id);
-    case "email":
-      return this.toggleEmailModal(id);
+      case "webhook":
+        return this.toggleWebhookModal(id);
+      case "email":
+        return this.toggleEmailModal(id);
     }
-  }
+  };
 
   componentDidUpdate(lastProps) {
     if (this.props.watch !== lastProps.watch && this.props.watch) {
-      this.props.client.query({
-        query: listNotificationsQuery,
-        variables: { watchId: this.props.watch.id },
-        fetchPolicy: "network-only"
-      })
-        .then((res) => {
+      this.props.client
+        .query({
+          query: listNotificationsQuery,
+          variables: { watchId: this.props.watch.id },
+          fetchPolicy: "network-only"
+        })
+        .then(res => {
           this.setState({ notifications: res.data.listNotifications });
         });
     }
@@ -88,11 +89,12 @@ class DetailPageIntegrations extends React.Component {
 
   componentDidMount() {
     if (this.props.watch) {
-      this.props.client.query({
-        query: listNotificationsQuery,
-        variables: { watchId: this.props.watch.id }
-      })
-        .then((res) => {
+      this.props.client
+        .query({
+          query: listNotificationsQuery,
+          variables: { watchId: this.props.watch.id }
+        })
+        .then(res => {
           this.setState({ notifications: res.data.listNotifications });
         });
     }
@@ -108,43 +110,51 @@ class DetailPageIntegrations extends React.Component {
       notificationId
     } = this.state;
 
-    const appIdSelected = watch && watch.id || "";
-    const appName = watch && watch.watchName || "";
+    const appIdSelected = (watch && watch.id) || "";
+    const appName = (watch && watch.watchName) || "";
 
     if (!watch) {
       return (
         <div className="flex-column flex1 alignItems--center justifyContent--center">
           <Loader size="60" />
         </div>
-      )
+      );
     }
 
     return (
       <div className="flex-column flex1">
         <div className="flex-column flex-1-auto u-overflow--auto container">
           <div className="u-flexTabletReflow u-paddingBottom--20 integration-cards-wrapper flexWrap--wrap">
-            {notifications && notifications.map((integration) => {
-              const type = Utilities.getNotificationType(integration);
-              if (type === "github") {return null}
-              return (
-                <div key={integration.id} className="integration-card-wrapper flex-auto u-paddingBottom--20">
-                  <IntegrationCard
-                    item={integration}
-                    type={type}
-                    toggleEnable={this.toggleEnable}
-                    onEditClick={this.determineModalToOpen}
-                  />
-                </div>
-              )
-            })
-            }
-            <div className="add-new-integration u-position--relative flex-column alignItems--center justifyContent--center u-cursor--pointer" onClick={this.toggleNotificationsModal}>
+            {notifications &&
+              notifications.map(integration => {
+                const type = Utilities.getNotificationType(integration);
+                if (type === "github") {
+                  return null;
+                }
+                return (
+                  <div
+                    key={integration.id}
+                    className="integration-card-wrapper flex-auto u-paddingBottom--20"
+                  >
+                    <IntegrationCard
+                      item={integration}
+                      type={type}
+                      toggleEnable={this.toggleEnable}
+                      onEditClick={this.determineModalToOpen}
+                    />
+                  </div>
+                );
+              })}
+            <div
+              className="add-new-integration u-position--relative flex-column alignItems--center justifyContent--center u-cursor--pointer"
+              onClick={this.toggleNotificationsModal}
+            >
               <span className="icon integration-card-icon-github-add-new u-marginBottom--10 u-cursor--pointer"></span>
               <p className="u-fontSize--small replicated-link">Add More</p>
             </div>
           </div>
         </div>
-        {displayNotificationsModal &&
+        {displayNotificationsModal && (
           <SetUpNotificationsModal
             show={displayNotificationsModal}
             appName={appName}
@@ -154,8 +164,8 @@ class DetailPageIntegrations extends React.Component {
             toggleWebhookModal={this.toggleWebhookModal}
             appIdSelected={appIdSelected}
           />
-        }
-        {displayEmailModal &&
+        )}
+        {displayEmailModal && (
           <SetUpEmailModal
             show={displayEmailModal}
             appName={appName}
@@ -164,18 +174,20 @@ class DetailPageIntegrations extends React.Component {
             notificationId={notificationId}
             submitCallback={() => {
               if (watch) {
-                this.props.client.query({
-                  query: listNotificationsQuery,
-                  variables: { watchId: watch.id },
-                  fetchPolicy: "network-only"
-                }).then((res) => {
-                  this.setState({ notifications: res.data.listNotifications });
-                });
+                this.props.client
+                  .query({
+                    query: listNotificationsQuery,
+                    variables: { watchId: watch.id },
+                    fetchPolicy: "network-only"
+                  })
+                  .then(res => {
+                    this.setState({ notifications: res.data.listNotifications });
+                  });
               }
             }}
           />
-        }
-        {displayWebhookModal &&
+        )}
+        {displayWebhookModal && (
           <SetUpWebhookModal
             show={displayWebhookModal}
             appName={appName}
@@ -184,17 +196,19 @@ class DetailPageIntegrations extends React.Component {
             notificationId={notificationId}
             submitCallback={() => {
               if (watch) {
-                this.props.client.query({
-                  query: listNotificationsQuery,
-                  variables: { watchId: watch.id },
-                  fetchPolicy: "network-only"
-                }).then((res) => {
-                  this.setState({ notifications: res.data.listNotifications });
-                });
+                this.props.client
+                  .query({
+                    query: listNotificationsQuery,
+                    variables: { watchId: watch.id },
+                    fetchPolicy: "network-only"
+                  })
+                  .then(res => {
+                    this.setState({ notifications: res.data.listNotifications });
+                  });
               }
             }}
           />
-        }
+        )}
       </div>
     );
   }
@@ -205,7 +219,8 @@ export default compose(
   withRouter,
   graphql(enableNotification, {
     props: ({ mutate }) => ({
-      enableNotification: (watchId, notificationId, enabled) => mutate({ variables: { watchId, notificationId, enabled } })
+      enableNotification: (watchId, notificationId, enabled) =>
+        mutate({ variables: { watchId, notificationId, enabled } })
     })
   })
 )(DetailPageIntegrations);

@@ -6,7 +6,11 @@ import Modal from "react-modal";
 
 import withTheme from "@src/components/context/withTheme";
 import { getWatch } from "@src/queries/WatchQueries";
-import { createUpdateSession, deleteWatch, checkForUpdates } from "../../mutations/WatchMutations";
+import {
+  createUpdateSession,
+  deleteWatch,
+  checkForUpdates
+} from "../../mutations/WatchMutations";
 import WatchSidebarItem from "@src/components/watches/WatchSidebarItem";
 import NotFound from "../static/NotFound";
 import DetailPageApplication from "./DetailPageApplication";
@@ -37,7 +41,7 @@ class WatchDetailPage extends Component {
       clusterToRemove: {},
       watchToEdit: {},
       existingDeploymentClusters: []
-    }
+    };
   }
 
   static defaultProps = {
@@ -45,13 +49,13 @@ class WatchDetailPage extends Component {
     getWatch: {
       loading: true
     }
-  }
+  };
 
   componentDidUpdate(/* lastProps */) {
     const { getThemeState, setThemeState, match, listWatches } = this.props;
 
     const slug = `${match.params.owner}/${match.params.slug}`;
-    const currentWatch = listWatches.find( w => w.slug === slug);
+    const currentWatch = listWatches.find(w => w.slug === slug);
 
     // Handle updating the navbar logo when a watch changes.
     if (currentWatch?.watchIcon) {
@@ -75,25 +79,27 @@ class WatchDetailPage extends Component {
     client.mutate({
       mutation: checkForUpdates,
       variables: {
-        watchId: watch.id,
+        watchId: watch.id
       }
     });
-  }
+  };
 
   addClusterToWatch = (clusterId, githubPath) => {
     const { clusterParentSlug } = this.state;
     const upstreamUrl = `ship://ship-cloud/${clusterParentSlug}`;
-    this.props.history.push(`/watch/create/init?upstream=${upstreamUrl}&cluster_id=${clusterId}&path=${githubPath}&start=1`);
-  }
+    this.props.history.push(
+      `/watch/create/init?upstream=${upstreamUrl}&cluster_id=${clusterId}&path=${githubPath}&start=1`
+    );
+  };
 
-  handleAddNewClusterClick = (watch) => {
+  handleAddNewClusterClick = watch => {
     this.setState({
       addNewClusterModal: true,
       clusterParentSlug: watch.slug,
       selectedWatchName: watch.watchName,
-      existingDeploymentClusters: watch.watches.map((watch) => watch.cluster.id)
+      existingDeploymentClusters: watch.watches.map(watch => watch.cluster.id)
     });
-  }
+  };
 
   closeAddClusterModal = () => {
     this.setState({
@@ -101,30 +107,31 @@ class WatchDetailPage extends Component {
       clusterParentSlug: "",
       selectedWatchName: "",
       existingDeploymentClusters: []
-    })
-  }
+    });
+  };
 
-  onEditApplicationClicked = (watch) => {
+  onEditApplicationClicked = watch => {
     const { onActiveInitSession } = this.props;
 
     this.setState({ watchToEdit: watch, preparingUpdate: watch.cluster.id });
-    this.props.createUpdateSession(watch.id)
+    this.props
+      .createUpdateSession(watch.id)
       .then(({ data }) => {
         const { createUpdateSession } = data;
         const { id: initSessionId } = createUpdateSession;
         onActiveInitSession(initSessionId);
-        this.props.history.push("/ship/update")
+        this.props.history.push("/ship/update");
       })
       .catch(() => this.setState({ watchToEdit: null, preparingUpdate: "" }));
-  }
+  };
 
   toggleDeleteDeploymentModal = (watch, parentName) => {
     this.setState({
       clusterToRemove: watch,
       selectedWatchName: parentName,
       displayRemoveClusterModal: !this.state.displayRemoveClusterModal
-    })
-  }
+    });
+  };
 
   /**
    * Refetch all the GraphQL data for this component and all its children
@@ -132,8 +139,8 @@ class WatchDetailPage extends Component {
    * @return {undefined}
    */
   refetchGraphQLData = () => {
-    this.props.getWatchQuery.refetch()
-  }
+    this.props.getWatchQuery.refetch();
+  };
 
   onDeleteDeployment = async () => {
     const { clusterToRemove } = this.state;
@@ -144,11 +151,17 @@ class WatchDetailPage extends Component {
         displayRemoveClusterModal: false
       });
       this.refetchGraphQLData();
-    })
-  }
+    });
+  };
 
   render() {
-    const { match, history, getWatchQuery, listWatches, refetchListWatches } = this.props;
+    const {
+      match,
+      history,
+      getWatchQuery,
+      listWatches,
+      refetchListWatches
+    } = this.props;
     const {
       displayRemoveClusterModal,
       addNewClusterModal,
@@ -174,87 +187,110 @@ class WatchDetailPage extends Component {
         <SidebarLayout
           className="flex u-minHeight--full u-overflow--hidden"
           condition={listWatches.length > 1}
-          sidebar={(
+          sidebar={
             <SideBar
               className="flex flex1"
-              items={listWatches.map( (item, idx) => (
+              items={listWatches.map((item, idx) => (
                 <WatchSidebarItem
                   key={idx}
-                  className={classNames({ selected: item.slug === watch?.slug})}
-                  watch={item} />
+                  className={classNames({ selected: item.slug === watch?.slug })}
+                  watch={item}
+                />
               ))}
               currentWatch={watch?.watchName}
             />
-          )}>
+          }
+        >
           <div className="flex-column flex3 u-width--full u-height--full">
-            {loading
-              ? centeredLoader
-              : (
-                <Fragment>
-                  <SubNavBar
-                    className="flex"
-                    activeTab={match.params.tab || "app"}
-                    watch={watch}
-                  />
-                  <Switch>
-                    {watch && !watch.cluster &&
-                      <Route exact path="/watch/:owner/:slug" render={() =>
+            {loading ? (
+              centeredLoader
+            ) : (
+              <Fragment>
+                <SubNavBar
+                  className="flex"
+                  activeTab={match.params.tab || "app"}
+                  watch={watch}
+                />
+                <Switch>
+                  {watch && !watch.cluster && (
+                    <Route
+                      exact
+                      path="/watch/:owner/:slug"
+                      render={() => (
                         <DetailPageApplication
                           watch={watch}
                           refetchListWatches={refetchListWatches}
                           updateCallback={this.refetchGraphQLData}
                           onActiveInitSession={this.props.onActiveInitSession}
                         />
-                      } />
-                    }
-                    {watch && !watch.cluster &&
-                      <Route exact path="/watch/:owner/:slug/downstreams" render={() =>
+                      )}
+                    />
+                  )}
+                  {watch && !watch.cluster && (
+                    <Route
+                      exact
+                      path="/watch/:owner/:slug/downstreams"
+                      render={() => (
                         <div className="container">
                           <DeploymentClusters
                             appDetailPage={true}
                             parentClusterName={watch.watchName}
                             preparingUpdate={this.state.preparingUpdate}
                             childWatches={watch.watches}
-                            handleAddNewCluster={() => this.handleAddNewClusterClick(watch)}
+                            handleAddNewCluster={() =>
+                              this.handleAddNewClusterClick(watch)
+                            }
                             onEditApplication={this.onEditApplicationClicked}
-                            toggleDeleteDeploymentModal={this.toggleDeleteDeploymentModal}
+                            toggleDeleteDeploymentModal={
+                              this.toggleDeleteDeploymentModal
+                            }
                           />
                         </div>
-                      } />
-                    }
-                    { /* ROUTE UNUSED */}
-                    <Route exact path="/watch/:owner/:slug/integrations" render={() => <DetailPageIntegrations watch={watch} />} />
-                    { /* ROUTE UNUSED */}
-                    <Route exact path="/watch/:owner/:slug/state" render={() => <StateFileViewer headerText="Edit your application’s state.json file" />} />
+                      )}
+                    />
+                  )}
+                  {/* ROUTE UNUSED */}
+                  <Route
+                    exact
+                    path="/watch/:owner/:slug/integrations"
+                    render={() => <DetailPageIntegrations watch={watch} />}
+                  />
+                  {/* ROUTE UNUSED */}
+                  <Route
+                    exact
+                    path="/watch/:owner/:slug/state"
+                    render={() => (
+                      <StateFileViewer headerText="Edit your application’s state.json file" />
+                    )}
+                  />
 
-                    <Route exact path="/watch/:owner/:slug/version-history" render={() =>
-                      <WatchVersionHistory
-                        watch={watch}
-                      />
-                    } />
-                    <Route exact path="/watch/:owner/:slug/config" render={() =>
-                      <WatchConfig
-                        watch={watch}
-                      />
-                    } />
-                    <Route exact path="/watch/:owner/:slug/troubleshoot" render={() =>
-                      <WatchTroubleshoot
-                        watch={watch}
-                      />
-                    } />
-                    <Route exact path="/watch/:owner/:slug/license" render={() =>
-                      <WatchLicense
-                        watch={watch}
-                      />
-                    } />
-                    <Route component={NotFound} />
-                  </Switch>
-                </Fragment>
-              )
-            }
+                  <Route
+                    exact
+                    path="/watch/:owner/:slug/version-history"
+                    render={() => <WatchVersionHistory watch={watch} />}
+                  />
+                  <Route
+                    exact
+                    path="/watch/:owner/:slug/config"
+                    render={() => <WatchConfig watch={watch} />}
+                  />
+                  <Route
+                    exact
+                    path="/watch/:owner/:slug/troubleshoot"
+                    render={() => <WatchTroubleshoot watch={watch} />}
+                  />
+                  <Route
+                    exact
+                    path="/watch/:owner/:slug/license"
+                    render={() => <WatchLicense watch={watch} />}
+                  />
+                  <Route component={NotFound} />
+                </Switch>
+              </Fragment>
+            )}
           </div>
         </SidebarLayout>
-        {addNewClusterModal &&
+        {addNewClusterModal && (
           <Modal
             isOpen={addNewClusterModal}
             onRequestClose={this.closeAddClusterModal}
@@ -264,8 +300,12 @@ class WatchDetailPage extends Component {
             className="AddNewClusterModal--wrapper Modal"
           >
             <div className="Modal-body">
-              <h2 className="u-fontSize--largest u-color--tuna u-fontWeight--bold u-lineHeight--normal">Add {this.state.selectedWatchName} to a new downstream</h2>
-              <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">Select one of your existing downstreams to deploy to.</p>
+              <h2 className="u-fontSize--largest u-color--tuna u-fontWeight--bold u-lineHeight--normal">
+                Add {this.state.selectedWatchName} to a new downstream
+              </h2>
+              <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">
+                Select one of your existing downstreams to deploy to.
+              </p>
               <AddClusterModal
                 onAddCluster={this.addClusterToWatch}
                 onRequestClose={this.closeAddClusterModal}
@@ -273,26 +313,39 @@ class WatchDetailPage extends Component {
               />
             </div>
           </Modal>
-        }
-        {displayRemoveClusterModal &&
+        )}
+        {displayRemoveClusterModal && (
           <Modal
             isOpen={displayRemoveClusterModal}
-            onRequestClose={() => this.toggleDeleteDeploymentModal({},"")}
+            onRequestClose={() => this.toggleDeleteDeploymentModal({}, "")}
             shouldReturnFocusAfterClose={false}
             contentLabel="Add cluster modal"
             ariaHideApp={false}
             className="RemoveClusterFromWatchModal--wrapper Modal"
           >
             <div className="Modal-body">
-              <h2 className="u-fontSize--largest u-color--tuna u-fontWeight--bold u-lineHeight--normal">Remove {this.state.selectedWatchName} from {clusterToRemove.cluster.title}</h2>
-              <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">This application will no longer be deployed to {clusterToRemove.cluster.title}.</p>
+              <h2 className="u-fontSize--largest u-color--tuna u-fontWeight--bold u-lineHeight--normal">
+                Remove {this.state.selectedWatchName} from{" "}
+                {clusterToRemove.cluster.title}
+              </h2>
+              <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">
+                This application will no longer be deployed to{" "}
+                {clusterToRemove.cluster.title}.
+              </p>
               <div className="u-marginTop--10 flex">
-                <button onClick={() => this.toggleDeleteDeploymentModal({},"")} className="btn secondary u-marginRight--10">Cancel</button>
-                <button onClick={this.onDeleteDeployment} className="btn green primary">Delete deployment</button>
+                <button
+                  onClick={() => this.toggleDeleteDeploymentModal({}, "")}
+                  className="btn secondary u-marginRight--10"
+                >
+                  Cancel
+                </button>
+                <button onClick={this.onDeleteDeployment} className="btn green primary">
+                  Delete deployment
+                </button>
               </div>
             </div>
           </Modal>
-        }
+        )}
       </div>
     );
   }
@@ -310,18 +363,17 @@ export default compose(
         variables: {
           slug: `${owner}/${slug}`
         }
-      }
+      };
     }
   }),
   graphql(createUpdateSession, {
     props: ({ mutate }) => ({
-      createUpdateSession: (watchId) => mutate({ variables: { watchId }})
+      createUpdateSession: watchId => mutate({ variables: { watchId } })
     })
   }),
   graphql(deleteWatch, {
     props: ({ mutate }) => ({
-      deleteWatch: (watchId) => mutate({ variables: { watchId }})
+      deleteWatch: watchId => mutate({ variables: { watchId } })
     })
   })
-
 )(WatchDetailPage);

@@ -4,7 +4,7 @@ export const checkForUpdatesRaw = `
   mutation checkForUpdates($watchId: ID!) {
     checkForUpdates(watchId: $watchId)
   }
-`
+`;
 export const checkForUpdates = gql(checkForUpdatesRaw);
 
 export const createNewWatchRaw = `
@@ -73,7 +73,7 @@ export const createInitSessionRaw = `
       createdOn
     }
   }
-`
+`;
 export const createInitSession = gql(createInitSessionRaw);
 
 export const createUnforkSession = gql`
@@ -85,7 +85,7 @@ export const createUnforkSession = gql`
       createdOn
     }
   }
-`
+`;
 
 export const createUpdateSession = gql`
   mutation createUpdateSession($watchId: ID!) {
@@ -95,7 +95,7 @@ export const createUpdateSession = gql`
       createdOn
     }
   }
-`
+`;
 
 export const createEditSessionRaw = `
   mutation createEditSession($watchId: ID!) {
@@ -133,7 +133,7 @@ export const removeWatchContributorRaw = `
 export const removeWatchContributor = gql(removeWatchContributorRaw);
 
 export const deleteNotification = gql`
-  mutation deleteNotification ($id: String!, $isPending: Boolean) {
+  mutation deleteNotification($id: String!, $isPending: Boolean) {
     deleteNotification(id: $id, isPending: $isPending)
   }
 `;

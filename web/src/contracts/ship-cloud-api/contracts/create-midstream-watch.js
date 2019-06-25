@@ -9,12 +9,12 @@ import { createNewWatchRaw } from "../../../mutations/WatchMutations";
 chai.use(chaiAsPromised);
 
 export default () => {
-  it("creates a midstream watch for solo dev", async (done) => {
+  it("creates a midstream watch for solo dev", async done => {
     await global.provider.addInteraction(createMidstreamWatchInteraction);
     const result = await getShipClient("solo-account-session-1").mutate({
-        mutation: createNewWatch,
-        variables: {
-          stateJSON: `{
+      mutation: createNewWatch,
+      variables: {
+        stateJSON: `{
   "v1": {
     "config": {},
     "releaseName": "factorio",
@@ -38,11 +38,11 @@ export default () => {
     "contentSHA": "126fa6eb8f09171050751c65a386f41aef4fe9ebe00c8b1e66f2c4e60319ec4e"
   }
 }`
-        },
+      }
     });
     global.provider.verify().then(() => done());
   });
-}
+};
 
 const createMidstreamWatchInteraction = new Pact.GraphQLInteraction()
   .uponReceiving("a mutation to create a midstream watch for solo dev")
@@ -50,8 +50,8 @@ const createMidstreamWatchInteraction = new Pact.GraphQLInteraction()
     path: "/graphql",
     method: "POST",
     headers: {
-      "Authorization": createSessionToken("solo-account-session-1"),
-      "Content-Type": "application/json",
+      Authorization: createSessionToken("solo-account-session-1"),
+      "Content-Type": "application/json"
     }
   })
   .withOperation("createWatch")
@@ -80,7 +80,7 @@ const createMidstreamWatchInteraction = new Pact.GraphQLInteraction()
     },
     "contentSHA": "126fa6eb8f09171050751c65a386f41aef4fe9ebe00c8b1e66f2c4e60319ec4e"
   }
-}`,
+}`
   })
   .willRespondWith({
     status: 200,
@@ -92,8 +92,8 @@ const createMidstreamWatchInteraction = new Pact.GraphQLInteraction()
           slug: Matchers.like("generated"),
           watchName: Matchers.like("generated"),
           createdOn: Matchers.like("generated"),
-          lastUpdated: null,
-        },
-      },
-    },
+          lastUpdated: null
+        }
+      }
+    }
   });

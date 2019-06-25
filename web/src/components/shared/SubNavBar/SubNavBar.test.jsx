@@ -6,7 +6,7 @@ import SubNavBar from "./SubNavBar";
 describe("<SubNavBar> tests", () => {
   const topLevelWatch = {
     cluster: null,
-    metadata: "{\"applicationType\": \"helm\" }"
+    metadata: '{"applicationType": "helm" }'
   };
 
   const childWatch = {
@@ -31,5 +31,4 @@ describe("<SubNavBar> tests", () => {
 
     expect(wrapper.find("li")).toHaveLength(2);
   });
-
 });

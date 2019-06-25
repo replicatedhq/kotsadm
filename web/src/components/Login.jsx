@@ -8,15 +8,14 @@ import TraditionalAuth from "./TraditionalAuth";
 import ForgotPasswordModal from "./shared/modals/ForgotPasswordModal";
 
 class Login extends React.Component {
-
   state = {
     traditionalAuth: false,
     displayForgotPasswordModal: false
-  }
+  };
 
   componentDidMount() {
     if (!Utilities.localStorageEnabled()) {
-      this.props.history.push("/unsupported")
+      this.props.history.push("/unsupported");
     }
 
     const { search } = this.props.location;
@@ -39,7 +38,7 @@ class Login extends React.Component {
     }
   }
 
-  handleLogIn = (type) => {
+  handleLogIn = type => {
     if (type === "github") {
       this.props.history.push("/auth/github");
     } else if (type === "gitlab") {
@@ -49,43 +48,67 @@ class Login extends React.Component {
     } else {
       this.setState({ traditionalAuth: true });
     }
-  }
+  };
 
   render() {
     const { traditionalAuth } = this.state;
     const showSCM = window.env.SHOW_SCM_LEADS;
     const allowedLogins = window.env.AVAILABLE_LOGIN_TYPES;
-    const scmLeadsStyle = showSCM ? { width: "100%", maxWidth: "960px"} : {};
+    const scmLeadsStyle = showSCM ? { width: "100%", maxWidth: "960px" } : {};
     return (
       <div className="container flex-column flex1 u-overflow--auto Login-wrapper justifyContent--center alignItems--center">
-        <div className="LoginBox-wrapper u-flexTabletReflow flex-auto" style={scmLeadsStyle}>
+        <div
+          className="LoginBox-wrapper u-flexTabletReflow flex-auto"
+          style={scmLeadsStyle}
+        >
           <div className="flex-auto flex-column login-form-wrapper justifyContent--center">
             <div className="flex">
               <span className="icon ship-login-icon"></span>
               <p className="login-text u-color--tuna u-fontWeight--bold">Log in</p>
             </div>
-            {traditionalAuth ?
-              <button type="button" className={`btn auth traditional u-marginTop--20`} onClick={() => this.setState({ traditionalAuth: false })}>
-                <span className="icon clickable backArrow-icon" style={{ verticalAlign: "0" }}></span> Use a different auth type
+            {traditionalAuth ? (
+              <button
+                type="button"
+                className={`btn auth traditional u-marginTop--20`}
+                onClick={() => this.setState({ traditionalAuth: false })}
+              >
+                <span
+                  className="icon clickable backArrow-icon"
+                  style={{ verticalAlign: "0" }}
+                ></span>{" "}
+                Use a different auth type
               </button>
-            : allowedLogins && allowedLogins.map((type) => {
-              const readableType = Utilities.getReadableLoginType(type);
-              return (
-                <button key={type} type="button" className={`btn auth ${type} u-marginTop--20`} onClick={() => this.handleLogIn(type)}>
-                  <span className={`icon clickable ${type}-button-icon`}></span> {type === "traditional" ? "Use email & password" : `Login with ${readableType}`}
-                </button>
-              )
-            })
-            }
+            ) : (
+              allowedLogins &&
+              allowedLogins.map(type => {
+                const readableType = Utilities.getReadableLoginType(type);
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`btn auth ${type} u-marginTop--20`}
+                    onClick={() => this.handleLogIn(type)}
+                  >
+                    <span className={`icon clickable ${type}-button-icon`}></span>{" "}
+                    {type === "traditional"
+                      ? "Use email & password"
+                      : `Login with ${readableType}`}
+                  </button>
+                );
+              })
+            )}
           </div>
-          {traditionalAuth &&
-            <TraditionalAuth context="login" handleForgotPasswordClick={() => this.setState({ displayForgotPasswordModal: true })} />
-          }
-          {showSCM && !traditionalAuth ?
-            <TrackSCMLeads />
-          : null}
+          {traditionalAuth && (
+            <TraditionalAuth
+              context="login"
+              handleForgotPasswordClick={() =>
+                this.setState({ displayForgotPasswordModal: true })
+              }
+            />
+          )}
+          {showSCM && !traditionalAuth ? <TrackSCMLeads /> : null}
         </div>
-        {this.state.displayForgotPasswordModal &&
+        {this.state.displayForgotPasswordModal && (
           <Modal
             isOpen={this.state.displayForgotPasswordModal}
             onRequestClose={() => this.setState({ displayForgotPasswordModal: false })}
@@ -95,10 +118,14 @@ class Login extends React.Component {
             className="ForgotPasswordModal--wrapper Modal DefaultSize"
           >
             <div className="Modal-body">
-              <ForgotPasswordModal onRequestClose={() => this.setState({ displayForgotPasswordModal: false })} />
+              <ForgotPasswordModal
+                onRequestClose={() =>
+                  this.setState({ displayForgotPasswordModal: false })
+                }
+              />
             </div>
           </Modal>
-        }
+        )}
       </div>
     );
   }

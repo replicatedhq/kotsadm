@@ -11,7 +11,7 @@ export default class ReplicatedGraphiQL extends React.Component {
     super(props);
     this.state = {
       fetcher: this.fetcher.bind(this),
-      query: userInfoRaw,
+      query: userInfoRaw
     };
   }
 
@@ -20,9 +20,9 @@ export default class ReplicatedGraphiQL extends React.Component {
       method: "post",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": Utilities.getToken(),
+        Authorization: Utilities.getToken()
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify(params)
     }).then(response => response.json());
   }
 
@@ -35,15 +35,18 @@ export default class ReplicatedGraphiQL extends React.Component {
 
   render() {
     return (
-      <GraphiQL ref={c => { this.graphiql = c; }} {...this.state}>
+      <GraphiQL
+        ref={c => {
+          this.graphiql = c;
+        }}
+        {...this.state}
+      >
         <GraphiQL.Toolbar>
-
           <GraphiQL.Button
             onClick={this.handleClickPrettifyButton}
             label="Prettify"
             title="Prettify Query (Shift-Ctrl-P)"
           />
-
         </GraphiQL.Toolbar>
       </GraphiQL>
     );

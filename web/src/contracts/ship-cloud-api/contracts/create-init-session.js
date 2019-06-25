@@ -10,7 +10,7 @@ import { createInitSession } from "../../../mutations/WatchMutations";
 chai.use(chaiAsPromised);
 
 export default () => {
-  it("creates an init session for solo dev", async (done) => {
+  it("creates an init session for solo dev", async done => {
     await global.provider.addInteraction(createHelmInitSessionInteraction);
     const result = await getShipClient("solo-account-session-1").mutate({
       mutation: createInitSession,
@@ -18,12 +18,12 @@ export default () => {
         pendingInitId: "",
         upstreamUri: "https://github.com/helm/charts/stable/grafana",
         clusterID: null,
-        githubPath: null,
-      },
+        githubPath: null
+      }
     });
     global.provider.verify().then(() => done());
-    });
-}
+  });
+};
 
 const createHelmInitSessionInteraction = new Pact.GraphQLInteraction()
   .uponReceiving("a mutation to create a helm init session")
@@ -31,8 +31,8 @@ const createHelmInitSessionInteraction = new Pact.GraphQLInteraction()
     path: "/graphql",
     method: "POST",
     headers: {
-      "Authorization": createSessionToken("solo-account-session-1"),
-      "Content-Type": "application/json",
+      Authorization: createSessionToken("solo-account-session-1"),
+      "Content-Type": "application/json"
     }
   })
   .withOperation("createInitSession")
@@ -41,7 +41,7 @@ const createHelmInitSessionInteraction = new Pact.GraphQLInteraction()
     pendingInitId: "",
     upstreamUri: "https://github.com/helm/charts/stable/grafana",
     clusterID: null,
-    githubPath: null,
+    githubPath: null
   })
   .willRespondWith({
     status: 200,
@@ -51,8 +51,8 @@ const createHelmInitSessionInteraction = new Pact.GraphQLInteraction()
         createInitSession: {
           id: Matchers.like("generated"),
           upstreamUri: "https://github.com/helm/charts/stable/grafana",
-          createdOn: Matchers.like("generated"),
-        },
-      },
-    },
+          createdOn: Matchers.like("generated")
+        }
+      }
+    }
   });

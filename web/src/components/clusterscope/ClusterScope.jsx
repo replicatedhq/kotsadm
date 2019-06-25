@@ -15,24 +15,39 @@ class ClusterScope extends React.Component {
   }
 
   componentDidMount() {
-    document.title = "ClusterScope - Discover outdated containers in your Kubernetes cluster"
+    document.title =
+      "ClusterScope - Discover outdated containers in your Kubernetes cluster";
   }
 
   render() {
     return (
       <div className="flex-column flex1 u-overflow--auto">
         <div className="flex-column flex1 HelmValues--wrapper">
-          <Suspense fallback={<div className="flex-column flex1 alignItems--center justifyContent--center"><Loader size="60" /></div>}>
+          <Suspense
+            fallback={
+              <div className="flex-column flex1 alignItems--center justifyContent--center">
+                <Loader size="60" />
+              </div>
+            }
+          >
             <Switch>
-              <Route exact path="/clusterscope" render={() =>
-                <ClusterScopeBatchCreate
-                  history={this.props.history}
-                  uploadImageWatchBatch={this.props.uploadImageWatchBatch} />
-              }/>
-              <Route exact path="/clusterscope/:batchId" render={() =>
-                <ClusterScopeBatch
-                  getImageWatch={this.props.getImageWatch} />
-              }/>
+              <Route
+                exact
+                path="/clusterscope"
+                render={() => (
+                  <ClusterScopeBatchCreate
+                    history={this.props.history}
+                    uploadImageWatchBatch={this.props.uploadImageWatchBatch}
+                  />
+                )}
+              />
+              <Route
+                exact
+                path="/clusterscope/:batchId"
+                render={() => (
+                  <ClusterScopeBatch getImageWatch={this.props.getImageWatch} />
+                )}
+              />
             </Switch>
           </Suspense>
         </div>
@@ -46,7 +61,7 @@ export default compose(
   withRouter,
   graphql(uploadImageWatchBatch, {
     props: ({ mutate }) => ({
-      uploadImageWatchBatch: (imageList) => mutate({ variables: { imageList } })
+      uploadImageWatchBatch: imageList => mutate({ variables: { imageList } })
     })
-  }),
+  })
 )(ClusterScope);

@@ -7,23 +7,18 @@ class Ship extends React.Component {
     history: PropTypes.object.isRequired,
     rootURL: PropTypes.string.isRequired,
     initSessionId: PropTypes.string,
-    onCompletion: PropTypes.func.isRequired,
-  }
+    onCompletion: PropTypes.func.isRequired
+  };
 
   render() {
     const { url } = this.props.match;
-    const {
-      history,
-      rootURL,
-      initSessionId,
-      onCompletion,
-    } = this.props;
+    const { history, rootURL, initSessionId, onCompletion } = this.props;
 
     if (!initSessionId) {
       return "Unable to access Ship Cloud API instance, please try again";
     }
 
-    const shipApiEndpoint = `${rootURL}${initSessionId}/api/v1`
+    const shipApiEndpoint = `${rootURL}${initSessionId}/api/v1`;
     return (
       <ShipInit
         apiEndpoint={shipApiEndpoint}
