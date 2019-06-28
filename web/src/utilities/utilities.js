@@ -77,11 +77,18 @@ export function getReadableLicenseType(type) {
 }
 
 /**
- *
  * @param {String} - Returns the commit SHA of the current build
  */
 export function getBuildVersion() {
   return window.env.SHIP_CLUSTER_BUILD_VERSION;
+}
+
+/**
+ * @param {Watch} watch - watch to determine type
+ * @return {Boolean}
+ */
+export function isHelmChart(watch) {
+  return Boolean(watch.helmName);
 }
 
 export const Utilities = {
