@@ -177,7 +177,6 @@ class WatchDetailPage extends Component {
     if (!isHelmChartUrl) {
       watch = getWatchQuery?.getWatch;
     } else {
-      console.log(getHelmChartQuery);
       watch = getHelmChartQuery?.getHelmChart;
     }
     const loading = getWatchQuery?.loading || getHelmChartQuery?.loading;
@@ -211,8 +210,6 @@ class WatchDetailPage extends Component {
                       watch={item} />
                   );
                 } else if (item.helmName) {
-                  console.log("Helm id:", match.params.slug);
-
                   sidebarItemNode = (
                     <HelmChartSidebarItem
                       key={idx}
