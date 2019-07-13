@@ -15,7 +15,7 @@ spec:
             - name: SHIP_IMAGE
               value: "replicated/ship"
             - name: SHIP_TAG
-              value: "0.48.1"
+              value: "alpha"
             - name: SHIP_PULL_POLICY
               value: "IfNotPresent"
             - name: LOG_LEVEL

@@ -1,3 +1,62 @@
+const TestProc = `
+type TestProc {
+	displayname: String
+	command: String
+	timeout: Int
+	argFields: [String]
+	args: [String]
+	runOnSave: String
+	when: String
+}
+`;
+
+const ConfigChildItem = `
+  type ConfigChildItem {
+    name: String!
+    title: String
+    recommended: Boolean
+    default: String
+    value: String
+  }
+`;
+
+const ConfigItem = `
+  type ConfigItem {
+    name: String
+    title: String
+    helpText: String
+    recommended: Boolean
+    default: String
+    value: String
+    multiValue: [String]
+    readOnly: Boolean
+    writeOnce: Boolean
+    when: String
+    type: String
+    multiple: Boolean
+    hidden: Boolean
+    position: Int
+    affix: String
+    required: Boolean
+    testProc: TestProc
+    isExcludedFromSupport: Boolean
+    filters: [String]
+    items: [ConfigChildItem]
+  }
+`;
+
+const ConfigGroup = `
+  type ConfigGroup {
+    name: String!
+    title: String
+    description: String
+    testProc: TestProc
+    when: String
+    filters: [String]
+    items: [ConfigItem]
+  }
+`;
+
 const Watch = `
   type Watch {
     id: ID
@@ -18,6 +77,7 @@ const Watch = `
     currentVersion: Version
     parentWatch: Watch
     metadata: String
+    config: [ConfigGroup]
   }
 `;
 
@@ -60,6 +120,10 @@ const Contributor = `
 `;
 
 export default [
+  ConfigChildItem,
+  ConfigItem,
+  ConfigGroup,
+  TestProc,
   Watch,
   StateMetadata,
   Contributor,

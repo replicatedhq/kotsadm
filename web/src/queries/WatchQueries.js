@@ -205,6 +205,18 @@ export const getWatch = gql`
       createdOn
       lastUpdated
       metadata
+      config {
+        name
+        title
+        description
+        items {
+          name
+          title
+          default
+          type
+          value
+        }
+      }
       contributors {
         id
         createdAt

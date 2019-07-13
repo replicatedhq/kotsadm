@@ -9,6 +9,7 @@ import { ReplicatedError } from "../server/errors";
 import { Params } from "../server/params";
 import * as pg from "pg";
 import { checkExists, putObject } from "../util/s3";
+import * as yaml from "js-yaml";
 
 export interface FindWatchOpts {
   id?: string;

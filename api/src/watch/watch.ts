@@ -4,6 +4,7 @@ import { Stores } from "../schema/stores";
 import { NotificationQueries } from "../notification";
 import { Context } from "../context";
 import * as _ from "lodash";
+import * as yaml from "js-yaml";
 
 export class Watch {
   public id: string;
@@ -23,6 +24,7 @@ export class Watch {
   public pastVersions: [Version];
   public parentWatch: Watch;
   public metadata: string;
+  public config?: Array<any>;
 
   // Watch Cluster Methods
   public async getCluster(stores: Stores): Promise<Cluster | void> {
@@ -65,6 +67,31 @@ export class Watch {
     return result;
   }
 
+  generateConfigGroups(stateJSON: string): Array<any> {
+    try {
+      const doc = yaml.safeLoad(stateJSON);
+      const config = doc.v1.config;
+      const configSpecArr = yaml.safeLoad(doc.v1.upstreamContents.appRelease.configSpec);
+
+      const configGroups: any = [];
+      _.map(configSpecArr.v1, (configSpec: any) => {
+        const filteredConfigSpec = { ...configSpec, items: [] };
+        _.map(configSpec.items, (item: any) => {
+          if (item.name in config) {
+            item.value = config[item.name]
+            filteredConfigSpec.items.push(item);
+          }
+        });
+        if (filteredConfigSpec.items.length) {
+          configGroups.push(filteredConfigSpec);
+        }
+      })
+      return configGroups;
+    } catch (err) {
+      return [];
+    }
+  }
+
   public toSchema(root: any, stores: Stores, context: Context): any {
     return {
       ...this,
@@ -77,6 +104,7 @@ export class Watch {
       pastVersions: async () => this.getPastVersions(stores),
       currentVersion: async () => this.getCurrentVersion(stores),
       parentWatch: async () => this.getParentWatch(stores),
+      config: async () => this.generateConfigGroups(this.stateJSON)
     };
   }
 
