@@ -4,10 +4,16 @@ import StateFileViewer from "../state/StateFileViewer";
 import { createEditSession } from "@src/mutations/WatchMutations";
 import { compose, withApollo } from "react-apollo";
 import { withRouter } from "react-router-dom";
+import PropTypes from "prop-types";
 
 import "../../scss/components/watches/WatchConfig.scss";
 
 class WatchConfig extends Component {
+  static propTypes = {
+    watch: PropTypes.object.isRequired,
+    onActiveInitSession: PropTypes.object.isRequired,
+  }
+
   constructor(props) {
     super(props);
 
