@@ -39,12 +39,21 @@ class WatchConfig extends Component {
   render() {
     const { watch } = this.props;
     const { preparingAppUpdate } = this.state;
+
+    if (watch.config?.length) {
+      return (
+        <div className="flex-column flex1">
+          <StateFileViewer watch={watch} />
+        </div>
+      );
+    }
+
     return (
-      <div className="flex1 flex-column u-overflow--auto justifyContent--flexStart alignItems--center u-padding--20">
+      <div className="flex1 flex-column u-overflow--auto u-padding--20 justifyContent--flexStart alignItems--center">
         <div className="ConfigOuterWrapper flex u-padding--15" >
           <div className="ConfigInnerWrapper flex1 u-padding--15">
             <div className="flex1 u-pointerEvents--none">
-              {watch.config?.length ? <ShipConfigRenderer groups={watch.config} /> : <StateFileViewer watch={watch} />}
+              <ShipConfigRenderer groups={watch.config} />
             </div>
           </div>
         </div>
