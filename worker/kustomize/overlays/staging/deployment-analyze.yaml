@@ -18,7 +18,7 @@ spec:
             - name: ANALYZE_IMAGE
               value: "replicated/analyze"
             - name: ANALYZE_TAG
-              value: "alpha"
+              value: "0.48.1"
             - name: ANALYZE_PULL_POLICY
               value: "Always"
             - name: ANALYZE_NODE_SELECTOR
