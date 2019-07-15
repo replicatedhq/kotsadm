@@ -1,62 +1,3 @@
-const TestProc = `
-type TestProc {
-	displayname: String
-	command: String
-	timeout: Int
-	argFields: [String]
-	args: [String]
-	runOnSave: String
-	when: String
-}
-`;
-
-const ConfigChildItem = `
-  type ConfigChildItem {
-    name: String!
-    title: String
-    recommended: Boolean
-    default: String
-    value: String
-  }
-`;
-
-const ConfigItem = `
-  type ConfigItem {
-    name: String
-    title: String
-    helpText: String
-    recommended: Boolean
-    default: String
-    value: String
-    multiValue: [String]
-    readOnly: Boolean
-    writeOnce: Boolean
-    when: String
-    type: String
-    multiple: Boolean
-    hidden: Boolean
-    position: Int
-    affix: String
-    required: Boolean
-    testProc: TestProc
-    isExcludedFromSupport: Boolean
-    filters: [String]
-    items: [ConfigChildItem]
-  }
-`;
-
-const ConfigGroup = `
-  type ConfigGroup {
-    name: String!
-    title: String
-    description: String
-    testProc: TestProc
-    when: String
-    filters: [String]
-    items: [ConfigItem]
-  }
-`;
-
 const Watch = `
   type Watch {
     id: ID
@@ -78,6 +19,7 @@ const Watch = `
     parentWatch: Watch
     metadata: String
     config: [ConfigGroup]
+    entitlements: [Entitlement]
   }
 `;
 
@@ -119,14 +61,40 @@ const Contributor = `
   }
 `;
 
+const ConfigItem = `
+  type ConfigItem {
+    name: String
+    title: String
+    default: String
+    value: String
+    type: String
+  }
+`;
+
+const ConfigGroup = `
+  type ConfigGroup {
+    name: String!
+    title: String
+    description: String
+    items: [ConfigItem]
+  }
+`;
+
+const Entitlement = `
+  type Entitlement {
+    key: String
+    value: String
+    name: String
+  }
+`;
+
 export default [
-  ConfigChildItem,
-  ConfigItem,
-  ConfigGroup,
-  TestProc,
   Watch,
   StateMetadata,
   Contributor,
   Version,
   VersionDetail,
+  ConfigItem,
+  ConfigGroup,
+  Entitlement,
 ];
