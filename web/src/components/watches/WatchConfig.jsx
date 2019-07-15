@@ -40,7 +40,7 @@ class WatchConfig extends Component {
     const { watch } = this.props;
     const { preparingAppUpdate } = this.state;
 
-    if (watch.config?.length) {
+    if (!watch.config?.length) {
       return (
         <div className="flex-column flex1">
           <StateFileViewer watch={watch} />
