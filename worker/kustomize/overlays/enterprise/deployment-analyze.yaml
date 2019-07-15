@@ -23,6 +23,6 @@ spec:
             - name: ANALYZE_IMAGE
               value: "replicated/analyze"
             - name: ANALYZE_TAG
-              value: "0.48.1"
+              value: "alpha"
             - name: ANALYZE_PULL_POLICY
               value: "IfNotPresent"
