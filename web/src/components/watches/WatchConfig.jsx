@@ -11,7 +11,7 @@ import "../../scss/components/watches/WatchConfig.scss";
 class WatchConfig extends Component {
   static propTypes = {
     watch: PropTypes.object.isRequired,
-    onActiveInitSession: PropTypes.object.isRequired,
+    onActiveInitSession: PropTypes.function.isRequired,
   }
 
   constructor(props) {
