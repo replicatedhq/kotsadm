@@ -86,11 +86,14 @@ export function getReadableLicenseType(type) {
 export function getAssignedReleaseChannel(stateJSON) {
   try {
     if (!stateJSON) return "";
-    const state = JSON.parse(stateJSON)
-    return state.v1.upstreamContents.appRelease.channelName;
+    const state = JSON.parse(stateJSON);
+    if (state?.v1?.upstreamContents?.appRelease) {
+      return state.v1.upstreamContents.appRelease.channelName;
+    }
+    return "Unknown";
   } catch (error) {
     console.error(error);
-    return "";
+    return "Unknown";
   }
 }
 
