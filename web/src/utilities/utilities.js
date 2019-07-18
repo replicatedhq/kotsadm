@@ -82,12 +82,18 @@ export function isLicenseOutOfDate(currentWatchLicense, latestWatchLicense) {
     }
 
     // check for entitlements
-    latestWatchLicense.entitlements.forEach(entitlement => {
-      const currentEntitlement = find(currentWatchLicense.entitlements, ["key", entitlement.key]);
-      if (!currentEntitlement || currentEntitlement.value !== entitlement.value) {
-        return true
+    if (latestWatchLicense.entitlements && currentWatchLicense.entitlements) {
+      if (latestWatchLicense.entitlements.length !== currentWatchLicense.entitlements.length) {
+        return true;
       }
-    });
+      for (let i = 0; i < latestWatchLicense.entitlements.length; i++) {
+        const entitlement = latestWatchLicense.entitlements[i];
+        const currentEntitlement = find(currentWatchLicense.entitlements, ["key", entitlement.key]);
+        if (!currentEntitlement || currentEntitlement.value !== entitlement.value) {
+          return true
+        }
+      }
+    }
 
     return false;
   } catch (error) {
@@ -99,7 +105,7 @@ export function isLicenseOutOfDate(currentWatchLicense, latestWatchLicense) {
 /**
  * Retrieves the entitlement spec from app's stateJSON
  *
- * @param {String} watch The watched application to check
+ * @param {String} watch The watched application stateJSON
  * @return {String} entitlement spec
  */
 export function getEntitlementSpecFromState(stateJSON) {
@@ -113,6 +119,47 @@ export function getEntitlementSpecFromState(stateJSON) {
   } catch (error) {
     console.error(error);
     return "";
+  }
+}
+
+/**
+ * Constructs the watch license from app's watch
+ *
+ * @param {String} watch The watched application to check
+ * @return {String} watch license
+ */
+export function getWatchLicenseFromState(watch) {
+  try {
+    if (!watch) return {};
+
+    const state = JSON.parse(watch.stateJSON);
+    if (!state) return {};
+
+    const appMeta = getWatchMetadata(watch.metadata);
+
+    let channel = "";
+    if (state?.v1?.upstreamContents?.appRelease?.channelName) {
+      channel = state.v1.upstreamContents.appRelease.channelName;
+    }
+
+    let entitlements = [];
+    if (watch.entitlements) {
+      entitlements = watch.entitlements;
+    }
+
+    if (appMeta?.license?.expiresAt === "0001-01-01T00:00:00Z") {
+      appMeta.license.expiresAt = null;
+    }
+    
+    const license = {
+      ...appMeta.license,
+      channel,
+      entitlements
+    };
+    return license;
+  } catch (error) {
+    console.error(error);
+    return {};
   }
 }
 
@@ -153,6 +200,13 @@ export function sortAnalyzers(bundleInsight) {
       return 1;
     }
   })
+}
+
+export function getWatchLicenseExpiryDate(watchLicense) {
+  if (!watchLicense) {
+    return "";
+  }
+  return !watchLicense.expiresAt ? "Never" : Utilities.dateFormat(watchLicense.expiresAt, "MMM D, YYYY", false);
 }
 
 export function rootPath(path) {

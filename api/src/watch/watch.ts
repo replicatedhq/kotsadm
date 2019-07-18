@@ -3,6 +3,7 @@ import { Feature } from "../feature/feature";
 import { Stores } from "../schema/stores";
 import { NotificationQueries } from "../notification";
 import { Context } from "../context";
+import { Entitlement } from '../license';
 import * as _ from "lodash";
 import * as yaml from "js-yaml";
 
@@ -25,6 +26,7 @@ export class Watch {
   public parentWatch: Watch;
   public metadata: string;
   public config?: Array<ConfigGroup>;
+  public entitlements?: Array<Entitlement>;
 
   // Watch Cluster Methods
   public async getCluster(stores: Stores): Promise<Cluster | void> {
@@ -92,6 +94,24 @@ export class Watch {
     }
   }
 
+  getEntitlementsWithNames(stores: Stores): Array<Entitlement> {
+    try {
+      const doc = yaml.safeLoad(this.stateJSON);
+      const appRelease = doc.v1.upstreamContents.appRelease
+
+      if (!appRelease.entitlements.values) {
+        return [];
+      }
+
+      const entitlements = appRelease.entitlements.values;
+      const entitlementSpec = appRelease.entitlementSpec;
+
+      return stores.licenseStore.getEntitlementsWithNames(entitlements, entitlementSpec);
+    } catch (err) {
+      return [];
+    }
+  }
+
   public toSchema(root: any, stores: Stores, context: Context): any {
     return {
       ...this,
@@ -105,6 +125,7 @@ export class Watch {
       currentVersion: async () => this.getCurrentVersion(stores),
       parentWatch: async () => this.getParentWatch(stores),
       config: async () => this.generateConfigGroups(this.stateJSON),
+      entitlements: async () => this.getEntitlementsWithNames(stores)
     };
   }
 }

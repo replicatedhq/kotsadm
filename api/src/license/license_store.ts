@@ -29,7 +29,7 @@ export class LicenseStore {
 
       return currentWatchLicense;
     } catch (err) {
-      throw new ReplicatedError(`Failed to get latest watch license ${err}`);
+      throw new ReplicatedError(`Failed to get watch license ${err}`);
     }
   }
 
@@ -46,7 +46,7 @@ export class LicenseStore {
       },
       body: JSON.stringify({
         query: `query($licenseId: String) {
-          latestWatchLicense (licenseId: $licenseId) {
+          license (licenseId: $licenseId) {
             id
             createdAt
             expiresAt
@@ -66,7 +66,7 @@ export class LicenseStore {
     const response = await request(options);
     const responseJson = JSON.parse(response);
 
-    const latestWatchLicense = responseJson.data.latestWatchLicense;
+    const latestWatchLicense = responseJson.data.license;
     latestWatchLicense.entitlements = this.getEntitlementsWithNames(latestWatchLicense.entitlements, entitlementSpec);
 
     return latestWatchLicense;
@@ -76,8 +76,9 @@ export class LicenseStore {
     try {
       const latestWatchLicense = await this.getLatestWatchLicense(licenseId, entitlementSpec);
 
-      const q = `update watch_license set license = $1, license_updated_at = $2 where watch_id = $3`;
-      const v: any[] = [latestWatchLicense, new Date(), watchId];
+      const q = `insert into watch_license (watch_id, license, license_updated_at) values($1, $2, $3)
+      on conflict (watch_id) do update set license = EXCLUDED.license, license_updated_at = EXCLUDED.license_updated_at`;
+      const v: any[] = [watchId, latestWatchLicense, new Date()];
 
       await this.pool.query(q, v);
 

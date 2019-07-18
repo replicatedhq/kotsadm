@@ -6,7 +6,9 @@ import {
   getReadableLicenseType,
   isLicenseOutOfDate,
   getEntitlementSpecFromState,
-  getWatchMetadata
+  getWatchMetadata,
+  getWatchLicenseFromState,
+  getWatchLicenseExpiryDate
 } from "@src/utilities/utilities";
 
 import { graphql, compose, withApollo } from "react-apollo";
@@ -28,18 +30,25 @@ class WatchLicense extends Component {
   }
 
   componentDidMount() {
-    console.log("Hello there");
+    const { getWatchLicense } = this.props.getWatchLicense;
+    if (getWatchLicense) {
+      this.setState({ watchLicense: getWatchLicense });
+    }
   }
 
-  // TODO: first time, no license yet in db?
-  // TODO: switch tabs, nothing appears?
   componentDidUpdate(lastProps) {
-    if (this.props.getWatchLicense !== lastProps.getWatchLicense && this.props.getWatchLicense) {
+    // current license
+    if (this.props.getWatchLicense?.error && !this.state.watchLicense) {
+      // no current license found in db, construct from stateJSON
+      const watchLicense = getWatchLicenseFromState(this.props.watch);
+      this.setState({ watchLicense });
+    } else if (this.props.getWatchLicense !== lastProps.getWatchLicense && this.props.getWatchLicense) {
       const { getWatchLicense } = this.props.getWatchLicense;
       if (getWatchLicense) {
         this.setState({ watchLicense: getWatchLicense });
       }
     }
+    // latest license
     if (this.props.getLatestWatchLicense !== lastProps.getLatestWatchLicense && this.props.getLatestWatchLicense) {
       const { getLatestWatchLicense } = this.props.getLatestWatchLicense;
       if (getLatestWatchLicense) {
@@ -83,10 +92,11 @@ class WatchLicense extends Component {
     }
 
     const { watch } = this.props;
+
     const createdAt = Utilities.dateFormat(watchLicense.createdAt, "MMM D, YYYY");
     const licenseType = getReadableLicenseType(watchLicense.type);
     const assignedReleaseChannel = watchLicense.channel;
-    const expiresAt = watchLicense.expiresAt ? "Never" : Utilities.dateFormat(watchLicense.expiresAt, "MMM D, YYYY");
+    const expiresAt = getWatchLicenseExpiryDate(watchLicense);
     const isOutOfDate = isLicenseOutOfDate(watchLicense, latestWatchLicense);
 
     return (
@@ -143,7 +153,8 @@ export default compose(
         variables: {
           watchId: props.watch.id,
           entitlementSpec
-        }
+        },
+        fetchPolicy: "no-cache"
       };
     }
   }),
@@ -157,7 +168,8 @@ export default compose(
         variables: {
           licenseId,
           entitlementSpec
-        }
+        },
+        fetchPolicy: "no-cache"
       };
     }
   }),
