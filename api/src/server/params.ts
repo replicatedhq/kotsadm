@@ -52,7 +52,7 @@ export class Params {
     s3SecretAccessKey,
     s3BucketEndpoint,
     apiAdvertiseEndpoint,
-    graphqlPremEndpoint
+    graphqlPremEndpoint,
   }) {
     this.githubAppInstallURL = githubAppInstallURL;
     this.githubClientId = githubClientId;
@@ -72,11 +72,11 @@ export class Params {
     this.skipDeployToWorker = skipDeployToWorker;
     this.objectStoreInDatabase = objectStoreInDatabase;
     this.s3Endpoint = s3Endpoint;
-    this.s3AccessKeyId = s3AccessKeyId,
-    this.s3SecretAccessKey = s3SecretAccessKey,
-    this.s3BucketEndpoint = s3BucketEndpoint,
-    this.apiAdvertiseEndpoint = apiAdvertiseEndpoint,
-    this.graphqlPremEndpoint = graphqlPremEndpoint
+    this.s3AccessKeyId = s3AccessKeyId;
+    this.s3SecretAccessKey = s3SecretAccessKey;
+    this.s3BucketEndpoint = s3BucketEndpoint;
+    this.apiAdvertiseEndpoint = apiAdvertiseEndpoint;
+    this.graphqlPremEndpoint = graphqlPremEndpoint;
   }
 
   static async getParams(): Promise<Params> {

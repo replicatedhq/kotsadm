@@ -12,7 +12,7 @@ type License {
   channel: String
   createdAt: String
   expiresAt: String
-  type: String,
+  type: String
   entitlements: [Entitlement]
 }`;
 

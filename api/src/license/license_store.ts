@@ -22,7 +22,7 @@ export class LicenseStore {
 
       const result = await this.pool.query(q, v);
       if (result.rows.length === 0) {
-        throw new ReplicatedError("Not found");
+        throw new ReplicatedError(`No license found for watch with an ID of ${watchId}`);
       }
       const currentWatchLicense = JSON.parse(result.rows[0].license);
       currentWatchLicense.entitlements = this.getEntitlementsWithNames(currentWatchLicense.entitlements, entitlementSpec);

@@ -126,7 +126,7 @@ class WatchLicense extends Component {
               <p className="u-marginRight--10">License Type:</p>
               <p className="u-fontWeight--bold u-color--tuna">{licenseType}</p>
             </div>
-            {watchLicense.entitlements && watchLicense.entitlements.map(entitlement => {
+            {watchLicense.entitlements?.map(entitlement => {
               return (
                 <div key={entitlement.key} className="flex u-marginBottom--20">
                   <p className="u-marginRight--10">{entitlement.name}</p>
@@ -134,7 +134,7 @@ class WatchLicense extends Component {
                 </div>
               );
             })}
-            <button className="btn secondary green u-marginBottom--10" disabled={syncing} onClick={() => this.syncWatchLicense(watch)}>{syncing ? "Syncing..." : "Sync License"}</button>
+            <button className="btn secondary green u-marginBottom--10" disabled={syncing} onClick={() => this.syncWatchLicense(watch)}>{syncing ? "Syncing" : "Sync License"}</button>
             {syncingError && <p className="u-fontWeight--bold u-color--red u-fontSize--small u-position--absolute">{syncingError}</p>}
           </div>
         </div>

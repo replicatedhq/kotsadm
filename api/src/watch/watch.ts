@@ -98,7 +98,7 @@ export class Watch {
   getEntitlementsWithNames(stores: Stores): Array<Entitlement> {
     try {
       const doc = yaml.safeLoad(this.stateJSON);
-      const appRelease = doc.v1.upstreamContents.appRelease
+      const appRelease = doc.v1.upstreamContents.appRelease;
 
       if (!appRelease.entitlements.values) {
         return [];
@@ -126,7 +126,7 @@ export class Watch {
       currentVersion: async () => this.getCurrentVersion(stores),
       parentWatch: async () => this.getParentWatch(stores),
       config: async () => this.generateConfigGroups(this.stateJSON),
-      entitlements: async () => this.getEntitlementsWithNames(stores)
+      entitlements: async () => this.getEntitlementsWithNames(stores),
     };
   }
 }
