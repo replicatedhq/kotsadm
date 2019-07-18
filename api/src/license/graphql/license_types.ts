@@ -8,6 +8,7 @@ const Entitlement = `
 
 const License = `
 type License {
+  id: String
   channel: String
   createdAt: String
   expiresAt: String

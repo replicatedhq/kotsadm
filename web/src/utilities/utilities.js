@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 import pick from "lodash/pick";
+import find from "lodash/find";
 import filter from "lodash/filter";
 import sortBy from "lodash/sortBy";
 import { default as download } from "downloadjs";
@@ -63,6 +64,59 @@ export function getApplicationType(watch) {
 }
 
 /**
+ * Checks if current license is out of date (sync)
+ *
+ * @param {Object} currentWatchLicense The watched application current license
+ * @param {Object} latestWatchLicense The watched application latest license from vendor
+ * @return {Boolean}
+ */
+export function isLicenseOutOfDate(currentWatchLicense, latestWatchLicense) {
+  try {
+    if (
+      currentWatchLicense.id !== latestWatchLicense.id ||
+      currentWatchLicense.channel !== latestWatchLicense.channel ||
+      currentWatchLicense.expiresAt !== latestWatchLicense.expiresAt ||
+      currentWatchLicense.type !== latestWatchLicense.type
+    ) {
+      return true;
+    }
+
+    // check for entitlements
+    latestWatchLicense.entitlements.forEach(entitlement => {
+      const currentEntitlement = find(currentWatchLicense.entitlements, ["key", entitlement.key]);
+      if (!currentEntitlement || currentEntitlement.value !== entitlement.value) {
+        return true
+      }
+    });
+
+    return false;
+  } catch (error) {
+    console.error(error);
+    return true;
+  }
+}
+
+/**
+ * Retrieves the entitlement spec from app's stateJSON
+ *
+ * @param {String} watch The watched application to check
+ * @return {String} entitlement spec
+ */
+export function getEntitlementSpecFromState(stateJSON) {
+  try {
+    if (!stateJSON) return "";
+    const state = JSON.parse(stateJSON);
+    if (state?.v1?.upstreamContents?.appRelease) {
+      return state.v1.upstreamContents.appRelease.entitlementSpec;
+    }
+    return "";
+  } catch (error) {
+    console.error(error);
+    return "";
+  }
+}
+
+/**
  *
  * @param {String} -
  * @return {String} -
@@ -75,26 +129,6 @@ export function getReadableLicenseType(type) {
     readableType = "Trial"
   }
   return readableType;
-}
-
-/**
- * Retrieves the channel name the release is assigned to from app's stateJSON
- *
- * @param {String} watch The watched application to check
- * @return {String} name of the channel
- */
-export function getAssignedReleaseChannel(stateJSON) {
-  try {
-    if (!stateJSON) return "";
-    const state = JSON.parse(stateJSON);
-    if (state?.v1?.upstreamContents?.appRelease) {
-      return state.v1.upstreamContents.appRelease.channelName;
-    }
-    return "Unknown";
-  } catch (error) {
-    console.error(error);
-    return "Unknown";
-  }
 }
 
 /**
