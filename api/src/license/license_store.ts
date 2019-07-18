@@ -46,7 +46,7 @@ export class LicenseStore {
       },
       body: JSON.stringify({
         query: `query($licenseId: String) {
-          getLatestWatchLicense (licenseId: $licenseId) {
+          latestWatchLicense (licenseId: $licenseId) {
             id
             createdAt
             expiresAt
