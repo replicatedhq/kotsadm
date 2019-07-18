@@ -5,12 +5,14 @@ import {
   Utilities,
   getReadableLicenseType,
   isLicenseOutOfDate,
-  getEntitlementSpecFromState
+  getEntitlementSpecFromState,
+  getWatchMetadata
 } from "@src/utilities/utilities";
 
 import { graphql, compose, withApollo } from "react-apollo";
 import { getWatchLicense, getLatestWatchLicense } from "@src/queries/WatchQueries";
 import { syncWatchLicense } from "@src/mutations/WatchMutations";
+import Loader from "../shared/Loader";
 
 class WatchLicense extends Component {
 
@@ -25,6 +27,11 @@ class WatchLicense extends Component {
     }
   }
 
+  componentDidMount() {
+    console.log("Hello there");
+  }
+
+  // TODO: first time, no license yet in db?
   // TODO: switch tabs, nothing appears?
   componentDidUpdate(lastProps) {
     if (this.props.getWatchLicense !== lastProps.getWatchLicense && this.props.getWatchLicense) {
@@ -42,28 +49,37 @@ class WatchLicense extends Component {
   }
 
   syncWatchLicense = () => {
-    this.setState({ syncing: true });
-    // TODO: remove static license
+    this.setState({ syncing: true, syncingError: "" });
     const { watch } = this.props;
-    this.props.syncWatchLicense(watch.id, "meOqgwZf1jSPHjjjAc-G0w74sFHDKXgN", getEntitlementSpecFromState(watch.stateJSON))
-    .then(response => {
-      this.setState({ watchLicense: response.data.syncWatchLicense });
-    })
-    .catch(err => {
-      console.log(err);
-      this.setState({ syncingError: err });
-    })
-    .finally(() => {
-      this.setState({ syncing: false });
-    });
+
+    const appMeta = getWatchMetadata(watch.metadata);
+    const licenseId = appMeta.license.id;
+    const entitlementSpec = getEntitlementSpecFromState(watch.stateJSON);
+
+    this.props.syncWatchLicense(watch.id, licenseId, entitlementSpec)
+      .then(response => {
+        this.setState({ watchLicense: response.data.syncWatchLicense });
+      })
+      .catch(err => {
+        console.log(err);
+        err.graphQLErrors.map(({ message }) => {
+          this.setState({ syncingError: message });
+        });
+      })
+      .finally(() => {
+        this.setState({ syncing: false });
+      });
   }
 
   render() {
-    const { watchLicense, latestWatchLicense } = this.state;
+    const { watchLicense, latestWatchLicense, syncing, syncingError } = this.state;
 
-    // TODO: LOADER HERE
     if (!watchLicense || !latestWatchLicense) {
-      return null;
+      return (
+        <div className="flex-column flex1 alignItems--center justifyContent--center">
+          <Loader size="60" />
+        </div>
+      );
     }
 
     const { watch } = this.props;
@@ -79,7 +95,10 @@ class WatchLicense extends Component {
           <title>{`${watch.watchName} License`}</title>
         </Helmet>
         <div className="LicenseDetails--wrapper u-textAlign--left u-paddingRight--20 u-paddingLeft--20">
-          <p className="u-fontWeight--bold u-color--tuna u-fontSize--larger u-marginBottom--20 u-paddingBottom--5 u-lineHeight--normal">License details</p>
+          <div className="flex u-marginBottom--20 u-paddingBottom--5 u-marginTop--20 alignItems--center">
+            <p className="u-fontWeight--bold u-color--tuna u-fontSize--larger u-lineHeight--normal u-marginRight--10">License details</p>
+            {isOutOfDate && <p className="u-fontWeight--bold u-color--orange">Outdated</p>}
+          </div>
           <div className="u-color--tundora u-fontSize--normal u-fontWeight--medium">
             <div className="flex u-marginBottom--20">
               <p className="u-marginRight--10">Assigned release channel:</p>
@@ -105,7 +124,8 @@ class WatchLicense extends Component {
                 </div>
               );
             })}
-            <button className="btn secondary green u-marginTop--20" disabled={!isOutOfDate} onClick={() => this.syncWatchLicense(watch)}>Sync License</button>
+            <button className="btn secondary green u-marginBottom--10" disabled={syncing} onClick={() => this.syncWatchLicense(watch)}>{syncing ? "Syncing..." : "Sync License"}</button>
+            {syncingError && <p className="u-fontWeight--bold u-color--red u-fontSize--small u-position--absolute">{syncingError}</p>}
           </div>
         </div>
       </div>
@@ -118,10 +138,11 @@ export default compose(
   graphql(getWatchLicense, {
     name: "getWatchLicense",
     options: props => {
+      const entitlementSpec = getEntitlementSpecFromState(props.watch.stateJSON);
       return {
         variables: {
           watchId: props.watch.id,
-          entitlementSpec: getEntitlementSpecFromState(props.watch.stateJSON)
+          entitlementSpec
         }
       };
     }
@@ -129,11 +150,13 @@ export default compose(
   graphql(getLatestWatchLicense, {
     name: "getLatestWatchLicense",
     options: props => {
+      const appMeta = getWatchMetadata(props.watch.metadata);
+      const licenseId = appMeta.license.id;
+      const entitlementSpec = getEntitlementSpecFromState(props.watch.stateJSON);
       return {
         variables: {
-          // TODO: remove static license
-          licenseId: "meOqgwZf1jSPHjjjAc-G0w74sFHDKXgN",
-          entitlementSpec: getEntitlementSpecFromState(props.watch.stateJSON)
+          licenseId,
+          entitlementSpec
         }
       };
     }

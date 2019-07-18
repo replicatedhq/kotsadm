@@ -66,7 +66,7 @@ export class LicenseStore {
     const response = await request(options);
     const responseJson = JSON.parse(response);
 
-    const latestWatchLicense = responseJson.data.getLatestWatchLicense;
+    const latestWatchLicense = responseJson.data.latestWatchLicense;
     latestWatchLicense.entitlements = this.getEntitlementsWithNames(latestWatchLicense.entitlements, entitlementSpec);
 
     return latestWatchLicense;
@@ -83,7 +83,7 @@ export class LicenseStore {
 
       return latestWatchLicense;
     } catch (err) {
-      throw new ReplicatedError(err);
+      throw new ReplicatedError("Error syncing license, please try again.");
     }
   }
 
