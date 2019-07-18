@@ -26,6 +26,7 @@ export class Watch {
   public metadata: string;
   public config?: Array<ConfigGroup>;
   public entitlements?: Array<Entitlement>;
+  public lastUpdateCheck: string;
 
   // Watch Cluster Methods
   public async getCluster(stores: Stores): Promise<Cluster | void> {
@@ -139,6 +140,7 @@ export interface Version {
   createdOn: string;
   sequence: number;
   pullrequestNumber: number;
+  deployedAt: string;
 }
 
 export interface VersionDetail {
@@ -148,6 +150,7 @@ export interface VersionDetail {
   sequence: number;
   pullrequestNumber: number;
   rendered: string;
+  deployedAt: string;
 }
 
 export interface StateMetadata {
