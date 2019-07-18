@@ -44,6 +44,7 @@ if(process.env.NODE_ENV === "production") {
     siteId: 6,
     trackErrors: true,
     jsFilename: "js/",
+    phpFilename: "js/"
   });
   history = piwik.connectToHistory(history);
 }
@@ -232,7 +233,15 @@ class Root extends Component {
                 <NavBar logo={themeState.navbarLogo}/>
                 <div className="flex1 flex-column u-overflow--hidden">
                   <Switch>
+
                     <Route exact path="/" component={() => <Redirect to={Utilities.isLoggedIn() ? "/watches" : "/login"} />} />
+                    <Route exact path="/crashz" render={() => {
+                      const Crashz = () => {
+                        throw new Error("Crashz!");
+                      };
+                      return <Crashz />;
+
+                    }}/>
                     <Route exact path="/login" render={props => (<Login {...props} onLoginSuccess={this.refetchListWatches} />) } />
                     <Route exact path="/signup" component={Signup} />
                     <Route path="/auth/github" render={props => (<GitHubAuth {...props} refetchListWatches={this.refetchListWatches}/>)} />

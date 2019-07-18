@@ -13,8 +13,8 @@ function getPlugins(appEnv) {
     plugins.push(new BugsnagSourceMapUploaderPlugin({
       apiKey: appEnv.BUGSNAG_API_KEY,
       publicPath: appEnv.PUBLIC_ASSET_PATH,
-      appVersion: "1.0.0",
       releaseStage: appEnv.ENVIRONMENT,
+      appVersion: appEnv.SHIP_CLUSTER_BUILD_VERSION,
       overwrite: true
     }));
   }
@@ -54,7 +54,7 @@ module.exports = (env) => {
             comments: false,
           }
         },
-        sourceMap: false,
+        sourceMap: true,
         parallel: true
       })],
     },
