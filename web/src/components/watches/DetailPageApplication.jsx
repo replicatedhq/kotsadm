@@ -11,7 +11,8 @@ import {
   Utilities,
   getClusterType,
   getWatchMetadata,
-  getReadableLicenseType
+  getReadableLicenseType,
+  getLicenseExpiryDate
 } from "@src/utilities/utilities";
 import {
   updateWatch,
@@ -195,7 +196,7 @@ class DetailPageApplication extends Component {
     // TODO: We shuold probably return something different if it never expires to avoid this hack string check.
     let expDate = "";
     if (!isEmpty(appMeta)) {
-      expDate = appMeta.license.expiresAt === "0001-01-01T00:00:00Z" ? "Never" : Utilities.dateFormat(appMeta.license.expiresAt, "MMM D, YYYY");
+      expDate = getLicenseExpiryDate(appMeta.license);
     }
     return (
       <div className="DetailPageApplication--wrapper flex-column flex1 centered-container alignItems--center u-overflow--auto">
