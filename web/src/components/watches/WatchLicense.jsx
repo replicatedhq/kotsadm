@@ -8,7 +8,7 @@ import {
   getEntitlementSpecFromState,
   getWatchMetadata,
   getWatchLicenseFromState,
-  getLicenseExpiryDate
+  getLicenseExpiryDate,
 } from "@src/utilities/utilities";
 
 import { graphql, compose, withApollo } from "react-apollo";

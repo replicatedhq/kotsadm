@@ -12,12 +12,12 @@ import {
   getClusterType,
   getWatchMetadata,
   getReadableLicenseType,
-  getLicenseExpiryDate
+  getLicenseExpiryDate,
 } from "@src/utilities/utilities";
 import {
   updateWatch,
   deleteWatch,
-  createEditSession
+  createEditSession,
  } from "@src/mutations/WatchMutations";
  import isEmpty from "lodash/isEmpty";
 
