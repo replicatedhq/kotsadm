@@ -12,6 +12,7 @@ import { UpdateProxy } from "../update/proxy";
 import { EditProxy } from "../edit/proxy";
 import { logger } from "./logger";
 import { Context } from "../context";
+import { getRedisPubSub } from "../util/persistence/redis";
 
 import { getPostgresPool } from "../util/persistence/db";
 import { Params } from "./params";
@@ -154,6 +155,13 @@ export class Server extends ServerLoader {
   $onReady() {
     this.expressApp.get("*", (req: Request, res: Response) => res.sendStatus(404));
     logger.info({msg: "Server started..."});
+
+    const ping = async function() {
+      const now = new Date();
+      const pubsub = await getRedisPubSub();
+      pubsub.publish("PING", { currentTime: now.toISOString() });
+    }
+    setInterval(ping, 1000);
   }
 
   $onServerInitError(err: Error) {

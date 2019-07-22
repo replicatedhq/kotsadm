@@ -16,6 +16,7 @@ import { GithubInstallationQueries, GithubInstallationMutations } from "../githu
 import { HelmChartQueries, HelmChartMutations } from "../helmchart";
 import { TroubleshootQueries, TroubleshootMutations } from "../troubleshoot";
 import { LicenseQueries, LicenseMutations } from "../license";
+import { WatchSubscriptions } from "../watch/resolvers/watch_subscriptions";
 
 export const Resolvers = (stores: Stores, params: Params) => ({
   Query: {
@@ -52,5 +53,9 @@ export const Resolvers = (stores: Stores, params: Params) => ({
     ...ImageWatchMutations(stores),
     ...TroubleshootMutations(stores),
     ...LicenseMutations(stores),
+  },
+
+  Subscription: {
+    ...WatchSubscriptions(stores),
   }
 })

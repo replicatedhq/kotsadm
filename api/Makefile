@@ -69,14 +69,6 @@ pkg:
 	npx pkg -t node8.11.3 --options no-deprecation --output bin/ship-cluster-api .
 	npx pkg -t node8.11.3 --options no-deprecation --output bin/shipcloudctl -c ./package.json ./build/api.js
 
-.PHONY: build-cache
-build-cache:
-	docker build -f Dockerfile.skaffoldcache -t repldev/${PROJECT_NAME}:latest .
-
-.PHONY: publish-cache
-publish-cache:
-	docker push repldev/${PROJECT_NAME}:latest
-
 .PHONY: build-staging
 build-staging: REGISTRY = 923411875752.dkr.ecr.us-east-1.amazonaws.com
 build-staging: build_and_push

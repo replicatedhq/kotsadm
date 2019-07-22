@@ -1,4 +1,4 @@
-const Mutation = `
+export const Mutation = `
 type Mutation {
   ping: String
   createGithubNonce: String!
@@ -37,5 +37,3 @@ type Mutation {
   markSupportBundleUploaded(id: String!): SupportBundle
 }
 `;
-
-export const all = [Mutation];

@@ -3,3 +3,4 @@ bases:
 
 resources:
   - ./minio/minio.yaml
+  - ./redis/redis.yaml

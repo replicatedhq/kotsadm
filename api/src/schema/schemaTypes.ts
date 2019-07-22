@@ -14,13 +14,15 @@ import HelmChart from "../helmchart/graphql/helmchart_types";
 import Troubleshoot from "../troubleshoot/graphql/troubleshoot_types";
 import License from "../license/graphql/license_types";
 
-import { all as Mutation } from "./mutation";
+import { Mutation } from "./mutation";
 import { Healthz, Query } from "./query";
+import { Subscription } from "./subscription";
 
 export const SchemaDefinition = `
 schema {
   query: Query
   mutation: Mutation
+  subscription: Subscription
 }
 `;
 
