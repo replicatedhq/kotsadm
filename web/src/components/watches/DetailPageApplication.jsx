@@ -203,9 +203,11 @@ class DetailPageApplication extends Component {
       this.setWatchState(watch);
     }
 
-    if (this.props.getWatchLicense?.getWatchLicense) {
+    if (this.props.getWatchLicense) {
       const { getWatchLicense } = this.props.getWatchLicense;
-      this.setState({ watchLicense: getWatchLicense });
+      if (getWatchLicense) {
+        this.setState({ watchLicense: getWatchLicense });
+      }
     }
   }
 
