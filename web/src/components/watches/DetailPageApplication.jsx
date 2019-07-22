@@ -185,7 +185,7 @@ class DetailPageApplication extends Component {
     }
 
     // current license info
-    if (this.props.getWatchLicense ?.error && !this.state.watchLicense) {
+    if (this.props.getWatchLicense?.error && !this.state.watchLicense) {
       // no current license found in db, construct from stateJSON
       const watchLicense = getWatchLicenseFromState(this.props.watch);
       this.setState({ watchLicense });
