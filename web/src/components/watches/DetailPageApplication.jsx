@@ -204,6 +204,7 @@ class DetailPageApplication extends Component {
     }
 
     const { getWatchLicense } = this.props.getWatchLicense;
+    console.log(this.props.getWatchLicense);
     if (getWatchLicense) {
       this.setState({ watchLicense: getWatchLicense });
     }
@@ -240,11 +241,15 @@ class DetailPageApplication extends Component {
                 <p className="u-fontSize--30 u-color--tuna u-fontWeight--bold">{watch.watchName}</p>
                 {(!isEmpty(appMeta) && appMeta.applicationType === "replicated.app") &&
                   <div className="u-marginTop--10 flex-column">
-                    {watchLicense ? <div className="flex u-color--dustyGray u-fontWeight--medium u-fontSize--normal">
-                      <span className="u-marginRight--30">Expires: <span className="u-fontWeight--bold u-color--tundora">{getLicenseExpiryDate(watchLicense)}</span></span>
-                      <span>Type: <span className="u-fontWeight--bold u-color--tundora">{getReadableLicenseType(watchLicense.type)}</span></span>
-                    </div> :
-                      <Loader size="12" />}
+                    {watchLicense
+                      ?
+                      <div className="flex u-color--dustyGray u-fontWeight--medium u-fontSize--normal">
+                        <span className="u-marginRight--30">Expires: <span className="u-fontWeight--bold u-color--tundora">{getLicenseExpiryDate(watchLicense)}</span></span>
+                        <span>Type: <span className="u-fontWeight--bold u-color--tundora">{getReadableLicenseType(watchLicense.type)}</span></span>
+                      </div> 
+                      :
+                      <Loader size="12" />
+                    }
                     <Link to={`/watch/${watch.slug}/license`} className="u-marginTop--10 u-fontSize--small replicated-link">License details</Link>
                   </div>
                 }
