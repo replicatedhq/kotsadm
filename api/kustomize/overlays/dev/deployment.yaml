@@ -54,7 +54,7 @@ spec:
             - name: SHIP_API_ADVERTISE_ENDPOINT
               value: http://docker.for.mac.localhost:30065
             - name: GRAPHQL_PREM_ENDPOINT
-              value: https://pg.replicated.com/graphql
+              value: http://graphql-api-prem:3000/graphql
           volumeMounts:
             - name: github-app-private-key
               mountPath: /keys/github
