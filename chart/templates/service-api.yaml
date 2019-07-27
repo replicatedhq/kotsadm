@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ship-cluster-api
+  name: ship-cluster-api
+spec:
+  ports:
+  - name: http
+    port: {{ .Values.api.service.port }}
+    targetPort: http
+  selector:
+    app.kubernetes.io/name: {{ include "kotsadm.api.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  type: {{ .Values.api.service.type }}
