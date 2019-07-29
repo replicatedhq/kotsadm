@@ -1,0 +1,3 @@
+chartVersion: '{{ .Major }}.{{ .Minor }}.{{ .Patch }}'
+appVersion: '{{ .Major }}.{{ .Minor }}.{{ .Patch }}'
+chartServer:

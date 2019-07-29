@@ -1,0 +1,42 @@
+
+
+images:
+  api:
+    repository: kotsadm/kotsadmin-api
+    tag: latest
+  web:
+    repository: kotsadm/kotsadm-web
+    tag: latest
+  worker:
+    repository: kotsadm/kotsadm-worker
+    tag: latest
+
+imagePullSecrets: []
+
+jwtsecret: "changeme"
+
+github:
+  appPrivateKey: ""
+  clientID: ""
+  clientSecret: ""
+  installURL: ""
+  integrationID: ""
+
+ingress:
+  enabled: false
+
+api:
+  labels: []
+  replicaCount: 1
+  nameOverride: ""
+  affinity: {}
+  tolerations: {}
+  resources: {}
+  service:
+    type: ClusterIP
+    port: 3000
+
+web:
+  service:
+    type: ClusterIP
+    port: 3000
