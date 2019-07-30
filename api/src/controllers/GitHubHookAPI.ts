@@ -150,7 +150,15 @@ export class GitHubHookAPI {
 
     const clusters = await request.app.locals.stores.clusterStore.listClustersForGitHubRepo(owner, repo);
 
-    let commitShaFound = false;
+    /////////
+    // before adding commit_sha, some pending versions don't have them
+    /////////
+    await handlePullRequestEventForVersionsWithoutCommitSha(clusters, request, pullRequestEvent, status);
+    ////////
+    // end of pre-commit-sha compatibility code
+    ////////
+
+
     for (const cluster of clusters) {
       if (!cluster.gitOpsRef) {
         continue;
@@ -158,33 +166,37 @@ export class GitHubHookAPI {
 
       const watches = await request.app.locals.stores.watchStore.listForCluster(cluster.id!);
       for (const watch of watches) {
-        try {
-          const github = new GitHubApi();
-          logger.debug({msg: "authenticating with bearer token"})
-          github.authenticate({
-            type: "app",
-            token: await getGitHubBearerToken()
-          });
+        const github = new GitHubApi();
+        logger.debug({msg: "authenticating with bearer token"})
+        github.authenticate({
+          type: "app",
+          token: await getGitHubBearerToken()
+        });
 
-          logger.debug({msg: "creating installation token for installationId", "installationId": cluster.gitOpsRef.installationId})
-          const installationTokenResponse = await github.apps.createInstallationToken({installation_id: cluster.gitOpsRef.installationId});
-          github.authenticate({
-            type: "token",
-            token: installationTokenResponse.data.token,
-          });
+        logger.debug({msg: "creating installation token for installationId", "installationId": cluster.gitOpsRef.installationId})
+        const installationTokenResponse = await github.apps.createInstallationToken({installation_id: cluster.gitOpsRef.installationId});
+        github.authenticate({
+          type: "token",
+          token: installationTokenResponse.data.token,
+        });
 
-          logger.debug({msg: "authenticated as app for installationId", "installationId": cluster.gitOpsRef.installationId});
+        logger.debug({msg: "authenticated as app for installationId", "installationId": cluster.gitOpsRef.installationId});
 
-          const params: GitHubApi.PullRequestsGetCommitsParams = {
-            owner,
-            repo,
-            number: pullRequestEvent.number,
-          };
-          const getCommitsResponse = await github.pullRequests.getCommits(params);
-
-          const sortedCommits = _.sortBy(getCommitsResponse.data, (commit) => {
-            if (!commit.committed_at) {
-              return undefined;
+        const params: GitHubApi.PullRequestsGetCommitsParams = {
+          owner,
+          repo,
+          number: pullRequestEvent.number,
+        };
+        const getCommitsResponse = await github.pullRequests.getCommits(params);
+        for (const commit of getCommitsResponse.data) {
+          const pendingVersion = await request.app.locals.stores.watchStore.getVersionForCommit(watch.id!, commit.sha);
+          if (!pendingVersion) {
+            continue;
+          }
+          await request.app.locals.stores.watchStore.updateVersionStatus(watch.id!, pendingVersion.sequence!, status);
+          if (pullRequestEvent.pull_request.merged) {
+            if (watch.currentVersion && pendingVersion.sequence! < watch.currentVersion.sequence!) {
+              return;
             }
             return new Date(commit.committed_at);
           });
