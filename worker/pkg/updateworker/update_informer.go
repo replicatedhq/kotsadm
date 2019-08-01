@@ -12,7 +12,6 @@ import (
 	"github.com/replicatedhq/ship-cluster/worker/pkg/types"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
 )
@@ -130,10 +129,6 @@ func (w *Worker) updateFunc(oldObj interface{}, newObj interface{}) error {
 			return errors.Wrap(err, "update watch from state")
 		}
 
-		collectors := ship.TroubleshootCollectorsFromState(stateJSON)
-		if err := w.Store.SetWatchTroubleshootCollectors(context.TODO(), updateSession.WatchID, collectors); err != nil {
-			return errors.Wrap(err, "set troubleshoot collectors")
-		}
 		analyzers := ship.TroubleshootAnalyzersFromState(stateJSON)
 		if err := w.Store.SetWatchTroubleshootAnalyzers(context.TODO(), updateSession.WatchID, analyzers); err != nil {
 			return errors.Wrap(err, "set troubleshoot analyzers")

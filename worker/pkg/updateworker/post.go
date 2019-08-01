@@ -1,10 +1,13 @@
 package updateworker
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"os"
 
@@ -13,6 +16,8 @@ import (
 	"github.com/replicatedhq/ship-cluster/worker/pkg/types"
 	"github.com/replicatedhq/ship/pkg/state"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (w *Worker) postUpdateActions(watchID string, parentWatchID *string, parentSequence *int, sequence int, s3Filepath string) error {
@@ -26,6 +31,10 @@ func (w *Worker) postUpdateActions(watchID string, parentWatchID *string, parent
 		return errors.Wrap(err, "fetch archive")
 	}
 	defer os.Remove(archive.Name())
+
+	if err := w.extractCollectorSpec(archive); err != nil {
+		return errors.Wrap(err, "extract collector spec")
+	}
 
 	if err := w.triggerIntegrations(watch, sequence, archive, parentSequence); err != nil {
 		return errors.Wrap(err, "trigger integraitons")
@@ -170,6 +179,57 @@ func (w *Worker) createVersion(watch *types.Watch, sequence int, file multipart.
 	err := w.Store.CreateWatchVersion(context.TODO(), watch.ID, versionLabel, versionStatus, branchName, sequence, prNumber, commitSHA, isCurrent, parentSequence)
 	if err != nil {
 		return errors.Wrap(err, "create watch version")
+	}
+
+	return nil
+}
+
+func (w *Worker) extractCollectorSpec(archive *os.File) error {
+	_, err := archive.Seek(0, io.SeekStart)
+	if err != nil {
+		return errors.Wrap(err, "seek archive")
+	}
+
+	gzReader, err := gzip.NewReader(archive)
+	if err != nil {
+		return err
+	}
+
+	tarReader := tar.NewReader(gzReader)
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return errors.Wrap(err, "read archive")
+		}
+
+		switch header.Typeflag {
+		case tar.TypeReg:
+			contents, err := ioutil.ReadAll(tarReader)
+			if err != nil {
+				return errors.Wrap(err, "read file from archive")
+			}
+
+			gvk := metav1.GroupVersionKind{}
+			if err := yaml.Unmarshal(contents, &gvk); err != nil {
+				continue
+			}
+
+			if gvk.Group != "troubleshoot.replicated.com" || gvk.Version != "v1beta1" || gvk.Kind != "Collector" {
+				continue
+			}
+
+			if err := w.Store.SetWatchTroubleshootCollectors(context.TODO(), updateSession.WatchID, contents); err != nil {
+				return errors.Wrap(err, "set troubleshoot collectors")
+			}
+
+		default:
+			if _, err := ioutil.ReadAll(tarReader); err != nil {
+				return errors.Wrap(err, "read non-file from archive")
+			}
+		}
 	}
 
 	return nil
