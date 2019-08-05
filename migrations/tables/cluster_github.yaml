@@ -34,3 +34,6 @@ spec:
       - name: is_deleted
         type: boolean
         default: "false"
+      - name: is_404
+        type: boolean
+        default: "false"

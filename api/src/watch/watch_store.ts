@@ -752,21 +752,6 @@ export class WatchStore {
     return contributors;
   }
 
-  async updateWatchVersionGithubInstalltionRepoAdded(installationId: number, owner: string, repo: string): Promise<void> {
-    const pg = await this.pool.connect();
-    const q = `
-UPDATE watch_version
-SET is_404 = FALSE
-FROM watch_cluster w
-  INNER JOIN cluster_github c ON (w.cluster_id = c.cluster_id)
-WHERE w.watch_id = watch_version.watch_id AND c.installation_id = $1 AND c.owner = $2 AND c.repo = $3 AND watch_version.is_404 = TRUE`;
-    const v = [installationId, owner, repo];
-    const res = await pg.query(q, v);
-    if (res.rowCount > 0) {
-      logger.info({msg: `Updated ${res.rowCount} row(s) with is_404 false for repo ${repo} and installation ${installationId}`});
-    }
-  }
-
   private mapWatch(row: any): Watch {
     const parsedWatchName = parseWatchName(row.title);
     const watch = new Watch();

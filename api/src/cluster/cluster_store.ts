@@ -347,7 +347,7 @@ export class ClusterStore {
     const pg = await this.pool.connect();
     const q = `
 UPDATE cluster_github
-SET installation_id = $1, is_deleted = false
+SET installation_id = $1, is_deleted = FALSE, is_404 = FALSE
 FROM user_cluster c
   INNER JOIN github_user u ON (u.user_id = c.user_id)
 WHERE c.cluster_id = cluster_github.cluster_id AND u.github_id = $2 AND cluster_github.installation_id != $1 AND cluster_github.is_deleted = TRUE`;
@@ -355,6 +355,19 @@ WHERE c.cluster_id = cluster_github.cluster_id AND u.github_id = $2 AND cluster_
     const res = await pg.query(q, v);
     if (res.rowCount > 0) {
       logger.info({msg: `Updated ${res.rowCount} row(s) with new installation ${installationId}`});
+    }
+  }
+
+  async updateClusterGithubInstallationRepoAdded(installationId: number, owner: string, repo: string): Promise<void> {
+    const pg = await this.pool.connect();
+    const q = `
+UPDATE cluster_github
+SET is_404 = FALSE
+WHERE installation_id = $1 AND owner = $2 AND repo = $3 AND is_404 = TRUE`;
+    const v = [installationId, owner, repo];
+    const res = await pg.query(q, v);
+    if (res.rowCount > 0) {
+      logger.info({msg: `Updated ${res.rowCount} row(s) with is_404 false for repo ${owner}/${repo} and installation ${installationId}`});
     }
   }
 

@@ -113,7 +113,7 @@ export class GitHubHookAPI {
     switch (event.action) {
       case "added":
         for (const repo of event.repositories_added) {
-          await request.app.locals.stores.watchStore.updateWatchVersionGithubInstalltionRepoAdded(event.installation.id, event.installation.account.login, repo.name);
+          await request.app.locals.stores.clusterStore.updateClusterGithubInstallationRepoAdded(event.installation.id, event.installation.account.login, repo.name);
         }
 
       case "removed":
