@@ -119,8 +119,14 @@ export class GitHubHookAPI {
         const org = installationData.account.login;
         const { data: membersData } = await github.orgs.getMembers({org});
         numberOfOrgMembers = membersData.length;
+
+        for (const memberData of membersData) {
+          await request.app.locals.stores.clusterStore.updateClusterGithubInstallationId(memberData.id, installationData.id);
+        }
       } else {
         numberOfOrgMembers = 0;
+
+        await request.app.locals.stores.clusterStore.updateClusterGithubInstallationId(installationData.account.id, installationData.id);
       };
 
       await request.app.locals.stores.githubInstall.createNewGithubInstall(installationData.id, installationData.account.login, installationData.account.type, numberOfOrgMembers, installationData.account.html_url, senderData.login);
@@ -128,6 +134,9 @@ export class GitHubHookAPI {
         trackNewGithubInstall(params, uuid.v4(), "New Github Install", senderData.login, installationData.account.login, installationData.account.html_url);
       }
     } else if (installationEvent.action === "deleted") {
+      // marking rows as deleted. currently this is only informative
+      await request.app.locals.stores.clusterStore.updateClusterGithubInstallationsAsDeleted(installationData.id);
+
       // deleting from db when uninstall from GitHub
       await request.app.locals.stores.githubInstall.deleteGithubInstall(installationData.id);
       // Should we delete all pullrequest notifications?

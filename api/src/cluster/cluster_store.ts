@@ -1,5 +1,6 @@
 import { Params } from "../server/params";
 import pg from "pg";
+import { logger } from "../server/logger";
 import { Cluster } from "./";
 import { ReplicatedError } from "../server/errors";
 import randomstring from "randomstring";
@@ -342,6 +343,31 @@ export class ClusterStore {
     }
   }
 
+  async updateClusterGithubInstallationId(accountId: string, installationId: string): Promise<void> {
+    const pg = await this.pool.connect();
+    const q = `
+UPDATE cluster_github
+SET installation_id = $1, is_deleted = false
+FROM user_cluster c
+  INNER JOIN github_user u ON (u.user_id = c.user_id)
+WHERE c.cluster_id = cluster_github.cluster_id AND u.github_id = $2 AND cluster_github.installation_id != $1 AND cluster_github.is_deleted = TRUE`;
+    const v = [installationId, accountId];
+    const res = await pg.query(q, v);
+    if (res.rowCount > 0) {
+      logger.info({msg: `Updated ${res.rowCount} row(s) with new installation ${installationId}`});
+    }
+  }
+
+  async updateClusterGithubInstallationsAsDeleted(installationId: string): Promise<void> {
+    const pg = await this.pool.connect();
+    const q = `UPDATE cluster_github SET is_deleted = true WHERE installation_id = $1 AND (is_deleted = false OR is_deleted is NULL)`;
+    const v = [installationId];
+    const res = await pg.query(q, v);
+    if (res.rowCount > 0) {
+      logger.info({msg: `Marked ${res.rowCount} row(s) for installation ${installationId} as is_deleted`});
+    }
+  }
+
   async getShipInstallationManifests(clusterId: string): Promise<string> {
     const cluster = await this.getShipOpsCluster(clusterId);
 
@@ -623,7 +649,7 @@ items:
 
       const q = `select count(1) as count from watch_cluster where cluster_id = $1`;
       const v = [clusterId];
-      const { rows }: { rows: any[] }  = await pg.query(q, v);
+      const { rows }: { rows: any[] } = await pg.query(q, v);
 
       if (rows[0].count > 0) {
         throw new ReplicatedError("This cluster has applications deployed to it so it cannot be deleted.");

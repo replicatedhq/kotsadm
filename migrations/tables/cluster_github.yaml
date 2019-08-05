@@ -31,3 +31,6 @@ spec:
         type: integer
         constraints:
           notNull: true
+      - name: is_deleted
+        type: boolean
+        default: "false"
