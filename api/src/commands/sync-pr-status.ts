@@ -47,12 +47,6 @@ async function main(argv): Promise<any> {
     process.exit(0);
   } 
 
-  const github = new GitHubApi();
-  github.authenticate({
-    type: "app",
-    token: await getGitHubBearerToken()
-  });
-
   const params = await Params.getParams();
   const watchStore = new WatchStore(pool, params);
   let changedVersions: number[] = [];
@@ -61,6 +55,12 @@ async function main(argv): Promise<any> {
   let i = 0;
 
   for (const version of versions.rows) {
+    const github = new GitHubApi();
+    github.authenticate({
+      type: "app",
+      token: await getGitHubBearerToken()
+    });
+
     try {
       let pr: GitHubApi.Response<GitHubApi.GetResponse>;
       let installationTokenResponse: GitHubApi.Response<GitHubApi.CreateInstallationTokenResponse>;
@@ -71,7 +71,7 @@ async function main(argv): Promise<any> {
         if (error.code === 404) {
           console.log("Github installation " + blueText(`${version.installation_id}`) + " got 404");
           if (!argv.dryRun) {
-            updateClusterAsIsDeleted(pool, version.installation_id);
+            await updateClusterAsIsDeleted(pool, version.installation_id);
           }
           isDeletedClusters[version.cluster_id] = true;
         } else {
@@ -95,7 +95,7 @@ async function main(argv): Promise<any> {
         if (error.code === 404) {
           console.log("Github PR " + blueText(`${version.pullrequest_number}`) + " got 404: " + blueText(`https://github.com/${version.owner}/${version.repo}/pull/${version.pullrequest_number}`));
           if (!argv.dryRun) {
-            updateWatchVersionAs404(pool, version.watch_id, version.sequence);
+            await updateWatchVersionAs404(pool, version.watch_id, version.sequence);
           }
           four04Versions.push(i)
         } else {
@@ -178,8 +178,8 @@ async function updateClusterAsIsDeleted(pool: Pool, installationId: string) {
   );
 }
 
-async function updateWatchVersionAs404(pool: Pool, watchId: string, sequence: string) {
-  await pool.query(
+async function updateWatchVersionAs404(pool: Pool, watchId: string, sequence: number) {
+  const res = await pool.query(
     `UPDATE watch_version SET is_404 = TRUE WHERE watch_id = $1 AND sequence = $2`,
     [watchId, sequence],
   );
