@@ -1,6 +1,6 @@
-import { Params } from "../server/params";
 import pg from "pg";
 import { logger } from "../server/logger";
+import { Params } from "../server/params";
 import { Cluster } from "./";
 import { ReplicatedError } from "../server/errors";
 import randomstring from "randomstring";
