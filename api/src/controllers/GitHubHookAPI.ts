@@ -43,13 +43,13 @@ export class GitHubHookAPI {
         return {};
       }
 
-      // ignored
       case "installation_repositories":
           const params = await Params.getParams();
           await this.handleInstallationRepositories(body as WebhooksApi.WebhookPayloadInstallationRepositories, params, request);
           response.status(204);
           return {};
 
+      // ignored
       case "integration_installation":
       case "integration_installation_repositories":
         response.status(204);
