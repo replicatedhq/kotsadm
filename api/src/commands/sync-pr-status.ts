@@ -117,7 +117,7 @@ async function main(argv): Promise<any> {
           if (lastCommit.sha) {
             console.log("Update github PR " + blueText(`${pr.number}`) + " commit sha to " + blueText(`${lastCommit.sha}`) + ": " + blueText(`https://github.com/${version.clusterOwner}/${version.clusterRepo}/pull/${pr.number}`));
             if (!argv.dryRun) {
-              updateWatchVersionCommitSha(pool, version.watchId, version.sequence, lastCommit.sha);
+              await updateWatchVersionCommitSha(pool, version.watchId, version.sequence, lastCommit.sha);
             }
             noshaVersions.push(i);
           }
@@ -193,7 +193,9 @@ async function getVersions(pool: Pool): Promise<Version[]> {
       FROM watch_version wv
       INNER JOIN watch_cluster wc ON wv.watch_id = wc.watch_id
       INNER JOIN cluster_github cg ON wc.cluster_id = cg.cluster_id AND (cg.is_deleted = FALSE OR cg.is_deleted is NULL) AND (cg.is_404 = FALSE OR cg.is_404 is NULL)
-      WHERE wv.status IN ('opened', 'pending') AND (wv.is_404 = FALSE OR wv.is_404 IS NULL)`
+      WHERE
+        (wv.commit_sha = '' OR wv.commit_sha is NULL) OR
+        (wv.status IN ('opened', 'pending') AND (wv.is_404 = FALSE OR wv.is_404 IS NULL))`
   );
   const versions: Version[] = [];
   for (const row of result.rows) {
@@ -305,14 +307,14 @@ async function updateClusterAs404(pool: Pool, installationId: string) {
 }
 
 async function updateWatchVersionCommitSha(pool: Pool, watchId: string, sequence: number, sha: string) {
-  const res = await pool.query(
+  await pool.query(
     `UPDATE watch_version SET commit_sha = $3 WHERE watch_id = $1 AND sequence = $2`,
     [watchId, sequence, sha],
   );
 }
 
 async function updateWatchVersionAs404(pool: Pool, watchId: string, sequence: number) {
-  const res = await pool.query(
+  await pool.query(
     `UPDATE watch_version SET is_404 = TRUE WHERE watch_id = $1 AND sequence = $2`,
     [watchId, sequence],
   );
