@@ -256,7 +256,7 @@ async function handlePullRequestEventForMerge(github: GitHubApi, cluster: Cluste
   };
   const getCommitsResponse = await github.pullRequests.getCommits(params);
 
-  const sortedCommits = getCommitsResponse.data;
+  const sortedCommits = getCommitsResponse.data.reverse(); // newest first
 
   for (const commit of sortedCommits) {
     const pendingVersion = await request.app.locals.stores.watchStore.getVersionForCommit(watch.id!, commit.sha);
@@ -265,15 +265,9 @@ async function handlePullRequestEventForMerge(github: GitHubApi, cluster: Cluste
     }
     await request.app.locals.stores.watchStore.updateVersionStatus(watch.id!, pendingVersion.sequence!, status);
 
-    if (watch.currentVersion && pendingVersion.sequence! < watch.currentVersion.sequence!) {
-      return;
-    }
-
     const currentVersion = await request.app.locals.stores.watchStore.getCurrentVersion(watch.id!);
-    if (currentVersion) {
-      if (currentVersion.sequence > pendingVersion.sequence!) {
-        continue;
-      }
+    if (currentVersion && currentVersion.sequence > pendingVersion.sequence!) {
+      continue;
     }
 
     await request.app.locals.stores.watchStore.setCurrentVersion(watch.id!, pendingVersion.sequence!, pullRequestEvent.pull_request.merged_at);
