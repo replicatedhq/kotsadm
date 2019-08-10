@@ -264,13 +264,7 @@ async function handlePullRequestEventForMerge(github: GitHubApi, cluster: Cluste
       continue;
     }
     await request.app.locals.stores.watchStore.updateVersionStatus(watch.id!, pendingVersion.sequence!, status);
-
-    const currentVersion = await request.app.locals.stores.watchStore.getCurrentVersion(watch.id!);
-    if (currentVersion && currentVersion.sequence > pendingVersion.sequence!) {
-      continue;
-    }
-
-    await request.app.locals.stores.watchStore.setCurrentVersion(watch.id!, pendingVersion.sequence!, pullRequestEvent.pull_request.merged_at);
+    await request.app.locals.stores.watchStore.setCurrentVersionIfCurrent(watch.id!, pendingVersion.sequence!, pullRequestEvent.pull_request.merged_at);
   }
 }
 
