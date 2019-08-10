@@ -81,7 +81,7 @@ export class WatchStore {
       await pg.query("begin");
 
       try {
-        let q = `update watch set current_sequence = $1 where id = $2 and current_sequence < $1`;
+        let q = `update watch set current_sequence = $1 where id = $2 and (current_sequence is null or current_sequence < $1)`;
         let v: any[] = [
           sequence,
           watchId,
