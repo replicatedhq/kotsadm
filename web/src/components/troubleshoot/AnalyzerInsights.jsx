@@ -165,23 +165,25 @@ export class AnalyzerInsights extends React.Component {
               :
               <div className="flex-column flex1 u-overflow--auto">
                   <div className="flex flex-auto flexWrap--wrap">
-                  {filteredInsights && filteredInsights.map((tile, i) => (
-                    <div key={i} className="insight-tile-wrapper flex-column">
-                      <div className={`insight-tile flex-auto u-textAlign--center flex-verticalCenter flex-column ${tile.severity}`}>
-                        <div className="flex justifyContent--center u-marginBottom--10">
-                          {tile.icon_key ?
-                            <span className={`icon analysis-${tile.icon_key} tile-icon`}></span>
-                            : tile.icon ?
-                              <span className="tile-icon" style={{ backgroundImage: `url(${tile.icon})` }}></span>
-                              :
-                              <span className={`icon analysis tile-icon`}></span>
-                          }
+                  {filteredInsights && filteredInsights.map((tile, i) => {
+                    return (
+                      <div key={i} className="insight-tile-wrapper flex-column">
+                        <div className={`insight-tile flex-auto u-textAlign--center flex-verticalCenter flex-column ${tile.severity}`}>
+                          <div className="flex justifyContent--center u-marginBottom--10">
+                            {tile.icon_key ?
+                              <span className={`icon analysis-${tile.icon_key} tile-icon`}></span>
+                              : tile.icon ?
+                                <span className="tile-icon" style={{ backgroundImage: `url(${tile.icon})` }}></span>
+                                :
+                                <span className={`icon analysis tile-icon`}></span>
+                            }
+                          </div>
+                          <p className={tile.severity === "debug" ? "u-color--dustyGray u-fontSize--smaller u-fontWeight--medium" : "u-color--doveGray u-fontSize--smaller u-fontWeight--medium"}>{tile.detail}</p>
+                          <p className={tile.severity === "debug" ? "u-color--dustyGray u-fontSize--normal u-fontWeight--bold u-marginTop--5" : "u-color--tuna u-fontSize--normal u-fontWeight--bold u-marginTop--5"}>{tile.primary}</p>
                         </div>
-                        <p className={tile.severity === "debug" ? "u-color--dustyGray u-fontSize--smaller u-fontWeight--medium" : "u-color--doveGray u-fontSize--smaller u-fontWeight--medium"}>{tile.detail}</p>
-                        <p className={tile.severity === "debug" ? "u-color--dustyGray u-fontSize--normal u-fontWeight--bold u-marginTop--5" : "u-color--tuna u-fontSize--normal u-fontWeight--bold u-marginTop--5"}>{tile.primary}</p>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             }

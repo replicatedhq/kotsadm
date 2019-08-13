@@ -71,19 +71,45 @@ class SupportBundleRow extends React.Component {
               <div className="flex flex1 u-marginTop--10">
                 {bundle?.analysis?.insights?.length ?
                   <div className="flex flex1 u-marginRight--5">
-                    {sortBy(filter(bundle?.analysis?.insights, (i) => i.level !== "debug"), ["desiredPosition"]).map((insight, i) => (
-                      <div key={i} className="analysis-icon-wrapper">
-                        {insight.icon_key ?
-                          <span className={`icon clickable analysis-${insight.icon_key}`} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></span>
-                          : insight.icon ?
-                            <span className="u-cursor--pointer" style={{ backgroundImage: `url(${insight.icon})` }} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></span>
-                            : null
+                    {sortBy(filter(bundle?.analysis?.insights, (i) => i.level !== "debug"), ["desiredPosition"]).map((insight, i) => {
+                      let icon = "";
+                      switch (insight.severity) {
+                        case "warn": {
+                          icon = "exclamationMark--icon";
+                          break;
                         }
-                        <ReactTooltip id={`${bundle.id}-${i}-${insight.key}`} effect="solid" className="replicated-tooltip">
-                          <span>{insight.detail}</span>
-                        </ReactTooltip>
-                      </div>
-                    ))}
+
+                        case "error": {
+                          icon = "error-small";
+                          break;
+                        }
+
+                        case "ok":
+                        case "debug": {
+                          icon = "checkmark-icon";
+                          break;
+                        }
+
+                        default: {
+                          icon = "analysis-gray_checkmark";
+                          break;
+                        }
+                      }
+
+                      return (
+                        <div key={i} className="analysis-icon-wrapper">
+                          {insight.icon_key ?
+                            <span className={`icon clickable ${icon}`} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></span>
+                            : insight.icon ?
+                              <span className="u-cursor--pointer" style={{ backgroundImage: `url(${insight.icon})` }} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></span>
+                              : null
+                          }
+                          <ReactTooltip id={`${bundle.id}-${i}-${insight.key}`} effect="solid" className="replicated-tooltip">
+                            <span>{insight.detail}</span>
+                          </ReactTooltip>
+                        </div>
+                    )
+                  })}
                   </div>
                   :
                   noInsightsMessage

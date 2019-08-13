@@ -132,7 +132,6 @@ export class SupportBundleAnalysis extends React.Component {
         </div>
       )
     }
-
     return (
       <div className="container u-marginTop--20 u-paddingBottom--30 flex1 flex-column">
         <div className="flex1 flex-column">
