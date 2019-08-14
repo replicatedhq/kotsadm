@@ -12,6 +12,7 @@ import {
   Utilities,
   getClusterType,
   getWatchMetadata,
+  getApplicationType,
   getReadableLicenseType,
   getLicenseExpiryDate,
   getWatchLicenseFromState,
@@ -489,9 +490,11 @@ export default compose(
   graphql(getWatchLicense, {
     name: "getWatchLicense",
     skip: props => {
+      const isHelmChart = getApplicationType(props.watch) === "helm";
       const { owner } = props.match.params;
-      // Skip if it's a KOTS app
-      if (!owner) {
+
+      // Skip if it's a KOTS app or helm chart
+      if (!owner || isHelmChart) {
         return true;
       }
       return false;
