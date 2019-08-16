@@ -81,27 +81,26 @@ export class WatchStore {
       await pg.query("begin");
 
       try {
-        let q = `update watch set current_sequence = $1 where id = $2 and (current_sequence is null or current_sequence < $1)`;
-        let v: any[] = [
-          sequence,
-          watchId,
-        ];
-        const res = await pg.query(q, v);
-        if (!res.rowCount) {
-          await pg.query("commit");
-          return false;
-        }
-
-        q = `update watch_version set deployed_at = $1 where watch_id = $2 and sequence = $3`;
-        v = [
+        let q = `update watch_version set deployed_at = $1 where watch_id = $2 and sequence = $3`;
+        let v = [
           deployedAt || new Date(),
           watchId,
           sequence,
         ];
         await pg.query(q, v);
 
+        q = `update watch set current_sequence = $1 where id = $2 and (current_sequence is null or current_sequence < $1)`;
+        v = [
+          sequence,
+          watchId,
+        ];
+        const res = await pg.query(q, v);
+
         await pg.query("commit");
 
+        if (!res.rowCount) {
+          return false;
+        }
         return true;
       } catch (err) {
         await pg.query("rollback");
