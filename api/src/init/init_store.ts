@@ -36,7 +36,6 @@ export class InitStore {
 
   async deployInitSession(id: string, pendingInitId?: string): Promise<InitSession> {
     const initSession = await this.getSession(id);
-
     if (this.params.skipDeployToWorker) {
       logger.info({msg: "skipping deploy to worker"});
       return initSession;
@@ -55,7 +54,22 @@ export class InitStore {
       json: true,
     };
 
-    const parsedBody = await rp(options);
+    let parsedBody;
+    try {
+      parsedBody = await rp(options);
+    } catch (error) {
+      if (error.statusCode === 401) {
+        return {
+          id: "",
+          upstreamURI: initSession.upstreamURI,
+          createdOn: initSession.createdOn,
+          result: "license expired"
+        };
+      } else {
+        throw error;
+      }
+    }
+
     logger.debug({ msg: "response from deploy init", parsedBody });
     return initSession;
   }

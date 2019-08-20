@@ -26,6 +26,10 @@ export function InitMutations(stores: Stores) {
       const initSession = await stores.initStore.createInitSession(context.session.userId, uri, clusterID, githubPath, parent.watchId, parent.sequence, upstreamUri);
       const deployedInitSession = await stores.initStore.deployInitSession(initSession.id, pendingInitId);
 
+      if (deployedInitSession.result === "license expired") {
+        throw new ReplicatedError("License is expired");
+      }
+
       return {
         id: deployedInitSession.id,
         upstreamUri: deployedInitSession.upstreamURI,

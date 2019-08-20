@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/replicatedhq/kotsadm/worker/pkg/ship"
 	"github.com/replicatedhq/kotsadm/worker/pkg/store"
 	"github.com/replicatedhq/kotsadm/worker/pkg/version"
+	shipspecs "github.com/replicatedhq/ship/pkg/specs"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -163,6 +165,19 @@ func (s *InitServer) CreateInitHandler(c *gin.Context) {
 		return
 	}
 
+	if strings.Contains(createInitRequest.UpstreamURI, "replicated.app") {
+		isLicenseValid, err := isUpstreamLicenseValid(createInitRequest.UpstreamURI)
+		if err != nil {
+			s.Logger.Errorw("initserver failed to check license", zap.Error(err))
+			return
+		}
+		if !isLicenseValid {
+			s.Logger.Infof("initserver found license for %q to be invalid", createInitRequest.UpstreamURI)
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+	}
+
 	shipInit, err := s.Store.GetInit(context.TODO(), createInitRequest.ID)
 	if err != nil {
 		s.Logger.Errorw("initserver failed to get init", zap.Error(err))
@@ -253,4 +268,31 @@ func (s *InitServer) CreateInitHandler(c *gin.Context) {
 
 		time.Sleep(time.Millisecond * 100)
 	}
+}
+
+// isUpstreamLicenseValid - Returns true if a replicated.app license is valid, otherwise false.
+func isUpstreamLicenseValid(upstreamURI string) (bool, error) {
+	shipViper := viper.New()
+	shipViper.Set("customer-endpoint", "https://pg.replicated.com/graphql")
+	shipViper.Set("prefer-git", true)
+	shipViper.Set("retries", 3)
+
+	contentProcessor, err := shipspecs.NewContentProcessor(shipViper)
+	if err != nil {
+		return false, err
+	}
+
+	defer contentProcessor.RemoveAll()
+
+	_, err = contentProcessor.ReadContentSHAForWatch(context.TODO(), upstreamURI)
+	if err != nil {
+		errString := err.Error()
+		if strings.Contains(errString, "license is expired") {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
 }

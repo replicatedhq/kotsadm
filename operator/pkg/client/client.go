@@ -62,7 +62,7 @@ func getDesiredStateFromKotsadmServer(apiEndpoint string, token string) (*Desire
 
 	uri := fmt.Sprintf("%s/api/v1/deploy/desired", apiEndpoint)
 
-	fmt.Printf("Requesting desired state from %q\n", uri)
+	// fmt.Printf("Requesting desired state from %q\n", uri)
 	req, err := http.NewRequest("GET", uri, nil)
 	req.SetBasicAuth("", token)
 	resp, err := client.Do(req)

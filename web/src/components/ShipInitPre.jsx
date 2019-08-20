@@ -24,7 +24,8 @@ export class ShipInitPre extends React.Component {
     url: "",
     urlError: false,
     saving: false,
-    fetchError: false
+    fetchError: false,
+    errorMessage: ""
   };
 
   componentDidMount() {
@@ -95,6 +96,7 @@ export class ShipInitPre extends React.Component {
       saving: true,
       urlError: false,
       displayLicenseIdModal: false,
+      errorMessage: "",
       url,
     });
     const validUpstream = await this.validateUpstream(url).catch(this.handleInvalidUpstream);
@@ -107,12 +109,18 @@ export class ShipInitPre extends React.Component {
             // Prevent redirect if component is no longer mounted
             return;
           }
-
           const { createInitSession } = data;
           const { id: initSessionId } = createInitSession;
           onActiveInitSession(initSessionId);
           this.props.history.push("/ship/init")
-        }).catch(this.handleInvalidUpstream);
+        }).catch(err => {
+          console.log(err.message);
+          if (err.message.includes("License is expired")) {
+            this.handleInvalidUpstream("License is expired");
+            return;
+          }
+          this.handleInvalidUpstream();
+        });
     } else {
       this.handleInvalidUpstream();
     }
@@ -134,10 +142,20 @@ export class ShipInitPre extends React.Component {
     })
   )
 
-  handleInvalidUpstream = () => this.setState({ saving: false, fetchError: true })
+  handleInvalidUpstream = errorMessage => {
+    if (errorMessage) {
+      this.setState({
+        saving: false,
+        fetchError: true,
+        errorMessage
+      });
+      return;
+    }
+    this.setState({ saving: false, fetchError: true, errorMessage: "" });
+  }
 
   render() {
-    const { url, fetchError, urlError } = this.state;
+    const { url, fetchError, urlError, errorMessage } = this.state;
     const n = url.lastIndexOf("/");
     const appString = url.substring(n + 1);
     const readableAppString = appString.split(/[?#]/)[0];
@@ -161,10 +179,13 @@ export class ShipInitPre extends React.Component {
             <div className="flex1 flex-column u-textAlign--center">
               <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--normal">What is the URL of the application you want to install?</p>
               <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--30">This could be a URL to any Helm Chart, Kubernetes or Replicated application</p>
-              {fetchError &&
+              {errorMessage &&
+                <p className="u-fontSize--small u-color--chestnut u-marginBottom--5 u-paddingBottom--20">{errorMessage}</p>
+              }
+              {fetchError && !errorMessage &&
                 <p className="u-fontSize--small u-color--chestnut u-marginBottom--5 u-paddingBottom--20">There's a problem with fetching {Utilities.toTitleCase(appString)}. Verify you have the correct URL and try again</p>
               }
-              {urlError &&
+              {urlError && !errorMessage &&
                 <p className="u-fontSize--small u-color--chestnut u-marginBottom--5 u-paddingBottom--20">Please enter a valid url to the kubernetes application to continue</p>
               }
               <div className="flex flex1">
