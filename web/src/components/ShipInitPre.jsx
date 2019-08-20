@@ -114,8 +114,7 @@ export class ShipInitPre extends React.Component {
           onActiveInitSession(initSessionId);
           this.props.history.push("/ship/init")
         }).catch(err => {
-          console.log(err.message);
-          if (err.message.includes("License is expired")) {
+          if (err.message.toLowerCase().includes("license is expired")) {
             this.handleInvalidUpstream("License is expired");
             return;
           }

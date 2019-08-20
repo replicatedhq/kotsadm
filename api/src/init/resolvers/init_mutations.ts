@@ -27,6 +27,7 @@ export function InitMutations(stores: Stores) {
       const deployedInitSession = await stores.initStore.deployInitSession(initSession.id, pendingInitId);
 
       if (deployedInitSession.result === "license expired") {
+        // don't change this message or ship-init will break
         throw new ReplicatedError("License is expired");
       }
 
