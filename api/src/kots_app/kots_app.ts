@@ -11,7 +11,6 @@ import tar from "tar-stream";
 import mkdirp from "mkdirp";
 import { exec } from "child_process";
 import { Cluster } from "../cluster";
-import * as _ from "lodash";
 
 export class KotsApp {
   id: string;
