@@ -38,22 +38,18 @@ export class DeployAPI {
 
       // this needs to be updated after the preflight PR is merged
       const pendingPreflightURLs = await request.app.locals.stores.preflightStore.getPendingPreflightUrls();
-      const deployedKotsAppVersion = await request.app.locals.stores.kotsAppStore.getCurrentDownstreamVersion(app.id, cluster.id);
-      const deployedAppSequence = deployedKotsAppVersion && deployedKotsAppVersion.currentSequence;
       if (pendingPreflightURLs.length > 0) {
         preflight = preflight.concat(pendingPreflightURLs);
       }
 
-      if (deployedAppSequence > -1) {
-        const desiredNamespace = ".";
-        if (!(desiredNamespace in present)) {
-          present[desiredNamespace] = [];
-        }
-
-        const rendered = await app.render(''+app.currentSequence, `overlays/downstreams/${cluster.title}`);
-        const b = new Buffer(rendered);
-        present[desiredNamespace].push(b.toString("base64"));
+      const desiredNamespace = ".";
+      if (!present[desiredNamespace]) {
+        present[desiredNamespace] = [];
       }
+
+      const rendered = await app.render(''+app.currentSequence, `overlays/downstreams/${cluster.title}`);
+      const b = new Buffer(rendered);
+      present[desiredNamespace].push(b.toString("base64"));
     }
 
     response.status(200);
