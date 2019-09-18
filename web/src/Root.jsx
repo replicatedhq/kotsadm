@@ -241,6 +241,7 @@ class Root extends Component {
             <Router history={history}>
               <div className="flex-column flex1">
                 <NavBar
+                  fetchingMetadata={this.state.fetchingMetadata}
                   logo={themeState.navbarLogo}
                   defaultKotsAppIcon={this.state.defaultKotsAppIcon}
                   refetchListApps={this.refetchListApps}

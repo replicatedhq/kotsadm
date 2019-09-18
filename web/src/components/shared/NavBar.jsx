@@ -78,18 +78,27 @@ export class NavBar extends PureComponent {
   }
 
   render() {
-    const { className, logo, defaultKotsAppIcon } = this.props;
+    const { className, logo, defaultKotsAppIcon, fetchingMetadata } = this.props;
     const { user } = this.state;
 
     const isClusterScope = this.props.location.pathname.includes("/clusterscope");
     const isKotsApp = this.props.location.pathname.startsWith("/app");
     let navBarIcon = "";
 
+    // If iconUri is set, display
     if (logo) {
-      navBarIcon = logo;
-    } else if (isKotsApp) {
-      navBarIcon = defaultKotsAppIcon;
+      navBarIcon = <span className="watch-logo clickable" style={{ backgroundImage: `url(${navBarIcon})` }} />;
+
+    // No icon but fetching metadata, show blank element
+    } else if (fetchingMetadata) {
+      navBarIcon = <span style={{ width: "30px", height: "30px" }} />
     }
+
+    // No icon, but is a kots app? - display defaultKotsIcon
+    else if (isKotsApp) {
+      navBarIcon = <span className="watch-logo clickable" style={{ backgroundImage: `url(${defaultKotsAppIcon})` }} />;
+    }
+
     return (
       <div className={classNames("NavBarWrapper flex flex-auto", className, {
         "cluster-scope": isClusterScope
@@ -101,10 +110,7 @@ export class NavBar extends PureComponent {
                 <div className="flex alignItems--center flex1 flex-verticalCenter u-position--relative u-marginRight--20">
                   <div className="HeaderLogo">
                     <Link to={isClusterScope ? "/clusterscope" : "/"} tabIndex="-1">
-                      {navBarIcon
-                        ? <span className="watch-logo clickable" style={{ backgroundImage: `url(${navBarIcon})` }} />
-                        : <span className="logo icon clickable" />
-                      }
+                      {navBarIcon}
                     </Link>
                   </div>
                 </div>
