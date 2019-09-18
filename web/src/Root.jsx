@@ -329,6 +329,7 @@ class Root extends Component {
                         props => (
                           <WatchDetailPage
                             {...props}
+                            defaultKotsAppIcon={this.state.defaultKotsAppIcon}
                             rootDidInitialWatchFetch={rootDidInitialWatchFetch}
                             listApps={listApps}
                             refetchListApps={this.refetchListApps}

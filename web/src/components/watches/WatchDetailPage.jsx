@@ -230,7 +230,8 @@ class WatchDetailPage extends Component {
       getHelmChartQuery,
       listApps,
       refetchListApps,
-      rootDidInitialWatchFetch
+      rootDidInitialWatchFetch,
+      defaultKotsAppIcon
     } = this.props;
 
     const {
@@ -279,6 +280,7 @@ class WatchDetailPage extends Component {
                   const slugFromRoute = `${match.params.owner}/${match.params.slug}`;
                   sidebarItemNode = (
                     <KotsSidebarItem
+                      defaultKotsAppIcon={defaultKotsAppIcon}
                       key={idx}
                       className={classNames({
                         selected: (
