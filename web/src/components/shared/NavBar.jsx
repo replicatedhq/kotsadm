@@ -78,10 +78,18 @@ export class NavBar extends PureComponent {
   }
 
   render() {
-    const { className, logo, fetchingMetadata } = this.props;
+    const { className, logo, defaultKotsAppIcon } = this.props;
     const { user } = this.state;
 
     const isClusterScope = this.props.location.pathname.includes("/clusterscope");
+    const isKotsApp = this.props.location.pathname.startsWith("/app");
+    let navBarIcon = "";
+
+    if (logo) {
+      navBarIcon = logo;
+    } else if (isKotsApp) {
+      navBarIcon = defaultKotsAppIcon;
+    }
     return (
       <div className={classNames("NavBarWrapper flex flex-auto", className, {
         "cluster-scope": isClusterScope
@@ -93,10 +101,9 @@ export class NavBar extends PureComponent {
                 <div className="flex alignItems--center flex1 flex-verticalCenter u-position--relative u-marginRight--20">
                   <div className="HeaderLogo">
                     <Link to={isClusterScope ? "/clusterscope" : "/"} tabIndex="-1">
-                      {logo
-                        ? <span className="watch-logo clickable" style={{ backgroundImage: `url(${logo})` }} />
-                        : !fetchingMetadata ? <span className="logo icon clickable" />
-                        : <span style={{ width: "30px", height: "30px" }} />
+                      {navBarIcon
+                        ? <span className="watch-logo clickable" style={{ backgroundImage: `url(${navBarIcon})` }} />
+                        : <span className="logo icon clickable" />
                       }
                     </Link>
                   </div>

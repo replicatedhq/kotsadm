@@ -233,7 +233,7 @@ class DetailPageApplication extends Component {
   }
 
   render() {
-    const { watch, updateCallback } = this.props;
+    const { watch, updateCallback, defaultKotsAppIcon } = this.props;
     const { preparingAppUpdate, watchLicense } = this.state;
     const appMeta = getWatchMetadata(watch.metadata);
     const isKotsApp = isKotsApplication(watch);
@@ -249,7 +249,7 @@ class DetailPageApplication extends Component {
             <div className="flex">
               <div className="flex flex-auto">
                 <div
-                  style={{ backgroundImage: `url(${isKotsApp ? watch.iconUri : watch.watchIcon})`}}
+                  style={{ backgroundImage: `url(${isKotsApp ? watch.iconUri || defaultKotsAppIcon : watch.watchIcon})`}}
                   className="DetailPageApplication--appIcon u-position--relative">
                   <PaperIcon
                     className="u-position--absolute"

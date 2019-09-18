@@ -3,7 +3,7 @@ import classNames from "classnames";
 import { Link } from "react-router-dom";
 
 export default function KotsSidebarItem(props) {
-  const { className, app } = props;
+  const { className, app, defaultKotsAppIcon } = props;
   const { iconUri, name, slug } = app;
 
   let downstreamPendingLengths = [];
@@ -32,7 +32,7 @@ export default function KotsSidebarItem(props) {
       <Link
         className="flex alignItems--center"
         to={`/app/${slug}`}>
-          <span className="sidebar-link-icon" style={{ backgroundImage: `url(${iconUri})` }}></span>
+          <span className="sidebar-link-icon" style={{ backgroundImage: `url(${iconUri || defaultKotsAppIcon})` }}></span>
           <div className="flex-column">
             <p className="u-color--tuna u-fontWeight--bold u-marginBottom--10">{name}</p>
             <div className="flex alignItems--center">

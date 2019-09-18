@@ -14,7 +14,7 @@ export function KotsQueries(stores: Stores) {
       try {
         const rawBranding = await kotsAppGetBranding();
         const parsedBranding = yaml.safeLoad(rawBranding);
-
+        console.log(parsedBranding);
         return {
           name: parsedBranding.spec.title,
           iconUri: parsedBranding.spec.icon,

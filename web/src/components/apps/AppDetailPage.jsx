@@ -249,6 +249,7 @@ class AppDetailPage extends Component {
       refetchListApps,
       rootDidInitialAppFetch,
       listDownstreamsForAppQuery,
+      defaultKotsAppIcon
     } = this.props;
     const {
       displayRemoveClusterModal,
@@ -286,6 +287,7 @@ class AppDetailPage extends Component {
                   sidebarItemNode = (
                     <KotsSidebarItem
                       key={idx}
+                      defaultKotsAppIcon={defaultKotsAppIcon}
                       className={classNames({
                         selected: (
                           item.slug === slugFromRoute &&
@@ -332,6 +334,7 @@ class AppDetailPage extends Component {
                   <Switch>
                     <Route exact path="/app/:slug" render={() =>
                       <DetailPageApplication
+                        defaultKotsAppIcon={this.props.defaultKotsAppIcon}
                         watch={app}
                         refetchListApps={refetchListApps}
                         refetchWatch={this.props.getKotsAppQuery?.refetch}

@@ -90,7 +90,7 @@ const ThemeContext = React.createContext({
 class Root extends Component {
   state = {
     listApps: [],
-    appLogo: null,
+    defaultKotsAppIcon: null,
     selectedAppName: null,
     fetchingMetadata: false,
     initSessionId: Utilities.localStorageEnabled()
@@ -192,7 +192,7 @@ class Root extends Component {
     });
     if (meta.data.getKotsMetadata) {
       this.setState({
-        appLogo: meta.data.getKotsMetadata.iconUri,
+        defaultKotsAppIcon: meta.data.getKotsMetadata.iconUri,
         selectedAppName: meta.data.getKotsMetadata.name,
         fetchingMetadata: false
       });
@@ -240,7 +240,11 @@ class Root extends Component {
           }}>
             <Router history={history}>
               <div className="flex-column flex1">
-                <NavBar logo={themeState.navbarLogo || this.state.appLogo} refetchListApps={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />
+                <NavBar
+                  logo={themeState.navbarLogo}
+                  defaultKotsAppIcon={this.state.defaultKotsAppIcon}
+                  refetchListApps={this.refetchListApps}
+                />
                 <div className="flex1 flex-column u-overflow--hidden">
                   <Switch>
 
@@ -255,10 +259,10 @@ class Root extends Component {
                     <Route exact path="/login" render={props => (<Login {...props} onLoginSuccess={this.refetchListApps} />) } />
                     <Route path="/preflight" render={props => <PreflightResultPage {...props} /> }/>
                     <Route exact path="/signup" component={Signup} />
-                    <Route exact path="/secure-console" render={props => <SecureAdminConsole {...props} logo={this.state.appLogo} appName={this.state.selectedAppName} onLoginSuccess={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />} />
-                    <Route exact path="/upload-license" render={props => <UploadLicenseFile {...props} logo={this.state.appLogo} appName={this.state.selectedAppName} fetchingMetadata={this.state.fetchingMetadata} onUploadSuccess={this.refetchListApps} />} />
+                    <Route exact path="/secure-console" render={props => <SecureAdminConsole {...props} logo={this.state.defaultKotsAppIcon} appName={this.state.selectedAppName} onLoginSuccess={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />} />
+                    <Route exact path="/upload-license" render={props => <UploadLicenseFile {...props} logo={this.state.defaultKotsAppIcon} appName={this.state.selectedAppName} fetchingMetadata={this.state.fetchingMetadata} onUploadSuccess={this.refetchListApps} />} />
                     <Route exact path="/airgap/progress" render={props => <AirgapUploadProgress {...props} />} />
-                    <Route exact path="/:slug/airgap" render={props => <UploadAirgapBundle {...props} logo={this.state.appLogo} appName={this.state.selectedAppName} onUploadSuccess={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />} />
+                    <Route exact path="/:slug/airgap" render={props => <UploadAirgapBundle {...props} logo={this.state.defaultKotsAppIcon} appName={this.state.selectedAppName} onUploadSuccess={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />} />
                     <Route path="/auth/github" render={props => (<GitHubAuth {...props} refetchListApps={this.refetchListApps}/>)} />
                     <Route path="/install/github" component={GitHubInstall} />
                     <Route exact path="/clusterscope" component={ClusterScope} />
@@ -287,6 +291,7 @@ class Root extends Component {
                           <AppDetailPage
                             {...props}
                             rootDidInitialAppFetch={rootDidInitialWatchFetch}
+                            defaultKotsAppIcon={this.state.defaultKotsAppIcon}
                             listApps={listApps}
                             refetchListApps={this.refetchListApps}
                             onActiveInitSession={this.handleActiveInitSession}
@@ -338,6 +343,7 @@ class Root extends Component {
                         props => (
                           <AppDetailPage
                             {...props}
+                            defaultKotsAppIcon={this.state.defaultKotsAppIcon}
                             rootDidInitialAppFetch={rootDidInitialWatchFetch}
                             listApps={listApps}
                             refetchListApps={this.refetchListApps}
