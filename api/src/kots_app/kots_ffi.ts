@@ -119,6 +119,7 @@ export async function kotsAppFromLicenseData(licenseData: string, name: string, 
 
     const pullResult = kots().PullFromLicense(licenseDataParam, downstreamParam, outParam);
     if (pullResult > 0) {
+      console.error(`Failed to pull from license, pull result: ${pullResult}`);
       return;
     }
 
