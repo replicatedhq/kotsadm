@@ -29,9 +29,9 @@ export async function upload(params: Params, key: string, body: any, bucket: str
     Body: body,
     Bucket: bucket,
     Key: key,
-  };
+   };
 
-  return s3.upload(uploadParams);
+   return s3.upload(uploadParams);
 }
 
 export async function putObject(params: Params, filepath: string, body: any, bucket: string): Promise<boolean> {
@@ -41,17 +41,17 @@ export async function putObject(params: Params, filepath: string, body: any, buc
     Body: body,
     Bucket: bucket,
     Key: filepath,
-  };
+   };
 
-  return new Promise<boolean>((resolve, reject) => {
-    s3.putObject(putObjectParams, (err, data) => {
-      if (err) {
-        reject(err);
-      }
+   return new Promise<boolean>((resolve, reject) => {
+     s3.putObject(putObjectParams, (err, data) => {
+       if (err) {
+         reject(err);
+       }
 
-      resolve(true);
+       resolve(true);
     });
-  });
+   });
 }
 
 export async function signGetRequest(params: Params, bucket: string, key: string, expires?: number): Promise<any> {
