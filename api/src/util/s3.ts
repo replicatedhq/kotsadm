@@ -29,9 +29,9 @@ export async function upload(params: Params, key: string, body: any, bucket: str
     Body: body,
     Bucket: bucket,
     Key: key,
-   };
+  };
 
-   return s3.upload(uploadParams);
+  return s3.upload(uploadParams);
 }
 
 export async function putObject(params: Params, filepath: string, body: any, bucket: string): Promise<boolean> {
@@ -41,17 +41,17 @@ export async function putObject(params: Params, filepath: string, body: any, buc
     Body: body,
     Bucket: bucket,
     Key: filepath,
-   };
+  };
 
-   return new Promise<boolean>((resolve, reject) => {
-     s3.putObject(putObjectParams, (err, data) => {
-       if (err) {
-         reject(err);
-       }
+  return new Promise<boolean>((resolve, reject) => {
+    s3.putObject(putObjectParams, (err, data) => {
+      if (err) {
+        reject(err);
+      }
 
-       resolve(true);
+      resolve(true);
     });
-   });
+  });
 }
 
 export async function signGetRequest(params: Params, bucket: string, key: string, expires?: number): Promise<any> {
@@ -148,13 +148,13 @@ export async function bucketExists(params: Params, bucketName: string): Promise<
   return new Promise<boolean>(resolve => {
     const s3 = getS3(params);
 
-    s3.headBucket({Bucket: bucketName}, err => {
-      if (err) {
-        resolve(false);
+    s3.headObject({ Bucket: bucketName, Key: "no_such_file.tar.gz" }, err => {
+      if (err.code === "NotFound") {
+        resolve(true);
         return;
       }
 
-      resolve(true);
+      resolve(false);
     });
   });
 }
