@@ -112,7 +112,6 @@ export class AnalyzerInsights extends React.Component {
     const { insights, status } = this.props;
     const { filterTiles, analyzing, hasAnalysisError } = this.state;
     const filteredInsights = this.state.insights;
-    console.log(hasAnalysisError);
 
     let noInsightsNode;
     if (isEmpty(insights)) {
