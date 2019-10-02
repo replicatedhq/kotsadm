@@ -231,7 +231,7 @@ class GenerateSupportBundle extends React.Component {
           <div className="Modal-body">
             <UploadSupportBundleModal
               watch={this.props.watch}
-              bundleCommand={selectedWatch ?.bundleCommand}
+              bundleCommand={selectedWatch?.bundleCommand}
               submitCallback={(bundleId) => {
                 let url;
                 if (isKotsApplication(watch)) {

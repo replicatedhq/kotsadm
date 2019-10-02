@@ -1,10 +1,9 @@
 import * as React from "react";
 import Clipboard from "clipboard";
-import { graphql, compose, withApollo } from "react-apollo";
 import { Link } from "react-router-dom";
 import isEmpty from "lodash/isEmpty";
-import { uploadSupportBundle, markSupportBundleUploaded } from "../../mutations/TroubleshootMutations";
 import Dropzone from "react-dropzone";
+import randomstring from "randomstring";
 
 import "../../scss/components/troubleshoot/UploadSupportBundleModal.scss";
 
@@ -14,61 +13,40 @@ class UploadSupportBundleModal extends React.Component {
     this.state = {
       successState: false,
       fileUploading: false,
-      bundleS3Url: "",
       newBundleId: "",
       supportBundle: {},
     };
   }
 
-  uploadToS3 = async () => {
-    let response;
-    this.setState({ fileUploading: true });
+  uploadAndAnalyze = async () => {
     try {
-      response = await fetch(this.state.bundleS3Url, {
+      const { watch } = this.props;
+      const { newBundleId } = this.state;
+      const bundleId = newBundleId !== "" ? newBundleId : randomstring.generate({ capitalization: "lowercase" });
+      const uploadBundleUrl = `${window.env.TROUBLESHOOT_ENDPOINT}/${watch.id}/${bundleId}`;
+
+      this.setState({ fileUploading: true, newBundleId: bundleId });
+
+      const response = await fetch(uploadBundleUrl, {
         method: "PUT",
         body: this.state.supportBundle,
         headers: {
           "Content-Type": "application/tar+gzip",
         },
       });
-      await response;
-      this.props.markSupportBundleUploaded(this.state.newBundleId)
-        .then(async (response) => {
-          this.setState({ fileUploading: false });
-          if (this.props.submitCallback && typeof this.props.submitCallback === "function") {
-            this.props.submitCallback(response.data.markSupportBundleUploaded.id);
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          this.setState({ fileUploading: false });
-        })
-      return;
+      const analyzedBundle = await response.json();
+
+      this.setState({ fileUploading: false });
+      if (this.props.submitCallback && typeof this.props.submitCallback === "function") {
+        this.props.submitCallback(analyzedBundle.id);
+      }
     } catch (err) {
       this.setState({ fileUploading: false });
-      return;
     }
   }
 
-  getBundleS3Url = (file) => {
-    const { watch } = this.props
-    this.props.uploadSupportBundle(watch.id, file.size)
-      .then((response) => {
-        this.setState({
-          bundleS3Url: response.data.uploadSupportBundle.uploadUri,
-          newBundleId: response.data.uploadSupportBundle.supportBundle.id
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }
-
   onDrop = (files) => {
-    this.getBundleS3Url(files[0]);
-    this.setState({
-      supportBundle: files[0]
-    });
+    this.setState({ supportBundle: files[0] });
   }
 
   showCopyToast(message, didCopy) {
@@ -161,7 +139,7 @@ class UploadSupportBundleModal extends React.Component {
                       <button
                         type="button"
                         className="btn secondary flex-auto"
-                        onClick={this.uploadToS3}
+                        onClick={this.uploadAndAnalyze}
                         disabled={fileUploading || !hasFile}
                       >
                         {fileUploading ? "Uploading" : "Upload support bundle"}
@@ -178,16 +156,4 @@ class UploadSupportBundleModal extends React.Component {
   }
 }
 
-export default compose(
-  withApollo,
-  graphql(uploadSupportBundle, {
-    props: ({ mutate }) => ({
-      uploadSupportBundle: (watchId, size) => mutate({ variables: { watchId, size } })
-    })
-  }),
-  graphql(markSupportBundleUploaded, {
-    props: ({ mutate }) => ({
-      markSupportBundleUploaded: (id) => mutate({ variables: { id } })
-    })
-  })
-)(UploadSupportBundleModal);
+export default UploadSupportBundleModal;
