@@ -111,8 +111,7 @@ export class TroubleshootAPI {
     // Check if bundle exists
     const exists = await stores.troubleshootStore.supportBundleExists(supportBundleId);
     if (!exists) {
-      response.status(404);
-      response.send("Bundle does not exist");
+      response.send(404, "Bundle does not exist");
       return;
     }
 
