@@ -96,8 +96,7 @@ export class TroubleshootAPI {
       analyzedBundle = await stores.troubleshootStore.getSupportBundle(supportBundleId);
     } finally {
       fs.unlinkSync(bundleFile);
-      response.status(200);
-      response.send(analyzedBundle);
+      response.send(200, analyzedBundle);
     }
   }
 
@@ -120,8 +119,7 @@ export class TroubleshootAPI {
     await performAnalysis(supportBundleId, stores);
     const analyzedBundle = await stores.troubleshootStore.getSupportBundle(supportBundleId);
 
-    response.status(200);
-    response.send(analyzedBundle);
+    response.send(200, analyzedBundle);
   }
 
   @Post("/:watchId/:supportBundleId")
