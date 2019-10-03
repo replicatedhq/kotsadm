@@ -23,34 +23,34 @@ import {
   updateWatch,
   deleteWatch,
   createEditSession,
- } from "@src/mutations/WatchMutations";
+} from "@src/mutations/WatchMutations";
 
- import { deleteKotsApp } from "@src/mutations/AppsMutations";
- import isEmpty from "lodash/isEmpty";
- import { getWatchLicense } from "@src/queries/WatchQueries";
+import { deleteKotsApp } from "@src/mutations/AppsMutations";
+import isEmpty from "lodash/isEmpty";
+import { getWatchLicense } from "@src/queries/WatchQueries";
 
 class DetailPageApplication extends Component {
 
-    state = {
-      appName: "",
-      iconUri: "",
-      editWatchLoading: false,
-      showConfirmDelete: false,
-      showEditModal: false,
-      confirmAppName: "",
-      deleteAppLoading: false,
-      confirmDeleteErr: false,
-      isDownloadingAssets: false,
-      isDownloadingMidstreamAssets: false,
-      downloadCluster: {
-        value: "",
-        label: "Select a cluster",
-        watchId: ""
-      },
-      errorCustomizingCluster: false,
-      preparingAppUpdate: false,
-      watchLicense: null,
-    }
+  state = {
+    appName: "",
+    iconUri: "",
+    editWatchLoading: false,
+    showConfirmDelete: false,
+    showEditModal: false,
+    confirmAppName: "",
+    deleteAppLoading: false,
+    confirmDeleteErr: false,
+    isDownloadingAssets: false,
+    isDownloadingMidstreamAssets: false,
+    downloadCluster: {
+      value: "",
+      label: "Select a cluster",
+      watchId: ""
+    },
+    errorCustomizingCluster: false,
+    preparingAppUpdate: false,
+    watchLicense: null,
+  }
 
   onFormChange = (event) => {
     const { value, name } = event.target;
@@ -73,7 +73,7 @@ class DetailPageApplication extends Component {
     const { watch, updateCallback, updateWatch, refetchListApps } = this.props;
     this.setState({ editWatchLoading: true });
 
-    await updateWatch(watch.id, appName, iconUri).catch( error => {
+    await updateWatch(watch.id, appName, iconUri).catch(error => {
       console.error("[DetailPageApplication]: Error updating Watch info: ", error);
       this.setState({
         editWatchLoading: false
@@ -181,22 +181,22 @@ class DetailPageApplication extends Component {
         watchId: watch.id,
       },
     })
-    .then(({ data }) => {
-      if (isCluster) {
-        this.setState({ [`preparing${watch.id}`]: false });
-      } else {
-        this.setState({ preparingAppUpdate: false });
-      }
-      this.props.onActiveInitSession(data.createEditSession.id);
-      this.props.history.push("/ship/edit");
-    })
-    .catch(() => {
-      if (isCluster) {
-        this.setState({ errorCustomizingCluster: true, [`preparing${watch.id}`]: false })
-      } else {
-        this.setState({ preparingAppUpdate: false });
-      }
-    });
+      .then(({ data }) => {
+        if (isCluster) {
+          this.setState({ [`preparing${watch.id}`]: false });
+        } else {
+          this.setState({ preparingAppUpdate: false });
+        }
+        this.props.onActiveInitSession(data.createEditSession.id);
+        this.props.history.push("/ship/edit");
+      })
+      .catch(() => {
+        if (isCluster) {
+          this.setState({ errorCustomizingCluster: true, [`preparing${watch.id}`]: false })
+        } else {
+          this.setState({ preparingAppUpdate: false });
+        }
+      });
   }
 
   componentDidUpdate(lastProps) {
@@ -249,7 +249,7 @@ class DetailPageApplication extends Component {
             <div className="flex">
               <div className="flex flex-auto">
                 <div
-                  style={{ backgroundImage: `url(${isKotsApp ? watch.iconUri : watch.watchIcon})`}}
+                  style={{ backgroundImage: `url(${isKotsApp ? watch.iconUri : watch.watchIcon})` }}
                   className="DetailPageApplication--appIcon u-position--relative">
                   <PaperIcon
                     className="u-position--absolute"
@@ -285,27 +285,29 @@ class DetailPageApplication extends Component {
                 </div>
               </div>
             }
-
-            <div className="u-marginTop--30 u-paddingTop--10">
-              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal">Application links</p>
-              {childWatches && childWatches.map((childWatch) => {
-                return (
-                  <div className="DetailPage--linksRow flex" key={childWatch.cluster.id}>
-                    {childWatch.links.map((link) => {
-                      return (
-                        <div key={`${childWatch.cluster.id}-${link.title}`}>
-                          {childWatches.length === 1 ?
-                            <a href={link.uri} target="_blank"><button className="btn secondary">{link.title}</button></a>
-                          :
-                            <a href={link.uri} target="_blank"><button className="btn secondary">{childWatch.name} - {link.title}</button></a>
-                          }
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
+            
+            {isKotsApp && (
+              <div className="u-marginTop--30 u-paddingTop--10">
+                <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal">Application links</p>
+                {childWatches && childWatches.map((childWatch) => {
+                  return (
+                    <div className="DetailPage--linksRow flex" key={childWatch.cluster.id}>
+                      {childWatch.links.map((link) => {
+                        return (
+                          <div key={`${childWatch.cluster.id}-${link.title}`}>
+                            {childWatches.length === 1 ?
+                              <a href={link.uri} target="_blank"><button className="btn secondary">{link.title}</button></a>
+                              :
+                              <a href={link.uri} target="_blank"><button className="btn secondary">{childWatch.name} - {link.title}</button></a>
+                            }
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="u-marginTop--30 u-paddingTop--10">
               <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal">Edit application</p>
@@ -316,69 +318,69 @@ class DetailPageApplication extends Component {
             </div>
 
             <div className="u-marginTop--30 u-paddingTop--10">
-            {!childWatches?.length ?
-              <div>
-                <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal">Downstreams</p>
-                <p className="u-fontSize--small u-color--dustyGray u-lineHeight--normal u-marginBottom--10">You have not deployed your application to any downstream clusters. Get started by selecting a downstream cluster from the Downstreams tab.</p>
-                <Link to={`/${isKotsApp ? "app" : "watch"}/${watch.slug}/downstreams`} className="btn secondary">Select a downstream cluster</Link>
-              </div>
-            :
-              <div>
-                <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal">Downstreams</p>
-                <p className="u-fontSize--small u-color--dustyGray u-lineHeight--normal u-marginBottom--10">Your app can be deployed to as many clusters as you would like. Each cluster can have it’s own configuration and patches for your kubernetes YAML.</p>
-                <div className="flex flex-column u-marginTop--10 u-paddingTop--5">
-                  {childWatches && childWatches.map((childWatch) => {
-                    const childCluster = childWatch.cluster;
-                    const clusterType = getClusterType(childCluster.gitOpsRef);
-                    let versionNode = (
-                      <div className="flex alignItems--center">
-                        <div className="icon checkmark-icon"/>
-                        <span className="u-marginLeft--5 u-fontSize--small u-fontWeight--medium u-color--dustyGray">Up to date</span>
-                      </div>
-                    );
-                    if (childWatch.pendingVersions?.length) {
-                      versionNode = (
+              {!childWatches?.length ?
+                <div>
+                  <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal">Downstreams</p>
+                  <p className="u-fontSize--small u-color--dustyGray u-lineHeight--normal u-marginBottom--10">You have not deployed your application to any downstream clusters. Get started by selecting a downstream cluster from the Downstreams tab.</p>
+                  <Link to={`/${isKotsApp ? "app" : "watch"}/${watch.slug}/downstreams`} className="btn secondary">Select a downstream cluster</Link>
+                </div>
+                :
+                <div>
+                  <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal">Downstreams</p>
+                  <p className="u-fontSize--small u-color--dustyGray u-lineHeight--normal u-marginBottom--10">Your app can be deployed to as many clusters as you would like. Each cluster can have it’s own configuration and patches for your kubernetes YAML.</p>
+                  <div className="flex flex-column u-marginTop--10 u-paddingTop--5">
+                    {childWatches && childWatches.map((childWatch) => {
+                      const childCluster = childWatch.cluster;
+                      const clusterType = getClusterType(childCluster.gitOpsRef);
+                      let versionNode = (
                         <div className="flex alignItems--center">
-                          <div className="icon exclamationMark--icon"/>
-                          <span className="u-marginLeft--5 u-fontSize--small u-fontWeight--medium u-color--orange">
-                            {childWatch.pendingVersions?.length === 1 ? "1" : "2+"} {childWatch.pendingVersions?.length >= 2 ? "versions" : "version"} behind
+                          <div className="icon checkmark-icon" />
+                          <span className="u-marginLeft--5 u-fontSize--small u-fontWeight--medium u-color--dustyGray">Up to date</span>
+                        </div>
+                      );
+                      if (childWatch.pendingVersions?.length) {
+                        versionNode = (
+                          <div className="flex alignItems--center">
+                            <div className="icon exclamationMark--icon" />
+                            <span className="u-marginLeft--5 u-fontSize--small u-fontWeight--medium u-color--orange">
+                              {childWatch.pendingVersions?.length === 1 ? "1" : "2+"} {childWatch.pendingVersions?.length >= 2 ? "versions" : "version"} behind
                           </span>
-                        </div>
-                      );
-                    }
-                    if (!childWatch.currentVersion) {
-                      versionNode = (
-                        <div className="flex alignItems--center">
-                          <div className="icon blueCircleMinus--icon"/>
-                          <span className="u-marginLeft--5 u-fontSize--small u-fontWeight--medium u-color--dustyGray">No deployments made</span>
-                        </div>
-                      );
-                    }
-                    if (childCluster) {
-                      return (
-                        <div key={childCluster.id} className="DetailPage--downstreamRow flex">
-                          <div className="flex1 flex alignItems--center">
-                            <span className={`flex-auto icon clusterType ${clusterType}`}></span>
-                            <span className="u-fontSize--normal u-color--tundora u-fontWeight--bold u-marginLeft--5" title={childCluster.title}>{truncateMiddle(childCluster.title, 15, 10, "...")}</span>
                           </div>
-                          <div className="flex1">
-                            {versionNode}
+                        );
+                      }
+                      if (!childWatch.currentVersion) {
+                        versionNode = (
+                          <div className="flex alignItems--center">
+                            <div className="icon blueCircleMinus--icon" />
+                            <span className="u-marginLeft--5 u-fontSize--small u-fontWeight--medium u-color--dustyGray">No deployments made</span>
                           </div>
-                          <div className="flex-auto">
-                            {this.state[`preparing${childWatch.id}`]
-                              ? <Loader size="16"/>
-                              : <span onClick={() => isKotsApp ? this.navigateToFiles(watch) : this.handleEditWatchClick(childWatch)} className="u-fontSize--small replicated-link">Customize</span>
-                            }
+                        );
+                      }
+                      if (childCluster) {
+                        return (
+                          <div key={childCluster.id} className="DetailPage--downstreamRow flex">
+                            <div className="flex1 flex alignItems--center">
+                              <span className={`flex-auto icon clusterType ${clusterType}`}></span>
+                              <span className="u-fontSize--normal u-color--tundora u-fontWeight--bold u-marginLeft--5" title={childCluster.title}>{truncateMiddle(childCluster.title, 15, 10, "...")}</span>
+                            </div>
+                            <div className="flex1">
+                              {versionNode}
+                            </div>
+                            <div className="flex-auto">
+                              {this.state[`preparing${childWatch.id}`]
+                                ? <Loader size="16" />
+                                : <span onClick={() => isKotsApp ? this.navigateToFiles(watch) : this.handleEditWatchClick(childWatch)} className="u-fontSize--small replicated-link">Customize</span>
+                              }
+                            </div>
                           </div>
-                        </div>
-                      );
-                    }
-                  })}
+                        );
+                      }
+                    })}
+                  </div>
+                  <div className="u-marginTop--10 u-paddingTop--5">
+                    <Link to={`/${isKotsApp ? "app" : "watch"}/${watch.slug}/downstreams`} className="btn secondary">See all downstreams</Link>
+                  </div>
                 </div>
-                <div className="u-marginTop--10 u-paddingTop--5">
-                  <Link to={`/${isKotsApp ? "app" : "watch"}/${watch.slug}/downstreams`} className="btn secondary">See all downstreams</Link>
-                </div>
-              </div>
             }
             </div>
 
@@ -476,12 +478,12 @@ class DetailPageApplication extends Component {
                 <button
                   type="submit"
                   className="btn secondary green">
-                   {
-                     this.state.editWatchLoading
+                  {
+                    this.state.editWatchLoading
                       ? "Saving"
                       : "Save Application Details"
-                    }
-              </button>
+                  }
+                </button>
               </div>
             </form>
           </div>
