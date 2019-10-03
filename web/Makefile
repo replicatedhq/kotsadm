@@ -58,7 +58,9 @@ webpack_build_local:
 	node --max_old_space_size=6144 ./node_modules/webpack/bin/webpack.js --config webpack.config.js --env ${SHIP_CLOUD_ENV} --mode development
 
 .PHONY: webpack_build
-webpack_build: SHIP_CLUSTER_BUILD_VERSION = $(shell echo ${GIT_TAG})
+webpack_build:
+	SHORT_BUILDKITE_COMMIT = $(shell echo ${BUILDKITE_COMMIT} | cut -c1-7)
+	SHIP_CLUSTER_BUILD_VERSION = $(shell echo ${GIT_TAG:-SHORT_BUILDKITE_COMMIT})
 webpack_build:
 	SHIP_CLUSTER_BUILD_VERSION=$(SHIP_CLUSTER_BUILD_VERSION) \
 	node \
@@ -74,7 +76,6 @@ publish-kotsadm-tag:
 	docker push kotsadm/kotsadm-web:${GIT_TAG}
 
 .PHONY: publish-kotsadm-alpha
-publish-kotsadm-alpha: SHIP_CLUSTER_BUILD_VERSION = $(shell echo ${BUILDKITE_COMMIT} | cut -c1-7)
 publish-kotsadm-alpha:
 	docker build --build-arg=nginxconf=deploy/kotsadm.conf -f deploy/Dockerfile -t kotsadm/kotsadm-web:alpha .
 	docker push kotsadm/kotsadm-web:alpha
