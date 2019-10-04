@@ -29,6 +29,8 @@ spec:
         type: text
         constraints:
           notNull: true
+      - name: release_notes
+        type: text
       - name: status
         type: text
       - name: preflight_result

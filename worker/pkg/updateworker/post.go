@@ -123,6 +123,7 @@ func (w *Worker) maybeCreatePullRequest(watch *types.Watch, cluster *types.Clust
 		return 0, "", "", "", errors.Wrap(err, "create pull request")
 	}
 
+	// return prNumber, commitSHA, "opened", branchName, nil
 	return prNumber, commitSHA, "pending", branchName, nil
 }
 
