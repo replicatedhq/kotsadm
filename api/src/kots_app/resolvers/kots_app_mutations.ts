@@ -107,5 +107,11 @@ export function KotsMutations(stores: Stores) {
       await app.updateAppConfig(stores, slug, sequence, configGroups);
       return true;
     },
+
+    async updateKotsApp(root: any, args: any, context: Context): Promise<Boolean> {
+      const app = await context.getApp(args.appId);
+      await stores.kotsAppStore.updateApp(app.id, args.appName, args.iconUri);
+      return true;
+    },
   }
 }
