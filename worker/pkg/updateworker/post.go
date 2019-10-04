@@ -123,8 +123,7 @@ func (w *Worker) maybeCreatePullRequest(watch *types.Watch, cluster *types.Clust
 		return 0, "", "", "", errors.Wrap(err, "create pull request")
 	}
 
-	// return prNumber, commitSHA, "opened", branchName, nil
-	return prNumber, commitSHA, "pending", branchName, nil
+	return prNumber, commitSHA, "opened", branchName, nil
 }
 
 func (w *Worker) createVersion(watch *types.Watch, sequence int, file multipart.File, versionStatus string, branchName string, prNumber int, commitSHA string, isCurrent bool, parentSequence *int) error {

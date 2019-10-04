@@ -300,7 +300,7 @@ export async function kotsAppFromAirgapData(out: string, app: KotsApp, stores: S
   const objectStorePath = path.join(params.shipOutputBucket.trim(), app.id, "0.tar.gz");
   await putObject(params, objectStorePath, buffer, params.shipOutputBucket);
 
-const installationSpec = await extractInstallationSpecFromTarball(buffer);
+  const installationSpec = await extractInstallationSpecFromTarball(buffer);
   const supportBundleSpec = await extractSupportBundleSpecFromTarball(buffer);
   const preflightSpec = await extractPreflightSpecFromTarball(buffer);
   const appSpec = await extractAppSpecFromTarball(buffer);

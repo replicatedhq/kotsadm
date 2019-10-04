@@ -150,6 +150,7 @@ export class KotsAPI {
     const appSpec = await extractAppSpecFromTarball(buffer);
     const kotsAppSpec = await extractKotsAppSpecFromTarball(buffer);
     const appTitle = await extractAppTitleFromTarball(buffer);
+
     await request.app.locals.stores.kotsAppStore.createMidstreamVersion(kotsApp.id, 0, installationSpec.versionLabel, installationSpec.releaseNotes, installationSpec.cursor, supportBundleSpec, preflightSpec, appSpec, kotsAppSpec, appTitle);
 
     // we have a local copy of the file now, let's look for downstreams
