@@ -64,6 +64,7 @@ export default () => {
               status: "pending",
               createdOn: Matchers.like("date"),
               sequence: 0,
+              releaseNotes: "release notes",
               deployedAt: Matchers.like("date"),
               preflightResult: Matchers.like("JSONPreflightResult"),
               preflightResultCreatedAt: Matchers.like("date")

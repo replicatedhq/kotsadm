@@ -623,6 +623,7 @@
                 "status": "pending",
                 "createdOn": "date",
                 "sequence": 0,
+                "releaseNotes": "release notes",
                 "deployedAt": "date",
                 "preflightResult": "JSONPreflightResult",
                 "preflightResultCreatedAt": "date"
