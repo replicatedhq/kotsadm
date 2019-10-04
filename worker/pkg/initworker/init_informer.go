@@ -351,7 +351,7 @@ func (w *Worker) maybeCreatePullRequest(watchID string, clusterID string) (int, 
 		return 0, "", "", "", errors.Wrap(err, "create pull request")
 	}
 
-	return prNumber, commitSHA, "opened", branchName, nil
+	return prNumber, commitSHA, "pending", branchName, nil
 }
 
 func stringInSlice(a string, list []string) bool {
