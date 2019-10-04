@@ -90,7 +90,7 @@ export class KotsAppStore {
     await this.pool.query(qq, vv);
   }
 
-  async createDownstreamVersion(id: string, parentSequence: number, clusterId: string, versionLabel: string, releaseNotes: string, status: string): Promise<void> {
+  async createDownstreamVersion(id: string, parentSequence: number, clusterId: string, versionLabel: string, status: string): Promise<void> {
     const pg = await this.pool.connect();
 
     try {
@@ -118,7 +118,7 @@ export class KotsAppStore {
       if (preflightSpec) {
         status = "pending_preflight";
       }
-      const qqq = `insert into app_downstream_version (app_id, cluster_id, sequence, parent_sequence, created_at, version_label, release_notes, status) values ($1, $2, $3, $4, $5, $6, $7, $8)`;
+      const qqq = `insert into app_downstream_version (app_id, cluster_id, sequence, parent_sequence, created_at, version_label, status) values ($1, $2, $3, $4, $5, $6, $7)`;
       const vvv = [
         id,
         clusterId,
@@ -126,7 +126,6 @@ export class KotsAppStore {
         parentSequence,
         new Date(),
         versionLabel,
-        releaseNotes,
         status,
       ];
       await pg.query(qqq, vvv);
@@ -193,7 +192,7 @@ export class KotsAppStore {
       sequence = -1;
     }
 
-    q = `select created_at, version_label, release_notes, status, sequence, applied_at, preflight_result, preflight_result_created_at
+    q = `select created_at, version_label, status, sequence, applied_at, preflight_result, preflight_result_created_at
         from app_downstream_version
         where app_id = $1 and cluster_id = $3 and sequence > $2
         order by sequence desc`;
@@ -229,7 +228,7 @@ export class KotsAppStore {
       return;
     }
 
-    q = `select created_at, version_label, release_notes, status, sequence, applied_at, preflight_result, preflight_result_created_at from app_downstream_version where app_id = $1 and cluster_id = $3 and sequence = $2`;
+    q = `select created_at, version_label, status, sequence, applied_at, preflight_result, preflight_result_created_at from app_downstream_version where app_id = $1 and cluster_id = $3 and sequence = $2`;
     v = [
       appId,
       sequence,
@@ -320,7 +319,7 @@ export class KotsAppStore {
       return;
     }
 
-    q = `select created_at, version_label, release_notes, status, sequence, applied_at, preflight_result, preflight_result_created_at from app_downstream_version where app_id = $1 and cluster_id = $3 and sequence = $2`;
+    q = `select created_at, version_label, status, sequence, applied_at, preflight_result, preflight_result_created_at from app_downstream_version where app_id = $1 and cluster_id = $3 and sequence = $2`;
     v = [
       appId,
       sequence,
@@ -626,7 +625,7 @@ export class KotsAppStore {
       status: row.status || "",
       createdOn: row.created_at,
       sequence: row.sequence,
-      releaseNotes: row.release_notes,
+      releaseNotes: row.release_notes || "",
       deployedAt: row.applied_at,
       preflightResult: row.preflight_result,
       preflightResultCreatedAt: row.preflight_result_created_at,
