@@ -4,15 +4,13 @@ import Helmet from "react-helmet";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Modal from "react-modal";
-import Markdown from "markdown-it";
 import Loader from "../shared/Loader";
 import ActiveDownstreamVersionRow from "../watches/ActiveDownstreamVersionRow";
+import MarkdownRenderer from "@src/components/shared/MarkdownRenderer";
 
 // import { isSingleTenant } from "../../utilities/utilities";
 import "@src/scss/components/watches/WatchVersionHistory.scss";
 dayjs.extend(relativeTime);
-
-const md = Markdown();
 
 export default class AppVersionHistory extends Component {
   state = {
@@ -121,20 +119,20 @@ export default class AppVersionHistory extends Component {
           }
           </div>
         </div>
-        {/* HACK: #ship-init-component is used for existing markdown styles in ship-init */}
         <Modal
-          id="ship-init-component"
           isOpen={viewReleaseNotes}
           onRequestClose={this.hideReleaseNotes}
           contentLabel="Release Notes"
           ariaHideApp={false}
           className="Modal"
         >
-          <div id="ship-init-component">
-            <div
-              className="Modal-body markdown-wrapper"
-              dangerouslySetInnerHTML={{ __html: md.render(app ?.currentVersion ?.releaseNotes || "No release notes for this version") }}
-            />
+          <div className="flex-column">
+            <MarkdownRenderer>
+              {app?.currentVersion?.releaseNotes || "No release notes for this version"}
+            </MarkdownRenderer>
+          </div>
+          <div className="flex u-marginTop--10 u-marginLeft--10 u-marginBottom--10">
+            <button className="btn primary" onClick={this.hideReleaseNotes}>Close</button>
           </div>
         </Modal>
       </div>
