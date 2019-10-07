@@ -158,7 +158,27 @@ export class KotsAppStore {
       return [];
     }
 
-    q = `select created_at, version_label, status, sequence, applied_at, preflight_result, preflight_result_created_at from app_downstream_version where app_id = $1 and cluster_id = $3 and sequence < $2 order by sequence desc`;
+    q =
+      `SELECT
+         app_downstream_version.created_at,
+         app_downstream_version.version_label,
+         app_downstream_version.status,
+         app_downstream_version.sequence,
+         app_downstream_version.applied_at,
+         app_downstream_version.preflight_result,
+         app_downstream_version.preflight_result_created_at,
+         app_version.release_notes AS release_notes
+        FROM
+          app_downstream_version
+          LEFT JOIN app_version ON
+            app_downstream_version.sequence = app_version.sequence AND
+            app_downstream_version.app_id = app_version.app_id
+        WHERE
+          app_downstream_version.app_id = $1 AND
+          app_downstream_version.cluster_id = $3 AND
+          app_downstream_version.sequence < $2
+        ORDER BY
+          app_downstream_version.sequence DESC`;
     v = [
       appId,
       sequence,
@@ -193,10 +213,28 @@ export class KotsAppStore {
       sequence = -1;
     }
 
-    q = `select created_at, version_label, status, sequence, applied_at, preflight_result, preflight_result_created_at
-        from app_downstream_version
-        where app_id = $1 and cluster_id = $3 and sequence > $2
-        order by sequence desc`;
+    q =
+      `SELECT
+         app_downstream_version.created_at,
+         app_downstream_version.version_label,
+         app_downstream_version.status,
+         app_downstream_version.sequence,
+         app_downstream_version.applied_at,
+         app_downstream_version.preflight_result,
+         app_downstream_version.preflight_result_created_at,
+         app_version.release_notes AS release_notes
+        FROM
+          app_downstream_version
+          LEFT JOIN app_version ON
+            app_downstream_version.sequence = app_version.sequence AND
+            app_downstream_version.app_id = app_version.app_id
+        WHERE
+          app_downstream_version.app_id = $1 AND
+          app_downstream_version.cluster_id = $3 AND
+          app_downstream_version.sequence > $2
+        ORDER BY
+          app_downstream_version.sequence DESC`;
+
     v = [
       appId,
       sequence,
@@ -229,7 +267,27 @@ export class KotsAppStore {
       return;
     }
 
-    q = `select created_at, version_label, status, sequence, applied_at, preflight_result, preflight_result_created_at from app_downstream_version where app_id = $1 and cluster_id = $3 and sequence = $2`;
+    q =
+      `SELECT
+         app_downstream_version.created_at,
+         app_downstream_version.version_label,
+         app_downstream_version.status,
+         app_downstream_version.sequence,
+         app_downstream_version.applied_at,
+         app_downstream_version.preflight_result,
+         app_downstream_version.preflight_result_created_at,
+         app_version.release_notes AS release_notes
+        FROM
+          app_downstream_version
+          LEFT JOIN app_version ON
+            app_downstream_version.sequence = app_version.sequence AND
+            app_downstream_version.app_id = app_version.app_id
+        WHERE
+          app_downstream_version.app_id = $1 AND
+          app_downstream_version.cluster_id = $3 AND
+          app_downstream_version.sequence = $2
+        ORDER BY
+          app_downstream_version.sequence DESC`;
     v = [
       appId,
       sequence,
@@ -320,7 +378,27 @@ export class KotsAppStore {
       return;
     }
 
-    q = `select created_at, version_label, status, sequence, applied_at, preflight_result, preflight_result_created_at from app_downstream_version where app_id = $1 and cluster_id = $3 and sequence = $2`;
+    q =
+      `SELECT
+         app_downstream_version.created_at,
+         app_downstream_version.version_label,
+         app_downstream_version.status,
+         app_downstream_version.sequence,
+         app_downstream_version.applied_at,
+         app_downstream_version.preflight_result,
+         app_downstream_version.preflight_result_created_at,
+         app_version.release_notes AS release_notes
+        FROM
+          app_downstream_version
+          LEFT JOIN app_version ON
+            app_downstream_version.sequence = app_version.sequence AND
+            app_downstream_version.app_id = app_version.app_id
+        WHERE
+          app_downstream_version.app_id = $1 AND
+          app_downstream_version.cluster_id = $3 AND
+          app_downstream_version.sequence = $2
+        ORDER BY
+          app_downstream_version.sequence DESC`;
     v = [
       appId,
       sequence,
