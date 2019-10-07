@@ -3,10 +3,17 @@ var path = require("path");
 var srcPath = path.join(__dirname, "src");
 const TerserPlugin = require('terser-webpack-plugin');
 const { BugsnagSourceMapUploaderPlugin } = require("webpack-bugsnag-plugins");
+const CompressionPlugin = require('compression-webpack-plugin');
 
 function getPlugins(appEnv) {
   const plugins = [
-    new webpack.NamedModulesPlugin()
+    new webpack.NamedModulesPlugin(),
+    new CompressionPlugin({
+      filename: "[path].gz[query]",
+      algorithm: "gzip",
+      test: /\.(jsx|js|css|html|svg|png)$/,
+      deleteOriginalAssets: true,
+    }),
   ];
 
   if (appEnv.BUGSNAG_API_KEY) {
