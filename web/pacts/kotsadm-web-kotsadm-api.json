@@ -712,6 +712,53 @@
       }
     },
     {
+      "description": "A query to get kots downstream version history without release notes",
+      "request": {
+        "method": "POST",
+        "path": "/graphql",
+        "headers": {
+          "Authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1NDYzMDQ0MDAwMDAsInRva2VuIjoibm90LWNoZWNrZWQiLCJzZXNzaW9uSWQiOiJrb3RzLW5vLXJlbGVhc2Utbm90ZXMtdXNlci1zZXNzaW9uIn0.eNvGKY0UU2lIXWv-NwmLLJxXFhVGY041ohDu3fKVkZU",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "operationName": "getKotsDownstreamHistory",
+          "query": "\n  query getKotsDownstreamHistory($clusterSlug: String!, $upstreamSlug: String!) {\n    getKotsDownstreamHistory(clusterSlug: $clusterSlug, upstreamSlug: $upstreamSlug) {\n      title\n      status\n      createdOn\n      sequence\n      releaseNotes\n      deployedAt\n      preflightResult\n      preflightResultCreatedAt\n    }\n  }\n",
+          "variables": {
+            "clusterSlug": "kots-no-release-notes-cluster-slug",
+            "upstreamSlug": "kots-no-release-notes-app-slug"
+          }
+        },
+        "matchingRules": {
+          "$.body.query": {
+            "match": "regex",
+            "regex": "\\s*query\\s*getKotsDownstreamHistory\\(\\$clusterSlug:\\s*String!,\\s*\\$upstreamSlug:\\s*String!\\)\\s*\\{\\s*getKotsDownstreamHistory\\(clusterSlug:\\s*\\$clusterSlug,\\s*upstreamSlug:\\s*\\$upstreamSlug\\)\\s*\\{\\s*title\\s*status\\s*createdOn\\s*sequence\\s*releaseNotes\\s*deployedAt\\s*preflightResult\\s*preflightResultCreatedAt\\s*\\}\\s*\\}\\s*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "data": {
+            "getKotsDownstreamHistory": [
+              {
+                "title": "kots-no-release-notes-version-label",
+                "status": "pending",
+                "createdOn": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
+                "sequence": 0,
+                "releaseNotes": "",
+                "deployedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
+                "preflightResult": null,
+                "preflightResultCreatedAt": null
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
       "description": "a mutation to update a watch for single user",
       "request": {
         "method": "POST",

@@ -1,3 +1,6 @@
+/* global
+  describe
+*/
 import listClusters from "./contracts/list-clusters";
 import createShipCluster from "./contracts/create-ship-cluster";
 import createGitOpsCluster from "./contracts/create-gitops-cluster";
@@ -18,6 +21,7 @@ import getLatestKotsPreflightResult from "./contracts/get-latest-kots-preflight-
 import deployKotsVersion from "./contracts/deploy-kots-version";
 import getKotsDownstreamHistory from "./contracts/get-kots-downstream-history";
 import getKotsDownstreamHistoryReleaseNotes from "./contracts/get-kots-downstream-history-release-notes";
+import kotsDownstreamHistoryNoNotes from "./contracts/kots-downstream-history-no-notes";
 // import getWatchVersionGitOps from "./contracts/get-watch-version-gitops-cluster";
 
 describe("ShipAPI GraphQL Pact", () => {
@@ -37,6 +41,7 @@ describe("ShipAPI GraphQL Pact", () => {
   describe("deploy-kots-version", () => deployKotsVersion());
   describe("get-kots-downstream-history", () => getKotsDownstreamHistory());
   describe("get-kots-downstream-history-release-notes", () => getKotsDownstreamHistoryReleaseNotes());
+  describe("kots-downstream-history-no-notes", () => kotsDownstreamHistoryNoNotes());
   describe("single-user:updateWatch", () => updateWatch() );
   // describe("single-user:deleteWatch", () => deleteWatch() );
 

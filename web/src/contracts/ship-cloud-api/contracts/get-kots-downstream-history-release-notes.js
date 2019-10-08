@@ -26,7 +26,6 @@ export default () => {
       },
     });
     const{ data } = result;
-    console.log
     expect(data.getKotsDownstreamHistory[0].title).to.equal("my-other-awesome-version-2");
     expect(data.getKotsDownstreamHistory[0].status).to.equal("pending");
     expect(typeof data.getKotsDownstreamHistory[0].createdOn).to.equal("string");
