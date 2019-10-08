@@ -118,7 +118,6 @@ class PreflightResultPage extends Component {
                 <div className="flex-column">
                   <PreflightRenderer
                     className="u-marginTop--20"
-                    onDeployClick={this.deployKotsDownstream}
                     results={preflightResultData.result}
                   />
                 </div>
