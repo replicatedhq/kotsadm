@@ -8,6 +8,7 @@ import { getKotsPreflightResult, getLatestKotsPreflightResult } from "@src/queri
 import { deployKotsVersion } from "@src/mutations/AppsMutations";
 import Loader from "./shared/Loader";
 import PreflightRenderer from "./PreflightRenderer";
+import { getPreflightResultState } from "../utilities/utilities";
 
 class PreflightResultPage extends Component {
   state = {
@@ -16,7 +17,7 @@ class PreflightResultPage extends Component {
   }
 
   deployKotsDownstream = () => {
-    // deploying downstream when NOT IN license flow
+    // deploying downstream when NOT IN upload license flow
     const { makeCurrentVersion, match, data, history } = this.props;
     const gqlData = data.getKotsPreflightResult || data.getLatestKotsPreflightResult;
     const upstreamSlug = match.params.slug;
@@ -27,28 +28,15 @@ class PreflightResultPage extends Component {
     });
   }
 
-  hasPreflightIssues = preflightResult => {
-    try {
-      const results = JSON.parse(preflightResult).results;
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        if (result.isFail || result.isWarn) {
-          return true;
-        }
-      }
-      return false;
-    } catch(err) {
-      return true;
-    }
-  }
-
-  onContinue = async (force = null) => {
-    // deploying downstream when IN license flow
+  onContinue = async (force = false) => {
+    // deploying downstream when IN upload license flow
     try {
       const { data, history, match } = this.props;
       const preflightResultData = data.getKotsPreflightResult || data.getLatestKotsPreflightResult;
 
-      if (this.hasPreflightIssues(preflightResultData?.result)) {
+      const preflightResults = JSON.parse(preflightResultData?.result);
+      const preflightState = getPreflightResultState(preflightResults);
+      if (preflightState !== "pass") {
         if (force) {
           await this.props.deployKotsVersion(preflightResultData.appSlug, 0, preflightResultData.clusterSlug);
         } else {
