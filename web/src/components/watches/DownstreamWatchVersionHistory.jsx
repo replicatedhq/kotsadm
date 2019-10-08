@@ -20,7 +20,7 @@ class DownstreamWatchVersionHistory extends Component {
     showDeployWarningModal: false,
     deployParams: {},
     deployingSequence: null,
-    viewReleaseNotes: null
+    releaseNotes: null
   }
 
   handleMakeCurrent = async (upstreamSlug, sequence, clusterSlug, status) => {
@@ -90,13 +90,13 @@ class DownstreamWatchVersionHistory extends Component {
 
   showReleaseNotes = notes => {
     this.setState({
-      viewReleaseNotes: notes
+      releaseNotes: notes
     });
   }
 
   hideReleaseNotes = () => {
     this.setState({
-      viewReleaseNotes: null
+      releaseNotes: null
     });
   }
 
@@ -118,7 +118,7 @@ class DownstreamWatchVersionHistory extends Component {
 
   render() {
     const { watch, match, data } = this.props;
-    const { showSkipModal, showDeployWarningModal, viewReleaseNotes } = this.state;
+    const { showSkipModal, showDeployWarningModal, releaseNotes } = this.state;
     const { watches, downstreams } = watch;
     const isKots = isKotsApplication(watch);
     const _slug = isKots ? match.params.downstreamSlug : `${match.params.downstreamOwner}/${match.params.downstreamSlug}`;
@@ -252,7 +252,7 @@ class DownstreamWatchVersionHistory extends Component {
           </div>
         </Modal>
         <Modal
-          isOpen={!!viewReleaseNotes}
+          isOpen={!!releaseNotes}
           onRequestClose={this.hideReleaseNotes}
           contentLabel="Release Notes"
           ariaHideApp={false}
@@ -260,7 +260,7 @@ class DownstreamWatchVersionHistory extends Component {
         >
           <div className="flex-column">
             <MarkdownRenderer>
-              {this.state.viewReleaseNotes || ""}
+              {this.state.releaseNotes || ""}
             </MarkdownRenderer>
           </div>
           <div className="flex u-marginTop--10 u-marginLeft--10 u-marginBottom--10">
