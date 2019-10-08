@@ -397,8 +397,9 @@ export class KotsAppStore {
       sequence
     ];
     const result = await this.pool.query(q,v);
+    const row = result.rows[0];
 
-    return result.rows[0].release_notes;
+    return row && row.release_notes;
   }
 
   async getCurrentVersion(appId: string, clusterId: string): Promise<KotsVersion | undefined> {
