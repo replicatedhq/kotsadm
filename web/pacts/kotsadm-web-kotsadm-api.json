@@ -652,15 +652,15 @@
         "method": "POST",
         "path": "/graphql",
         "headers": {
-          "Authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1NDYzMDQ0MDAwMDAsInRva2VuIjoibm90LWNoZWNrZWQiLCJzZXNzaW9uSWQiOiJnZXQta290cy1kb3duc3RyZWFtLWhpc3RvcnktcmVsZWFzZS1ub3Rlcy11c2VyLXNlc3Npb24ifQ.Qa3XjkG754OynbgxBFRLGiRr2YTtDBFLIKQgN8kuafA",
+          "Authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1NDYzMDQ0MDAwMDAsInRva2VuIjoibm90LWNoZWNrZWQiLCJzZXNzaW9uSWQiOiJrb3RzLXJlbGVhc2Utbm90ZXMtdXNlci1zZXNzaW9uIn0.etnIn-jtkBXBViCV6qFXos_3DrC4AuZr5wBZppqhjPk",
           "Content-Type": "application/json"
         },
         "body": {
           "operationName": "getKotsDownstreamHistory",
           "query": "\n  query getKotsDownstreamHistory($clusterSlug: String!, $upstreamSlug: String!) {\n    getKotsDownstreamHistory(clusterSlug: $clusterSlug, upstreamSlug: $upstreamSlug) {\n      title\n      status\n      createdOn\n      sequence\n      releaseNotes\n      deployedAt\n      preflightResult\n      preflightResultCreatedAt\n    }\n  }\n",
           "variables": {
-            "clusterSlug": "get-kots-downstream-history-release-notes-cluster-slug",
-            "upstreamSlug": "get-kots-downstream-history-release-notes-app-slug"
+            "clusterSlug": "kots-release-notes-cluster-slug",
+            "upstreamSlug": "kots-release-notes-app-slug"
           }
         },
         "matchingRules": {
@@ -679,32 +679,33 @@
           "data": {
             "getKotsDownstreamHistory": [
               {
+                "title": "my-other-awesome-version-2",
+                "status": "pending",
+                "createdOn": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
+                "sequence": 1,
+                "releaseNotes": "",
+                "deployedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
+                "preflightResult": "string",
+                "preflightResultCreatedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)"
+              },
+              {
                 "title": "my-other-awesome-version",
                 "status": "pending",
-                "createdOn": "date",
+                "createdOn": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
                 "sequence": 0,
-                "deployedAt": "date",
-                "preflightResult": "JSONPreflightResult",
-                "preflightResultCreatedAt": "date",
-                "releaseNotes": "string"
+                "releaseNotes": "# Release Notes Markdown Text",
+                "deployedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
+                "preflightResult": "string",
+                "preflightResultCreatedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)"
               }
             ]
           }
         },
         "matchingRules": {
-          "$.body.data.getKotsDownstreamHistory[0].createdOn": {
-            "match": "type"
-          },
-          "$.body.data.getKotsDownstreamHistory[0].deployedAt": {
-            "match": "type"
-          },
           "$.body.data.getKotsDownstreamHistory[0].preflightResult": {
             "match": "type"
           },
-          "$.body.data.getKotsDownstreamHistory[0].preflightResultCreatedAt": {
-            "match": "type"
-          },
-          "$.body.data.getKotsDownstreamHistory[0].releaseNotes": {
+          "$.body.data.getKotsDownstreamHistory[1].preflightResult": {
             "match": "type"
           }
         }

@@ -18,21 +18,25 @@ export default () => {
   it("gets downstream version history for a kots app that has release notes", async done => {
 
     await global.provider.addInteraction(getKotsDownstreamHistoryInteraction);
-    const result = await getShipClient("get-kots-downstream-history-release-notes-user-session").mutate({
+    const result = await getShipClient("kots-release-notes-user-session").mutate({
       mutation: getKotsDownstreamHistory,
       variables: {
-        clusterSlug: "get-kots-downstream-history-release-notes-cluster-slug",
-        upstreamSlug: "get-kots-downstream-history-release-notes-app-slug"
+        clusterSlug: "kots-release-notes-cluster-slug",
+        upstreamSlug: "kots-release-notes-app-slug"
       },
     });
-    expect(result.data.getKotsDownstreamHistory[0].title).to.equal("my-other-awesome-version");
-    expect(result.data.getKotsDownstreamHistory[0].status).to.equal("pending");
-    expect(typeof result.data.getKotsDownstreamHistory[0].createdOn).to.equal("string");
-    expect(result.data.getKotsDownstreamHistory[0].sequence).to.equal(0);
-    expect(typeof result.data.getKotsDownstreamHistory[0].releaseNotes).to.equal("string");
-    expect(typeof result.data.getKotsDownstreamHistory[0].deployedAt).to.equal("string");
-    expect(typeof result.data.getKotsDownstreamHistory[0].preflightResult).to.equal("string");
-    expect(typeof result.data.getKotsDownstreamHistory[0].preflightResultCreatedAt).to.equal("string");
+    const{ data } = result;
+    console.log
+    expect(data.getKotsDownstreamHistory[0].title).to.equal("my-other-awesome-version-2");
+    expect(data.getKotsDownstreamHistory[0].status).to.equal("pending");
+    expect(typeof data.getKotsDownstreamHistory[0].createdOn).to.equal("string");
+    expect(data.getKotsDownstreamHistory[0].sequence).to.equal(1);
+    expect(data.getKotsDownstreamHistory[0].releaseNotes).to.equal("");
+    expect(typeof data.getKotsDownstreamHistory[0].preflightResult).to.equal("string");
+    expect(typeof data.getKotsDownstreamHistory[0].preflightResultCreatedAt).to.equal("string");
+
+    expect(data.getKotsDownstreamHistory[1].releaseNotes).to.equal("# Release Notes Markdown Text");
+
 
     global.provider.verify().then(() => done());
 
@@ -44,15 +48,15 @@ export default () => {
       path: "/graphql",
       method: "POST",
       headers: {
-        "Authorization": createSessionToken("get-kots-downstream-history-release-notes-user-session"),
+        "Authorization": createSessionToken("kots-release-notes-user-session"),
         "Content-Type": "application/json",
       }
     })
     .withOperation("getKotsDownstreamHistory")
     .withQuery(getKotsDownstreamHistoryRaw)
     .withVariables({
-      clusterSlug: "get-kots-downstream-history-release-notes-cluster-slug",
-      upstreamSlug: "get-kots-downstream-history-release-notes-app-slug"
+      clusterSlug: "kots-release-notes-cluster-slug",
+      upstreamSlug: "kots-release-notes-app-slug"
     })
     .willRespondWith({
       status: 200,
@@ -61,16 +65,26 @@ export default () => {
         data: {
           getKotsDownstreamHistory: [
             {
-              title: "my-other-awesome-version",
-              status: "pending",
-              createdOn: Matchers.like("date"),
-              sequence: 0,
-              deployedAt: Matchers.like("date"),
-              preflightResult: Matchers.like("JSONPreflightResult"),
-              preflightResultCreatedAt: Matchers.like("date"),
-              releaseNotes: Matchers.like("string")
-
+              "title": "my-other-awesome-version-2",
+              "status": "pending",
+              "createdOn": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
+              "sequence": 1,
+              "releaseNotes": "",
+              "deployedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
+              "preflightResult": Matchers.like("string"),
+              "preflightResultCreatedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)"
+            },
+            {
+              "title": "my-other-awesome-version",
+              "status": "pending",
+              "createdOn": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
+              "sequence": 0,
+              "releaseNotes": "# Release Notes Markdown Text",
+              "deployedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
+              "preflightResult": Matchers.like("string"),
+              "preflightResultCreatedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)"
             }
+
           ],
         },
       },
