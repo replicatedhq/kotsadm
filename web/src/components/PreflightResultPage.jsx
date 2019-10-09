@@ -16,19 +16,7 @@ class PreflightResultPage extends Component {
     showWarningModal: false
   }
 
-  deployKotsDownstream = () => {
-    // deploying downstream when NOT IN upload license flow
-    const { makeCurrentVersion, match, data, history } = this.props;
-    const gqlData = data.getKotsPreflightResult || data.getLatestKotsPreflightResult;
-    const upstreamSlug = match.params.slug;
-
-    const sequence = parseInt(match.params.sequence, 10);
-    makeCurrentVersion(upstreamSlug, sequence, gqlData.clusterSlug).then(() => {
-      history.push(`/app/${match.params.slug}/downstreams/${match.params.downstreamSlug}/version-history`);
-    });
-  }
-
-  onContinue = async (force = false) => {
+  deployKotsDownstream = async (force = false) => {
     // deploying downstream when IN upload license flow
     try {
       const { data, history, match } = this.props;
@@ -38,7 +26,8 @@ class PreflightResultPage extends Component {
       const preflightState = getPreflightResultState(preflightResults);
       if (preflightState !== "pass") {
         if (force) {
-          await this.props.deployKotsVersion(preflightResultData.appSlug, 0, preflightResultData.clusterSlug);
+          const sequence = match.params.sequence ? parseInt(match.params.sequence, 10) : 0;
+          await this.props.deployKotsVersion(preflightResultData.appSlug, sequence, preflightResultData.clusterSlug);
         } else {
           this.showWarningModal();
           return;
@@ -85,7 +74,7 @@ class PreflightResultPage extends Component {
     const isLoading = data.loading;
 
     // No cluster slug is present if coming from the license upload view
-    const isLicenseFlow = !match.params.clusterSlug;
+    const isLicenseFlow = !match.params.downstreamSlug;
     const preflightResultData = isLoading
       ? null
       : data.getKotsPreflightResult || data.getLatestKotsPreflightResult;
@@ -125,29 +114,18 @@ class PreflightResultPage extends Component {
             </div>
           </div>
         </div>
-        {hasData && !isLicenseFlow && (
+
+        {hasData ? (
           <div className="flex-auto flex justifyContent--flexEnd">
             <button
               type="button"
               className="btn primary u-marginRight--30 u-marginBottom--15"
-              onClick={this.deployKotsDownstream}
+              onClick={() => this.deployKotsDownstream(false)}
             >
-              Create Downstream Cluster
-          </button>
-          </div>
-        )}
-        {hasData && isLicenseFlow && (
-          <div className="flex-auto flex justifyContent--flexEnd">
-            <button
-              type="button"
-              className="btn primary u-marginRight--30 u-marginBottom--15"
-              onClick={() => this.onContinue(false)}
-            >
-              Continue
+              {isLicenseFlow ? "Continue" : "Create Downstream Cluster"}
             </button>
           </div>
-        )}
-        {!hasData && (
+        ) : (
           <div className="flex-auto flex justifyContent--flexEnd">
             <button
               type="button"
@@ -191,7 +169,9 @@ class PreflightResultPage extends Component {
             <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">Preflight is showing some issues, are you sure you want to continue?</p>
             <div className="u-marginTop--10 flex justifyContent--flexEnd">
               <button type="button" className="btn secondary" onClick={this.hideWarningModal}>Cancel</button>
-              <button type="button" className="btn green primary u-marginLeft--10" onClick={() => this.onContinue(true)}>Deploy and continue</button>
+              <button type="button" className="btn green primary u-marginLeft--10" onClick={() => this.deployKotsDownstream(true)}>
+                {isLicenseFlow ? "Deploy and continue" : "Create Downstream Cluster"}
+              </button>
             </div>
           </div>
         </Modal>
