@@ -17,7 +17,6 @@ class PreflightResultPage extends Component {
   }
 
   deployKotsDownstream = async (force = false) => {
-    // deploying downstream when IN upload license flow
     try {
       const { data, history, match } = this.props;
       const preflightResultData = data.getKotsPreflightResult || data.getLatestKotsPreflightResult;
