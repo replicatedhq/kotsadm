@@ -50,8 +50,8 @@ apps:
     install_state: "installed"
     users:
       - kots-no-release-notes-user-id
-    downstream:
-      - "kots-no-release-notes-cluster-id"
+    downstreams:
+      - id: "kots-no-release-notes-cluster-id"
     downstream_versions:
       - preflight_result: null
         preflight_result_created_at: null

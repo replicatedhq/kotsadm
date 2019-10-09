@@ -164,6 +164,7 @@ export class KotsAppStore {
          version_label,
          status,
          sequence,
+         parent_sequence,
          applied_at,
          preflight_result,
          preflight_result_created_at
@@ -185,7 +186,7 @@ export class KotsAppStore {
     const versionItems: KotsVersion[] = [];
 
     for (const row of result.rows) {
-      const releaseNotes = await this.getReleaseNotes(appId, row.sequence);
+      const releaseNotes = await this.getReleaseNotes(appId, row.parent_sequence);
 
       let versionItem: KotsVersion = {
         title: row.version_label,
@@ -227,6 +228,7 @@ export class KotsAppStore {
          version_label,
          status,
          sequence,
+         parent_sequence,
          applied_at,
          preflight_result,
          preflight_result_created_at
@@ -249,7 +251,7 @@ export class KotsAppStore {
     const versionItems: KotsVersion[] = [];
 
     for (const row of result.rows) {
-      const releaseNotes = await this.getReleaseNotes(appId, row.sequence);
+      const releaseNotes = await this.getReleaseNotes(appId, row.parent_sequence);
 
       let versionItem: KotsVersion = {
         title: row.version_label,
@@ -289,6 +291,7 @@ export class KotsAppStore {
          version_label,
          status,
          sequence,
+         parent_sequence,
          applied_at,
          preflight_result,
          preflight_result_created_at
@@ -313,7 +316,7 @@ export class KotsAppStore {
       throw new ReplicatedError(`App Version for clusterId ${clusterId} not found. appId: ${appId}, sequence ${sequence}`);
     }
 
-    const releaseNotes = await this.getReleaseNotes(appId, sequence);
+    const releaseNotes = await this.getReleaseNotes(appId, row.parent_sequence);
 
     let versionItem: KotsVersion = {
       title: row.version_label,
@@ -424,6 +427,7 @@ export class KotsAppStore {
          version_label,
          status,
          sequence,
+         parent_sequence,
          applied_at,
          preflight_result,
          preflight_result_created_at
@@ -449,7 +453,7 @@ export class KotsAppStore {
       throw new ReplicatedError(`App Version for clusterId ${clusterId} not found. appId: ${appId}, sequence ${sequence}`);
     }
 
-    const releaseNotes = await this.getReleaseNotes(appId, sequence);
+    const releaseNotes = await this.getReleaseNotes(appId, row.parent_sequence);
 
     let versionItem: KotsVersion = {
       title: row.version_label,

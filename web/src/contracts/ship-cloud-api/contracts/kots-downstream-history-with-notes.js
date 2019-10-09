@@ -26,19 +26,17 @@ export default () => {
       },
     });
     const{ data } = result;
-    expect(data.getKotsDownstreamHistory[0].title).to.equal("my-other-awesome-version-2");
-    expect(data.getKotsDownstreamHistory[0].status).to.equal("pending");
-    expect(typeof data.getKotsDownstreamHistory[0].createdOn).to.equal("string");
-    expect(data.getKotsDownstreamHistory[0].sequence).to.equal(1);
-    expect(data.getKotsDownstreamHistory[0].releaseNotes).to.equal("");
-    expect(typeof data.getKotsDownstreamHistory[0].preflightResult).to.equal("string");
-    expect(typeof data.getKotsDownstreamHistory[0].preflightResultCreatedAt).to.equal("string");
+    const downstream = data.getKotsDownstreamHistory[0];
 
-    expect(data.getKotsDownstreamHistory[1].releaseNotes).to.equal("# Release Notes Markdown Text");
-
+    expect(downstream.title).to.equal("my-other-awesome-version");
+    expect(downstream.status).to.equal("pending");
+    expect(typeof downstream.createdOn).to.equal("string");
+    expect(downstream.sequence).to.equal(0);
+    expect(downstream.releaseNotes).to.equal("# Release Notes Markdown Text");
+    expect(typeof downstream.preflightResult).to.equal("string");
+    expect(typeof downstream.preflightResultCreatedAt).to.equal("string");
 
     global.provider.verify().then(() => done());
-
   });
 
   const getKotsDownstreamHistoryInteraction = new Pact.GraphQLInteraction()
@@ -64,16 +62,6 @@ export default () => {
         data: {
           getKotsDownstreamHistory: [
             {
-              "title": "my-other-awesome-version-2",
-              "status": "pending",
-              "createdOn": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
-              "sequence": 1,
-              "releaseNotes": "",
-              "deployedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
-              "preflightResult": Matchers.like("string"),
-              "preflightResultCreatedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)"
-            },
-            {
               "title": "my-other-awesome-version",
               "status": "pending",
               "createdOn": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)",
@@ -83,7 +71,6 @@ export default () => {
               "preflightResult": Matchers.like("string"),
               "preflightResultCreatedAt": "Fri Apr 19 2019 01:23:45 GMT+0000 (UTC)"
             }
-
           ],
         },
       },

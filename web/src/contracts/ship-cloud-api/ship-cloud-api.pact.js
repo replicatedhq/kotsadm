@@ -20,8 +20,9 @@ import getKotsPreflightResult from "./contracts/get-kots-preflight-result";
 import getLatestKotsPreflightResult from "./contracts/get-latest-kots-preflight-result";
 import deployKotsVersion from "./contracts/deploy-kots-version";
 import getKotsDownstreamHistory from "./contracts/get-kots-downstream-history";
-import getKotsDownstreamHistoryReleaseNotes from "./contracts/get-kots-downstream-history-release-notes";
+import kotsDownstreamHistoryWithNotes from "./contracts/kots-downstream-history-with-notes";
 import kotsDownstreamHistoryNoNotes from "./contracts/kots-downstream-history-no-notes";
+import kotsDownstreamHistoryDifferentSequences from "./contracts/kots-downstream-history-different-sequences";
 // import getWatchVersionGitOps from "./contracts/get-watch-version-gitops-cluster";
 
 describe("ShipAPI GraphQL Pact", () => {
@@ -40,8 +41,9 @@ describe("ShipAPI GraphQL Pact", () => {
   describe("get-latest-kots-preflight-result", () => getLatestKotsPreflightResult());
   describe("deploy-kots-version", () => deployKotsVersion());
   describe("get-kots-downstream-history", () => getKotsDownstreamHistory());
-  describe("get-kots-downstream-history-release-notes", () => getKotsDownstreamHistoryReleaseNotes());
+  describe("kots-downstream-history-with-notes", () => kotsDownstreamHistoryWithNotes());
   describe("kots-downstream-history-no-notes", () => kotsDownstreamHistoryNoNotes());
+  describe("kots-downstream-history-different-sequences", () => kotsDownstreamHistoryDifferentSequences());
   describe("single-user:updateWatch", () => updateWatch() );
   // describe("single-user:deleteWatch", () => deleteWatch() );
 

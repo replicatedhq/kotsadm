@@ -216,12 +216,12 @@ export class Schema {
       }
     }
 
-    if (app.downstream) {
-      for (const clusterId of app.downstream) {
-        // NOTE: Clusters will use both cluster id for name and title.
+    if (app.downstreams) {
+      for (const downstream of app.downstreams) {
+        // NOTE: id is used for both id and name
         statements.push(
-          escape(`INSERT INTO app_downstream (app_id, cluster_id, downstream_name, current_sequence) VALUES (%L, %L, %L, ${app.current_sequence})`,
-            app.id, clusterId, clusterId
+          escape(`INSERT INTO app_downstream (app_id, cluster_id, downstream_name, current_sequence) VALUES (%L, %L, %L, ${downstream.sequence || app.current_sequence})`,
+            app.id, downstream.id, downstream.id
           )
         );
       }
