@@ -354,8 +354,22 @@ export class KotsAppStore {
     ];
 
     result = await this.pool.query(q, v);
-    // TODO: check for row length here?
-    const versionItem = this.mapKotsAppVersion(result.rows[0]);
+    
+    if (result.rows.length === 0) {
+      throw new ReplicatedError(`No app version found`);
+    }
+
+    const row = result.rows[0];
+    const versionItem: KotsVersion = {
+      title: row.version_label,
+      status: row.status || "",
+      createdOn: row.created_at,
+      sequence: row.sequence,
+      releaseNotes: row.release_notes || "",
+      deployedAt: row.applied_at,
+      preflightResult: row.preflight_result,
+      preflightResultCreatedAt: row.preflight_result_created_at,
+    };
 
     return versionItem;
   }
@@ -776,22 +790,6 @@ export class KotsAppStore {
       // deployVersion sets status to "deployed"
       await this.deployVersion(appId, sequence, clusterId);
     }
-  }
-
-  private mapKotsAppVersion(row: any): KotsVersion {
-    if (!row) {
-      throw new ReplicatedError("No app provided to map function");
-    }
-    return {
-      title: row.version_label,
-      status: row.status || "",
-      createdOn: row.created_at,
-      sequence: row.sequence,
-      releaseNotes: row.release_notes || "",
-      deployedAt: row.applied_at,
-      preflightResult: row.preflight_result,
-      preflightResultCreatedAt: row.preflight_result_created_at,
-    };
   }
 
   async getAirgapBundleGetUrl(filename: string): Promise<string> {
