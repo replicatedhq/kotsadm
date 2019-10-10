@@ -6,7 +6,7 @@ import { signGetRequest } from "../util/s3";
 import randomstring from "randomstring";
 import slugify from "slugify";
 import _ from "lodash";
-import { Utilities } from '../util/utilities';
+import { decodeBase64 } from '../util/utilities';
 
 export class KotsAppStore {
   constructor(private readonly pool: pg.Pool, private readonly params: Params) {}
@@ -99,10 +99,10 @@ export class KotsAppStore {
 
     const row = result.rows[0];
     return {
-      dryrunStdout: Utilities.decodeBase64(row.dryrun_stdout),
-      dryrunStderr: Utilities.decodeBase64(row.dryrun_stderr),
-      applyStdout: Utilities.decodeBase64(row.apply_stdout),
-      applyStderr: Utilities.decodeBase64(row.apply_stderr)
+      dryrunStdout: decodeBase64(row.dryrun_stdout),
+      dryrunStderr: decodeBase64(row.dryrun_stderr),
+      applyStdout: decodeBase64(row.apply_stdout),
+      applyStderr: decodeBase64(row.apply_stderr)
     };
   }
 
