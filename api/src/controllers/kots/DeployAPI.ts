@@ -38,8 +38,6 @@ export class DeployAPI {
       },
     };
 
-    const apps = await request.app.locals.stores.kotsAppStore.listAppsForCluster(cluster.id);
-
     // sequence really should be passed down to operator and returned from it
     const downstreamVersion = await request.app.locals.stores.kotsAppStore.getCurrentVersion(body.app_id, cluster.id);
 

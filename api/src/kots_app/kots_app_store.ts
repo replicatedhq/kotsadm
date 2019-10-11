@@ -106,6 +106,21 @@ export class KotsAppStore {
     };
   }
 
+  async hasFinishedDeployment(appId: string, clusterId: string, sequence: number): Promise<Boolean> {
+    const q = `
+      select count(1) as count
+      from app_downstream_output 
+      where app_id = $1 and cluster_id = $2 and downstream_sequence = $3
+    `;
+    const v = [
+      appId,
+      clusterId,
+      sequence,
+    ];
+    const result = await this.pool.query(q, v);
+    return parseInt(result.rows[0].count) > 0;
+  }
+
   async createDownstream(appId: string, downstreamName: string, clusterId: string): Promise<void> {
     const q = `insert into app_downstream (app_id, downstream_name, cluster_id) values ($1, $2, $3)`;
     const v = [

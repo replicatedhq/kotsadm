@@ -6,6 +6,7 @@ import { Cluster } from "../../cluster";
 import { ReplicatedError } from "../../server/errors";
 import { kotsAppFromLicenseData, kotsFinalizeApp, kotsAppCheckForUpdate } from "../kots_ffi";
 import { KotsApp } from "../kots_app";
+import { sleep } from '../../util/utilities';
 
 export function KotsMutations(stores: Stores) {
   return {
@@ -83,6 +84,14 @@ export function KotsMutations(stores: Stores) {
       const clusterId = await stores.clusterStore.getIdFromSlug(clusterSlug);
 
       await stores.kotsAppStore.deployVersion(appId, sequence, clusterId);
+
+      // wait for deployment to finish
+      let done: Boolean = false;
+      while(!done) {
+        done = await stores.kotsAppStore.hasFinishedDeployment(appId, clusterId, sequence);
+        sleep(500);
+      }
+
       return true;
     },
 
