@@ -23,15 +23,13 @@ class PreflightResultPage extends Component {
 
       const preflightResults = JSON.parse(preflightResultData?.result);
       const preflightState = getPreflightResultState(preflightResults);
-      if (preflightState !== "pass") {
-        if (force) {
-          const sequence = match.params.sequence ? parseInt(match.params.sequence, 10) : 0;
-          await this.props.deployKotsVersion(preflightResultData.appSlug, sequence, preflightResultData.clusterSlug);
-        } else {
-          this.showWarningModal();
-          return;
-        }
+      if (preflightState !== "pass" && !force) {
+        this.showWarningModal();
+        return;
       }
+
+      const sequence = match.params.sequence ? parseInt(match.params.sequence, 10) : 0;
+      await this.props.deployKotsVersion(preflightResultData.appSlug, sequence, preflightResultData.clusterSlug);
 
       if (match.params.downstreamSlug) {
         history.push(`/app/${preflightResultData.appSlug}/downstreams/${match.params.downstreamSlug}/version-history`);
