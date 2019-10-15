@@ -66,7 +66,7 @@ class PreflightResultPage extends Component {
   }
 
   render() {
-    const { data, match } = this.props;
+    const { data } = this.props;
     const { showSkipModal, showWarningModal } = this.state;
     const isLoading = data.loading;
 
