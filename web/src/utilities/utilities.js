@@ -106,33 +106,32 @@ export function isLicenseOutOfDate(currentWatchLicense, latestWatchLicense) {
 /**
  * Checks if current Kots license is out of date (sync)
  *
- * @param {Object} currentAppLicense The watched application current license
- * @param {Object} latestAppLicense The watched application latest license from vendor
+ * @param {Object} currentAppLicense The application current license
+ * @param {Object} latestAppLicense The application latest license from vendor
  * @return {Boolean}
  */
 export function isKotsLicenseOutOfDate(currentAppLicense, latestAppLicense) {
   try {
     if (
       currentAppLicense.id !== latestAppLicense.id ||
-      currentAppLicense.channel !== latestAppLicense.channel ||
-      currentAppLicense.type !== latestAppLicense.type ||
       getLicenseExpiryDate(currentAppLicense) !== getLicenseExpiryDate(latestAppLicense)
     ) {
       return true;
     }
 
     // check for entitlements
-    if (latestAppLicense.entitlements && currentAppLicense.entitlements) {
-      if (latestAppLicense.entitlements.length !== currentAppLicense.entitlements.length) {
+    const latestEntitlements = latestAppLicense.entitlements;
+    const currentEntitlements = currentAppLicense.entitlements;
+    if (latestEntitlements && currentEntitlements) {
+      if (Object.keys(latestEntitlements).length !== Object.keys(currentEntitlements).length) {
         return true;
       }
-      for (let i = 0; i < latestAppLicense.entitlements.length; i++) {
-        const entitlement = latestAppLicense.entitlements[i];
-        const currentEntitlement = find(currentAppLicense.entitlements, ["name", entitlement.name]);
-        if (!currentEntitlement || currentEntitlement.value !== entitlement.value) {
-          return true
+      const keys = Object.keys(latestEntitlements);
+      keys.forEach(key => {
+        if (!(key in currentEntitlements) || (currentEntitlements[key].value !== latestEntitlements[key].value)) {
+          return true;
         }
-      }
+      })
     }
 
     return false;
