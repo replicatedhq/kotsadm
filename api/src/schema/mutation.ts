@@ -22,6 +22,7 @@ type Mutation {
   resumeInstallOnline(slug: String!): KotsApp
   updateAppConfig(slug: String!, sequence: Int!, configGroups: [KotsConfigGroupInput]!): Boolean
   updateKotsApp(appId: String!, appName: String, iconUri: String): Boolean
+  syncAppLicense(appId: String!, licenseId: String!): KLicense
 
   createWatch(stateJSON: String!): Watch
   updateWatch(watchId: String!, watchName: String, iconUri: String): Watch

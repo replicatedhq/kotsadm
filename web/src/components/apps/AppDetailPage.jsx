@@ -22,7 +22,7 @@ import AppVersionHistory from "./AppVersionHistory";
 import DownstreamWatchVersionHistory from "../watches/DownstreamWatchVersionHistory";
 import PreflightResultPage from "../PreflightResultPage";
 import AppConfig from "../apps/AppConfig";
-import WatchLicense from "../watches/WatchLicense";
+import AppLicense from "../apps/AppLicense";
 import SubNavBar from "@src/components/shared/SubNavBar";
 import SidebarLayout from "../layout/SidebarLayout/SidebarLayout";
 import SideBar from "../shared/SideBar";
@@ -405,8 +405,8 @@ class AppDetailPage extends Component {
                       />
                     } />
                     <Route exact path="/app/:slug/license" render={() =>
-                      <WatchLicense
-                        watch={app}
+                      <AppLicense
+                        app={app}
                       />
                     } />
                     <Route exact path="/app/:slug/airgap-settings" render={() =>

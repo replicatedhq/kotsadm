@@ -598,3 +598,29 @@ export const getKotsDownstreamOutput = gql`
     }
   }
 `;
+
+export const getAppLicense = gql`
+  query getAppLicense($appId: String!) {
+    getAppLicense(appId: $appId) {
+      id
+      expiresAt
+      entitlements {
+        title
+        value
+      }
+    }
+  }
+`;
+
+export const getLatestAppLicense = gql`
+  query getLatestAppLicense($licenseId: String!) {
+    getLatestAppLicense(licenseId: $licenseId) {
+      id
+      expiresAt
+      entitlements {
+        title
+        value
+      }
+    }
+  }
+`;
