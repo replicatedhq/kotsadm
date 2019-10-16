@@ -16,10 +16,10 @@ export default class DownstreamKotsCard extends React.Component {
       appSlug
      } = this.props;
 
-     const cluster = downstream?.cluster;
-     const type = cluster?.gitOpsRef ? "git" : "ship";
-     const gitPath = cluster?.gitOpsRef ? `${cluster.gitOpsRef.owner}/${cluster.gitOpsRef.repo}/${cluster.gitOpsRef.branch}${cluster.gitOpsRef.path}` : "";
-     const hasDeployments = downstream?.currentVersion && downstream.currentVersion.status !== "failed";
+    const cluster = downstream?.cluster;
+    const type = cluster?.gitOpsRef ? "git" : "ship";
+    const gitPath = cluster?.gitOpsRef ? `${cluster.gitOpsRef.owner}/${cluster.gitOpsRef.repo}/${cluster.gitOpsRef.branch}${cluster.gitOpsRef.path}` : "";
+    const hasDeployments = downstream?.currentVersion && downstream.currentVersion.status !== "failed";
 
     return (
       <div className="integration flex-column flex1 flex">
