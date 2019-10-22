@@ -15,7 +15,14 @@ export function KotsMutations(stores: Stores) {
       const app = await context.getApp(appId);
       const midstreamUpdateCursor = await stores.kotsAppStore.getMidstreamUpdateCursor(appId);
 
-      const updateAvailable = await kotsAppCheckForUpdate(midstreamUpdateCursor, app, stores);
+      let updateAvailable = false;
+
+      if (app.upstreamUri.startsWith("replicated://") && app.license) {
+        // "quick" update check going to the api directly
+        updateAvailable = true;
+      } else {
+        updateAvailable = await kotsAppCheckForUpdate(midstreamUpdateCursor, app, stores);
+      }
 
       return updateAvailable;
     },
