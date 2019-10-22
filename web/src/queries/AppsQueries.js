@@ -373,6 +373,7 @@ export const getKotsAppRaw = `
       hasPreflight
       isAirgap
       isConfigurable
+      allowRollback
       currentVersion {
         title
         status
@@ -494,6 +495,8 @@ export const getKotsDownstreamHistoryRaw = `
       sequence
       releaseNotes
       deployedAt
+      source
+      diffSummary
       preflightResult
       preflightResultCreatedAt
     }

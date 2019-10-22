@@ -21,6 +21,7 @@ import { Cluster } from "../cluster";
 import * as _ from "lodash";
 import yaml from "js-yaml";
 import { StatusServer } from "../airgap/status";
+import { getDiffSummary } from "../util/utilities";
 
 const GoString = Struct({
   p: "string",
@@ -143,7 +144,7 @@ export async function kotsAppCheckForUpdate(currentCursor: string, app: KotsApp,
 
       const clusterIds = await stores.kotsAppStore.listClusterIDsForApp(app.id);
       for (const clusterId of clusterIds) {
-        await stores.kotsAppStore.createDownstreamVersion(app.id, newSequence, clusterId, installationSpec.versionLabel, "pending");
+        await stores.kotsAppStore.createDownstreamVersion(app.id, newSequence, clusterId, installationSpec.versionLabel, "pending", "Upstream Update", await getDiffSummary(app));
       }
     }
 
@@ -246,7 +247,7 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
         : "deployed";
 
       await stores.kotsAppStore.createDownstream(kotsApp.id, downstream, cluster.id);
-      await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, 0, cluster.id, installationSpec.versionLabel, downstreamState);
+      await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, 0, cluster.id, installationSpec.versionLabel, downstreamState, "Kots Create", await getDiffSummary(kotsApp));
     }
 
     return kotsApp;
@@ -326,7 +327,7 @@ export async function kotsAppFromAirgapData(out: string, app: KotsApp, stores: S
     }
 
     await stores.kotsAppStore.createDownstream(app.id, downstream, cluster.id);
-    await stores.kotsAppStore.createDownstreamVersion(app.id, 0, cluster.id, installationSpec.versionLabel, "deployed");
+    await stores.kotsAppStore.createDownstreamVersion(app.id, 0, cluster.id, installationSpec.versionLabel, "deployed", "Airgap", await getDiffSummary(app));
   }
 
   await stores.kotsAppStore.setKotsAirgapAppInstalled(app.id);

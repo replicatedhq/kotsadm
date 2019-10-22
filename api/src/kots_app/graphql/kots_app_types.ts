@@ -44,6 +44,8 @@ const KotsVersion = `
     sequence: Int
     releaseNotes: String
     deployedAt: String
+    source: String
+    diffSummary: String
     preflightResult: String
     preflightResultCreatedAt: String
     hasError: Boolean
