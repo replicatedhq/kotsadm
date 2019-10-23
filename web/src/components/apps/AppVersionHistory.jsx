@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import classNames from "classnames";
-import { withRouter } from "react-router-dom";
+import { withRouter, Link } from "react-router-dom";
 import { compose, withApollo, graphql } from "react-apollo";
 import Helmet from "react-helmet";
 import dayjs from "dayjs";
@@ -45,6 +45,61 @@ class AppVersionHistory extends Component {
     }
   }
 
+  renderSourceAndDiff = version => {
+    const diffSummary = this.getVersionDiffSummary(version);
+    return (
+      <div>
+        {version.source}
+        {diffSummary && (
+          diffSummary.filesChanged > 0 ?
+          <div className="DiffSummary">
+            <span className="files">{diffSummary.filesChanged} files changed </span>
+            <span className="lines-added">+{diffSummary.linesAdded} </span>
+            <span className="lines-removed">-{diffSummary.linesRemoved}</span>
+          </div>
+          :
+          <div className="DiffSummary">
+            <span className="files">No changes</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  renderDeployStatus = version => {
+    const { app } = this.props;
+    const downstream = app.downstreams[0];
+    const isCurrentVersion = version.sequence === downstream.currentVersion?.sequence;
+    const isPendingVersion = find(downstream.pendingVersions, { sequence: version.sequence });
+    const isPastVersion = find(downstream.pastVersions, { sequence: version.sequence });
+    return (
+      <div>
+        {!(isPastVersion && !app.allowRollback) && 
+        <button 
+          className={`btn ${isPastVersion ? "secondary gray" : "primary green"}`}
+          disabled={isCurrentVersion}
+          onClick={() => this.deployVersion(version)}
+        >
+          {isPendingVersion ? 
+              "Deploy" : 
+              isCurrentVersion ? 
+                "Deployed" : 
+                "Rollback"
+          }
+        </button>
+      }
+      </div>
+    );
+  }
+
+  deployVersion = version => {
+    const { match, app } = this.props;
+    const clusterSlug = app.downstreams?.length && app.downstreams[0].cluster?.slug;
+    if (clusterSlug) {
+      this.props.makeCurrentVersion(match.params.slug, version.sequence, clusterSlug);
+    }
+  }
+
   render() {
     const {
       app,
@@ -52,7 +107,8 @@ class AppVersionHistory extends Component {
       checkingUpdateText,
       errorCheckingUpdate,
       handleAddNewCluster,
-      data
+      data,
+      match
     } = this.props;
 
     const { viewReleaseNotes } = this.state;
@@ -165,42 +221,18 @@ class AppVersionHistory extends Component {
                     </tr>
                   </thead>
                   <tbody>
-                    {versionHistory.map((version) => {
-                      const isCurrentVersion = version.sequence === downstream.currentVersion?.sequence;
-                      const isPendingVersion = find(downstream.pendingVersions, { sequence: version.sequence });
-                      const isPastVersion = find(downstream.pastVersions, { sequence: version.sequence });
-                      const diffSummary = this.getVersionDiffSummary(version);
-                      return (
-                        <tr key={version.sequence}>
-                          <td>{downstream.name}</td>
-                          <td>{moment(version.createdOn).format("MM/DD/YY hh:mm a")}</td>
-                          <td>{version.title}</td>
-                          <td>{version.sequence}</td>
-                          <td>
-                            {version.source}
-                            {diffSummary && (
-                              diffSummary.filesChanged > 0 ?
-                              <div>
-                                <span className="DiffSummary files">{diffSummary.filesChanged} files changed </span>
-                                <span className="DiffSummary lines-added">+{diffSummary.linesAdded} </span>
-                                <span className="DiffSummary lines-removed">-{diffSummary.linesRemoved}</span>
-                              </div>
-                              :
-                              <span className="DiffSummary files"><br/>No changes</span>
-                            )}
-                          </td>
-                          <td>{version.deployedAt ? moment(version.createdOn).format("MM/DD/YY hh:mm a") : ""}</td>
-                          <td className="link">Edit config</td>
-                          <td>
-                            {!(isPastVersion && !app.allowRollback) && 
-                              <button className={`btn ${isPastVersion ? "secondary gray" : "primary green"}`} disabled={isCurrentVersion}>
-                                {isPendingVersion ? "Deploy" : isCurrentVersion ? "Deployed" : "Rollback"}
-                              </button>
-                            }
-                          </td>
-                        </tr>
-                      )
-                    })}
+                    {versionHistory.map((version) => (
+                      <tr key={version.sequence}>
+                        <td>{downstream.name}</td>
+                        <td>{moment(version.createdOn).format("MM/DD/YY hh:mm a")}</td>
+                        <td>{version.title}</td>
+                        <td>{version.sequence}</td>
+                        <td>{this.renderSourceAndDiff(version)}</td>
+                        <td>{version.deployedAt ? moment(version.createdOn).format("MM/DD/YY hh:mm a") : ""}</td>
+                        <td><Link className="link" to={`/app/${match.params.slug}/config`}>Edit config</Link></td>
+                        <td>{this.renderDeployStatus(version)}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

@@ -144,7 +144,7 @@ $cell-width: 140px;
 
 
 .DownstreamVersionsTable {
-  width: 90%;
+  width: 95%;
 
   thead {
     width: 100%;
@@ -179,16 +179,17 @@ $cell-width: 140px;
 
         .DiffSummary {
           font-size: 12px;
+          margin-top: 4px;
         
-          &.files {
+          .files {
             color: black;
           }
         
-          &.lines-added {
+          .lines-added {
             color: green;
           }
         
-          &.lines-removed {
+          .lines-removed {
             color: red;
           }
         }
@@ -205,7 +206,7 @@ $cell-width: 140px;
 }
 
 .DeployedDownstreamVersion {
-  width: 90%;
+  width: 95%;
   border: 1px #44bb66 solid;
   border-radius: 8px;
   margin-bottom: 42px;
