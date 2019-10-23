@@ -181,7 +181,7 @@ class AppVersionHistory extends Component {
       if (version?.preflightResult && version.status === "pending") {
         const preflightResults = JSON.parse(version.preflightResult);
         const preflightState = getPreflightResultState(preflightResults);
-        if (preflightState === "warn") {
+        if (preflightState === "fail") {
           this.setState({
             showDeployWarningModal: true,
             versionToDeploy: version
