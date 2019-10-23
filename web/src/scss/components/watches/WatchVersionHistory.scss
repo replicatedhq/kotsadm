@@ -145,6 +145,7 @@ $cell-width: 140px;
 
 .DownstreamVersionsTable {
   width: 95%;
+  max-width: 1000px;
   table-layout: fixed;
 
   &.full-width {
@@ -210,9 +211,11 @@ $cell-width: 140px;
 
 .DeployedDownstreamVersion {
   width: 95%;
+  max-width: 1000px;
   border: 1px #44bb66 solid;
   border-radius: 8px;
   margin-bottom: 42px;
+  margin-top: 12px;
 
   &.failed {
     border: 1px red solid;

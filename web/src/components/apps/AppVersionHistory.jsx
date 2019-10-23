@@ -4,14 +4,16 @@ import { withRouter, Link } from "react-router-dom";
 import { compose, withApollo, graphql } from "react-apollo";
 import Helmet from "react-helmet";
 import dayjs from "dayjs";
+import MonacoEditor from "react-monaco-editor";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Modal from "react-modal";
 import moment from "moment";
 import find from "lodash/find";
+import map from "lodash/map";
 import Loader from "../shared/Loader";
 import MarkdownRenderer from "@src/components/shared/MarkdownRenderer";
 
-import { getKotsDownstreamHistory } from "../../queries/AppsQueries";
+import { getKotsDownstreamHistory, getKotsDownstreamOutput } from "../../queries/AppsQueries";
 
 // import { isSingleTenant } from "../../utilities/utilities";
 import "@src/scss/components/watches/WatchVersionHistory.scss";
@@ -19,7 +21,10 @@ dayjs.extend(relativeTime);
 
 class AppVersionHistory extends Component {
   state = {
-    viewReleaseNotes: false
+    viewReleaseNotes: false,
+    logsLoading: false,
+    logs: null,
+    selectedTab: null,
   }
 
   showReleaseNotes = () => {
@@ -92,11 +97,58 @@ class AppVersionHistory extends Component {
     );
   }
 
+  renderLogsTabs = () => {
+    const { logs, selectedTab } = this.state;
+    if (!logs) {
+      return null;
+    }
+    const tabs = Object.keys(logs);
+    return (
+      <div className="flex action-tab-bar u-marginTop--10">
+        {map(tabs, tab => (
+          <div className={`tab-item blue ${tab === selectedTab && "is-active"}`} key={tab} onClick={() => this.setState({ selectedTab: tab })}>
+            {tab}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   deployVersion = version => {
     const { match, app } = this.props;
     const clusterSlug = app.downstreams?.length && app.downstreams[0].cluster?.slug;
     if (clusterSlug) {
       this.props.makeCurrentVersion(match.params.slug, version.sequence, clusterSlug);
+    }
+  }
+
+  hideLogsModal = () => {
+    this.setState({
+      showLogsModal: false
+    });
+  }
+
+  handleViewLogs = async version => {
+    const { match, app } = this.props;
+    const clusterSlug = app.downstreams?.length && app.downstreams[0].cluster?.slug;
+    if (clusterSlug) {
+      this.setState({ logsLoading: true, showLogsModal: true });
+      this.props.client.query({
+        query: getKotsDownstreamOutput,
+        fetchPolicy: "no-cache",
+        variables: {
+          appSlug: match.params.slug,
+          clusterSlug: clusterSlug,
+          sequence: version.sequence
+        }
+      }).then(result => {
+        const logs = result.data.getKotsDownstreamOutput;
+        const selectedTab = Object.keys(logs)[0];
+        this.setState({ logs, selectedTab, logsLoading: false });
+      }).catch(err => {
+        console.log(err);
+        this.setState({ logsLoading: false });
+      });
     }
   }
 
@@ -111,7 +163,13 @@ class AppVersionHistory extends Component {
       match
     } = this.props;
 
-    const { viewReleaseNotes } = this.state;
+    const { 
+      viewReleaseNotes, 
+      showLogsModal, 
+      selectedTab, 
+      logs, 
+      logsLoading
+    } = this.state;
 
     if (!app) {
       return null;
@@ -175,32 +233,31 @@ class AppVersionHistory extends Component {
             }
           </div>
         </div>
-        <div className="flex-column flex1 u-overflow--hidden">
-          <div className="flex1 u-overflow--auto">
-
-            {/* When no downstreams exit */}
-            {!downstream &&
-              <div className="flex-column flex1 u-marginBottom--30">
-                <div className="EmptyState--wrapper flex-column flex1">
-                  <div className="EmptyState flex-column flex1 alignItems--center justifyContent--center">
-                    <div className="flex alignItems--center justifyContent--center">
-                      <span className="icon ship-complete-icon-gh"></span>
-                      <span className="deployment-or-text">OR</span>
-                      <span className="icon ship-medium-size"></span>
-                    </div>
-                    <div className="u-textAlign--center u-marginTop--10">
-                      <p className="u-fontSize--largest u-color--tuna u-lineHeight--medium u-fontWeight--bold u-marginBottom--10">No active downstreams</p>
-                      <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--medium u-fontWeight--medium">{app.name} has no downstream deployment clusters yet. {app.name} must be deployed to a cluster to get version histories.</p>
-                    </div>
-                    <div className="u-marginTop--20">
-                      <button className="btn secondary" onClick={handleAddNewCluster}>Add a deployment cluster</button>
+        <div className="flex-column flex1">
+          <div className="flex1">
+            <div className="flex-column alignItems--center">
+              {/* When no downstreams exit */}
+              {!downstream &&
+                <div className="flex-column flex1 u-marginBottom--30">
+                  <div className="EmptyState--wrapper flex-column flex1">
+                    <div className="EmptyState flex-column flex1 alignItems--center justifyContent--center">
+                      <div className="flex alignItems--center justifyContent--center">
+                        <span className="icon ship-complete-icon-gh"></span>
+                        <span className="deployment-or-text">OR</span>
+                        <span className="icon ship-medium-size"></span>
+                      </div>
+                      <div className="u-textAlign--center u-marginTop--10">
+                        <p className="u-fontSize--largest u-color--tuna u-lineHeight--medium u-fontWeight--bold u-marginBottom--10">No active downstreams</p>
+                        <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--medium u-fontWeight--medium">{app.name} has no downstream deployment clusters yet. {app.name} must be deployed to a cluster to get version histories.</p>
+                      </div>
+                      <div className="u-marginTop--20">
+                        <button className="btn secondary" onClick={handleAddNewCluster}>Add a deployment cluster</button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            }
+              }
 
-            <div className="flex-column alignItems--center">
               {/* Active downstream */}
               {currentDownstreamVersion &&
                 <fieldset className={`DeployedDownstreamVersion ${currentDownstreamVersion.status}`}>
@@ -216,7 +273,7 @@ class AppVersionHistory extends Component {
                         <th>Sequence</th>
                         <th>Source</th>
                         <th>Deployed</th>
-                        <th/>
+                        <th>Logs</th>
                         <th/>
                       </tr>
                     </thead>
@@ -228,7 +285,7 @@ class AppVersionHistory extends Component {
                         <td>{currentDownstreamVersion.sequence}</td>
                         <td>{currentDownstreamVersion.source}</td>
                         <td>{currentDownstreamVersion.deployedAt ? moment(currentDownstreamVersion.createdOn).format("MM/DD/YY hh:mm a") : ""}</td>
-                        <td/>
+                        <td><button className="btn secondary u-marginRight--20" onClick={() => this.handleViewLogs(currentDownstreamVersion)}>View</button></td>
                         <td/>
                       </tr>
                     </tbody>
@@ -270,6 +327,7 @@ class AppVersionHistory extends Component {
             </div>
           </div>
         </div>
+        
         <Modal
           isOpen={viewReleaseNotes}
           onRequestClose={this.hideReleaseNotes}
@@ -284,6 +342,46 @@ class AppVersionHistory extends Component {
           </div>
           <div className="flex u-marginTop--10 u-marginLeft--10 u-marginBottom--10">
             <button className="btn primary" onClick={this.hideReleaseNotes}>Close</button>
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={showLogsModal}
+          onRequestClose={this.hideLogsModal}
+          shouldReturnFocusAfterClose={false}
+          contentLabel="View logs"
+          ariaHideApp={false}
+          className="Modal logs-modal"
+        >
+          <div className="Modal-body flex flex1">
+            {!logs || !selectedTab || logsLoading ? (
+              <div className="flex-column flex1 alignItems--center justifyContent--center">
+                <Loader size="60" />
+              </div>
+            ) : (
+                <div className="flex-column flex1">
+                  {this.renderLogsTabs()}
+                  <div className="flex-column flex1 u-border--gray monaco-editor-wrapper">
+                    <MonacoEditor
+                      language="json"
+                      value={logs[selectedTab]}
+                      height="100%"
+                      width="100%"
+                      options={{
+                        readOnly: true,
+                        contextmenu: false,
+                        minimap: {
+                          enabled: false
+                        },
+                        scrollBeyondLastLine: false,
+                      }}
+                    />
+                  </div>
+                  <div className="u-marginTop--20 flex">
+                    <button type="button" className="btn primary" onClick={this.hideLogsModal}>Ok, got it!</button>
+                  </div>
+                </div>
+              )}
           </div>
         </Modal>
       </div>
