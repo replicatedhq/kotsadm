@@ -396,6 +396,7 @@ export const getKotsAppRaw = `
           createdOn
           sequence
           deployedAt
+          source
         }
         pendingVersions {
           title

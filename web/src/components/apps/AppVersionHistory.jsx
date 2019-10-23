@@ -205,9 +205,9 @@ class AppVersionHistory extends Component {
               {currentDownstreamVersion &&
                 <fieldset className={`DeployedDownstreamVersion ${currentDownstreamVersion.status}`}>
                   <legend className="u-marginLeft--20 u-color--tuna u-fontWeight--bold u-paddingLeft--5 u-paddingRight--5">
-                    Deployed Version {currentDownstreamVersion.status === "failed" && "(Failed)"}
+                    Deployed Version{currentDownstreamVersion.status === "failed" && " (Failed)"}
                   </legend>
-                  <table className="DownstreamVersionsTable">
+                  <table className="DownstreamVersionsTable full-width">
                     <thead>
                       <tr key="header">
                         <th>Environment</th>
@@ -216,6 +216,8 @@ class AppVersionHistory extends Component {
                         <th>Sequence</th>
                         <th>Source</th>
                         <th>Deployed</th>
+                        <th/>
+                        <th/>
                       </tr>
                     </thead>
                     <tbody>
@@ -226,6 +228,8 @@ class AppVersionHistory extends Component {
                         <td>{currentDownstreamVersion.sequence}</td>
                         <td>{currentDownstreamVersion.source}</td>
                         <td>{currentDownstreamVersion.deployedAt ? moment(currentDownstreamVersion.createdOn).format("MM/DD/YY hh:mm a") : ""}</td>
+                        <td/>
+                        <td/>
                       </tr>
                     </tbody>
                   </table>

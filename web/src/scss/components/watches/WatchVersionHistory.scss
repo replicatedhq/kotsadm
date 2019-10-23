@@ -145,6 +145,11 @@ $cell-width: 140px;
 
 .DownstreamVersionsTable {
   width: 95%;
+  table-layout: fixed;
+
+  &.full-width {
+    width: 100%;
+  }
 
   thead {
     width: 100%;
@@ -157,7 +162,6 @@ $cell-width: 140px;
       width: 100%;
 
       th {
-        width: 15%;
         color: black;
         padding: 12px;
         font-weight: bold;
@@ -173,7 +177,6 @@ $cell-width: 140px;
       width: 100%;
   
       td {
-        width: 15%;
         color: black;
         padding: 12px;
 
