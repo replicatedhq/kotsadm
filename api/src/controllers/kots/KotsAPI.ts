@@ -409,7 +409,8 @@ export async function uploadUpdate(stores, slug, buffer, source) {
     const status = preflightSpec
       ? "pending_preflight"
       : "pending";
-    await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, newSequence, clusterId, installationSpec.versionLabel, status, source, await getDiffSummary(kotsApp));
+    const diffSummary = await getDiffSummary(kotsApp);
+    await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, newSequence, clusterId, installationSpec.versionLabel, status, source, diffSummary);
   }
 
   return {
