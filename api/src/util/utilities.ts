@@ -25,7 +25,7 @@ export function getPreflightResultState(preflightResults): string {
 }
 
 export async function getDiffSummary(app: KotsApp): Promise<string> {
-  if (!app || !app.currentSequence || app.currentSequence < 1) {
+  if (!app || app.currentSequence == undefined) {
     return "";
   }
   const oldSequence = `${app.currentSequence}`;

@@ -12,10 +12,10 @@ import find from "lodash/find";
 import map from "lodash/map";
 import Loader from "../shared/Loader";
 import MarkdownRenderer from "@src/components/shared/MarkdownRenderer";
+import { Utilities } from "@src/utilities/utilities";
 
 import { getKotsDownstreamHistory, getKotsDownstreamOutput } from "../../queries/AppsQueries";
 
-// import { isSingleTenant } from "../../utilities/utilities";
 import "@src/scss/components/watches/WatchVersionHistory.scss";
 dayjs.extend(relativeTime);
 
@@ -71,7 +71,7 @@ class AppVersionHistory extends Component {
     );
   }
 
-  renderDeployStatus = version => {
+  renderVersionAction = version => {
     const { app } = this.props;
     const downstream = app.downstreams[0];
     const isCurrentVersion = version.sequence === downstream.currentVersion?.sequence;
@@ -92,6 +92,39 @@ class AppVersionHistory extends Component {
                 "Rollback"
             }
           </button>
+        }
+      </div>
+    );
+  }
+
+  renderVersionStatus = version => {
+    return (
+      <div className="flex flex-column">
+        <div className="flex alignItems--center">
+          <div
+            data-tip={`${version.title}-${version.sequence}`}
+            data-for={`${version.title}-${version.sequence}`}
+            className={classNames("icon", {
+              "checkmark-icon": version.status === "deployed" || version.status === "merged",
+              "exclamationMark--icon": version.status === "opened" || version.status === "pending" || version.status === "pending_preflight",
+              "grayCircleMinus--icon": version.status === "closed",
+              "error-small": version.status === "failed"
+            })}
+          />
+          <span className={classNames("u-fontSize--small u-fontWeight--medium u-lineHeight--normal u-marginLeft--5", {
+            "u-color--nevada": version.status === "deployed" || version.status === "merged",
+            "u-color--orange": version.status === "opened" || version.status === "pending" || version.status === "pending_preflight",
+            "u-color--dustyGray": version.status === "closed",
+            "u-color--red": version.status === "failed"
+          })}>
+            {Utilities.toTitleCase(version.status === "pending_preflight" ? "pending" : version.status).replace("_", " ")}
+          </span>
+        </div>
+        {version.status === "pending_preflight" && 
+          <span className="flex u-paddingRight--5 u-fontSize--smaller alignItems--center">
+            Preflights
+            <Loader size="20" />
+          </span>
         }
       </div>
     );
@@ -271,7 +304,7 @@ class AppVersionHistory extends Component {
                         <th>Received</th>
                         <th>Upstream</th>
                         <th>Sequence</th>
-                        <th>Source</th>
+                        <th width="15%">Source</th>
                         <th>Deployed</th>
                         <th>Logs</th>
                         <th/>
@@ -283,10 +316,10 @@ class AppVersionHistory extends Component {
                         <td>{moment(currentDownstreamVersion.createdOn).format("MM/DD/YY hh:mm a")}</td>
                         <td>{currentDownstreamVersion.title}</td>
                         <td>{currentDownstreamVersion.sequence}</td>
-                        <td>{currentDownstreamVersion.source}</td>
+                        <td width="15%">{currentDownstreamVersion.source}</td>
                         <td>{currentDownstreamVersion.deployedAt ? moment(currentDownstreamVersion.createdOn).format("MM/DD/YY hh:mm a") : ""}</td>
                         <td><button className="btn secondary u-marginRight--20" onClick={() => this.handleViewLogs(currentDownstreamVersion)}>View</button></td>
-                        <td/>
+                        <td><Link className="link" to={`/app/${match.params.slug}/config`}>Edit config</Link></td>
                       </tr>
                     </tbody>
                   </table>
@@ -302,9 +335,9 @@ class AppVersionHistory extends Component {
                       <th>Received</th>
                       <th>Upstream</th>
                       <th>Sequence</th>
-                      <th>Source</th>
+                      <th width="15%">Source</th>
                       <th>Deployed</th>
-                      <th></th>
+                      <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -315,10 +348,10 @@ class AppVersionHistory extends Component {
                         <td>{moment(version.createdOn).format("MM/DD/YY hh:mm a")}</td>
                         <td>{version.title}</td>
                         <td>{version.sequence}</td>
-                        <td>{this.renderSourceAndDiff(version)}</td>
+                        <td width="15%">{this.renderSourceAndDiff(version)}</td>
                         <td>{version.deployedAt ? moment(version.createdOn).format("MM/DD/YY hh:mm a") : ""}</td>
-                        <td><Link className="link" to={`/app/${match.params.slug}/config`}>Edit config</Link></td>
-                        <td>{this.renderDeployStatus(version)}</td>
+                        <td>{this.renderVersionStatus(version)}</td>
+                        <td>{this.renderVersionAction(version)}</td>
                       </tr>
                     ))}
                   </tbody>
