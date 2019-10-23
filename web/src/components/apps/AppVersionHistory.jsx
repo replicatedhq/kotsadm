@@ -98,6 +98,15 @@ class AppVersionHistory extends Component {
   }
 
   renderVersionStatus = version => {
+    const { app } = this.props;
+    const downstream = app.downstreams?.length && app.downstreams[0];
+    if (!downstream) {
+      return null;
+    }
+    const isPastVersion = find(downstream.pastVersions, { sequence: version.sequence });
+    if (isPastVersion && isPastVersion.status !== "failed") {
+      return null;
+    }
     return (
       <div className="flex flex-column">
         <div className="flex alignItems--center">
