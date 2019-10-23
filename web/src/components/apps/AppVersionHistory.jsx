@@ -12,7 +12,7 @@ import find from "lodash/find";
 import map from "lodash/map";
 import Loader from "../shared/Loader";
 import MarkdownRenderer from "@src/components/shared/MarkdownRenderer";
-import { Utilities } from "@src/utilities/utilities";
+import { Utilities, hasPendingPreflight, getPreflightResultState } from "@src/utilities/utilities";
 
 import { getKotsDownstreamHistory, getKotsDownstreamOutput } from "../../queries/AppsQueries";
 
@@ -25,6 +25,9 @@ class AppVersionHistory extends Component {
     logsLoading: false,
     logs: null,
     selectedTab: null,
+    showDeployWarningModal: false,
+    showSkipModal: false,
+    versionToDeploy: null
   }
 
   showReleaseNotes = () => {
@@ -98,7 +101,7 @@ class AppVersionHistory extends Component {
   }
 
   renderVersionStatus = version => {
-    const { app } = this.props;
+    const { app, match } = this.props;
     const downstream = app.downstreams?.length && app.downstreams[0];
     if (!downstream) {
       return null;
@@ -107,6 +110,7 @@ class AppVersionHistory extends Component {
     if (isPastVersion && isPastVersion.status !== "failed") {
       return null;
     }
+    const clusterSlug = downstream.cluster?.slug;
     return (
       <div className="flex flex-column">
         <div className="flex alignItems--center">
@@ -129,11 +133,15 @@ class AppVersionHistory extends Component {
             {Utilities.toTitleCase(version.status === "pending_preflight" ? "pending" : version.status).replace("_", " ")}
           </span>
         </div>
-        {version.status === "pending_preflight" && 
+        {version.status === "pending_preflight" ? 
           <span className="flex u-paddingRight--5 u-fontSize--smaller alignItems--center">
             Preflights
             <Loader size="20" />
           </span>
+          : app.hasPreflight && version.status === "pending" &&
+            <Link to={`/app/${match.params.slug}/downstreams/${clusterSlug}/version-history/preflight/${version.sequence}`}>
+              <span className="link" style={{ fontSize: 12 }}>Preflight Results</span>
+            </Link>
         }
       </div>
     );
@@ -156,17 +164,57 @@ class AppVersionHistory extends Component {
     );
   }
 
-  deployVersion = version => {
+  deployVersion = async (version, force = false) => {
     const { match, app } = this.props;
     const clusterSlug = app.downstreams?.length && app.downstreams[0].cluster?.slug;
-    if (clusterSlug) {
-      this.props.makeCurrentVersion(match.params.slug, version.sequence, clusterSlug);
+    if (!clusterSlug) {
+      return;
     }
+    if (!force) {
+      if (version.status === "pending_preflight") {
+        this.setState({
+          showSkipModal: true,
+          versionToDeploy: version
+        });
+        return;
+      }
+      if (version?.preflightResult && version.status === "pending") {
+        const preflightResults = JSON.parse(version.preflightResult);
+        const preflightState = getPreflightResultState(preflightResults);
+        if (preflightState === "fail") {
+          this.setState({
+            showDeployWarningModal: true,
+            versionToDeploy: version
+          });
+          return;
+        }
+      }
+    }
+    await this.props.makeCurrentVersion(match.params.slug, version.sequence, clusterSlug);
+    this.setState({ versionToDeploy: null });
+  }
+
+  onForceDeployClick = () => {
+    this.setState({ showSkipModal: false, showDeployWarningModal: false });
+    const versionToDeploy = this.state.versionToDeploy;
+    this.deployVersion(versionToDeploy, true);
   }
 
   hideLogsModal = () => {
     this.setState({
       showLogsModal: false
+    });
+  }
+
+  hideDeployWarningModal = () => {
+    this.setState({
+      showDeployWarningModal: false
+    });
+  }
+
+  hideSkipModal = () => {
+    this.setState({
+      showSkipModal: false
     });
   }
 
@@ -210,7 +258,9 @@ class AppVersionHistory extends Component {
       showLogsModal, 
       selectedTab, 
       logs, 
-      logsLoading
+      logsLoading,
+      showDeployWarningModal,
+      showSkipModal
     } = this.state;
 
     if (!app) {
@@ -239,6 +289,12 @@ class AppVersionHistory extends Component {
     const downstream = app.downstreams.length && app.downstreams[0];
     const currentDownstreamVersion = downstream?.currentVersion;
     const versionHistory = data?.getKotsDownstreamHistory?.length ? data.getKotsDownstreamHistory : [];
+
+    if (hasPendingPreflight(versionHistory)) {
+      data?.startPolling(2000);
+    } else {
+      data?.stopPolling();
+    }
 
     return (
       <div className="flex-column flex1 u-position--relative u-overflow--auto u-padding--20">
@@ -424,6 +480,61 @@ class AppVersionHistory extends Component {
                   </div>
                 </div>
               )}
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={showDeployWarningModal}
+          onRequestClose={this.hideDeployWarningModal}
+          shouldReturnFocusAfterClose={false}
+          contentLabel="Skip preflight checks"
+          ariaHideApp={false}
+          className="Modal"
+        >
+          <div className="Modal-body">
+            <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">
+              Preflight checks for this version are currently failing. Are you sure you want to make this the current version?
+            </p>
+            <div className="u-marginTop--10 flex">
+              <button
+                onClick={this.onForceDeployClick}
+                type="button"
+                className="btn green primary"
+              >
+                Deploy this version
+              </button>
+              <button
+                onClick={this.hideDeployWarningModal}
+                type="button"
+                className="btn secondary u-marginLeft--20"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={showSkipModal}
+          onRequestClose={this.hideSkipModal}
+          shouldReturnFocusAfterClose={false}
+          contentLabel="Skip preflight checks"
+          ariaHideApp={false}
+          className="Modal SkipModal"
+        >
+          <div className="Modal-body">
+            <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">
+              Preflight checks have not finished yet. Are you sure you want to deploy this version?
+            </p>
+            <div className="u-marginTop--10 flex">
+              <button
+                onClick={this.onForceDeployClick}
+                type="button"
+                className="btn green primary">
+                Deploy this version
+              </button>
+              <button type="button" onClick={this.hideSkipModal} className="btn secondary u-marginLeft--20">Cancel</button>
+            </div>
           </div>
         </Modal>
       </div>
