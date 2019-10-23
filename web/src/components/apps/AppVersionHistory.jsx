@@ -40,7 +40,7 @@ class AppVersionHistory extends Component {
     }
     try {
       return JSON.parse(version.diffSummary);
-    } catch(err) {
+    } catch (err) {
       return null;
     }
   }
@@ -52,15 +52,15 @@ class AppVersionHistory extends Component {
         {version.source}
         {diffSummary && (
           diffSummary.filesChanged > 0 ?
-          <div className="DiffSummary">
-            <span className="files">{diffSummary.filesChanged} files changed </span>
-            <span className="lines-added">+{diffSummary.linesAdded} </span>
-            <span className="lines-removed">-{diffSummary.linesRemoved}</span>
-          </div>
-          :
-          <div className="DiffSummary">
-            <span className="files">No changes</span>
-          </div>
+            <div className="DiffSummary">
+              <span className="files">{diffSummary.filesChanged} files changed </span>
+              <span className="lines-added">+{diffSummary.linesAdded} </span>
+              <span className="lines-removed">-{diffSummary.linesRemoved}</span>
+            </div>
+            :
+            <div className="DiffSummary">
+              <span className="files">No changes</span>
+            </div>
         )}
       </div>
     );
@@ -74,20 +74,20 @@ class AppVersionHistory extends Component {
     const isPastVersion = find(downstream.pastVersions, { sequence: version.sequence });
     return (
       <div>
-        {!(isPastVersion && !app.allowRollback) && 
-        <button 
-          className={`btn ${isPastVersion ? "secondary gray" : "primary green"}`}
-          disabled={isCurrentVersion}
-          onClick={() => this.deployVersion(version)}
-        >
-          {isPendingVersion ? 
-              "Deploy" : 
-              isCurrentVersion ? 
-                "Deployed" : 
+        {!(isPastVersion && !app.allowRollback) &&
+          <button
+            className={`btn ${isPastVersion ? "secondary gray" : "primary green"}`}
+            disabled={isCurrentVersion}
+            onClick={() => this.deployVersion(version)}
+          >
+            {isPendingVersion ?
+              "Deploy" :
+              isCurrentVersion ?
+                "Deployed" :
                 "Rollback"
-          }
-        </button>
-      }
+            }
+          </button>
+        }
       </div>
     );
   }
@@ -135,7 +135,7 @@ class AppVersionHistory extends Component {
     }
 
     const isAirgap = app.isAirgap;
-    
+
     const downstream = app.downstreams.length && app.downstreams[0];
     const currentDownstreamVersion = downstream?.currentVersion;
     const versionHistory = data?.getKotsDownstreamHistory?.length ? data.getKotsDownstreamHistory : [];
@@ -177,11 +177,36 @@ class AppVersionHistory extends Component {
         </div>
         <div className="flex-column flex1 u-overflow--hidden">
           <div className="flex1 u-overflow--auto">
-            {versionHistory.length ?
-              <div className="flex-column alignItems--center">
-                {/* Active downstream */}
-                <fieldset className="DeployedDownstreamVersion">
-                  <legend className="u-marginLeft--20 u-color--tuna u-fontWeight--bold u-paddingLeft--5 u-paddingRight--5">Deployed Version</legend>
+
+            {/* When no downstreams exit */}
+            {!downstream &&
+              <div className="flex-column flex1 u-marginBottom--30">
+                <div className="EmptyState--wrapper flex-column flex1">
+                  <div className="EmptyState flex-column flex1 alignItems--center justifyContent--center">
+                    <div className="flex alignItems--center justifyContent--center">
+                      <span className="icon ship-complete-icon-gh"></span>
+                      <span className="deployment-or-text">OR</span>
+                      <span className="icon ship-medium-size"></span>
+                    </div>
+                    <div className="u-textAlign--center u-marginTop--10">
+                      <p className="u-fontSize--largest u-color--tuna u-lineHeight--medium u-fontWeight--bold u-marginBottom--10">No active downstreams</p>
+                      <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--medium u-fontWeight--medium">{app.name} has no downstream deployment clusters yet. {app.name} must be deployed to a cluster to get version histories.</p>
+                    </div>
+                    <div className="u-marginTop--20">
+                      <button className="btn secondary" onClick={handleAddNewCluster}>Add a deployment cluster</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <div className="flex-column alignItems--center">
+              {/* Active downstream */}
+              {currentDownstreamVersion &&
+                <fieldset className={`DeployedDownstreamVersion ${currentDownstreamVersion.status}`}>
+                  <legend className="u-marginLeft--20 u-color--tuna u-fontWeight--bold u-paddingLeft--5 u-paddingRight--5">
+                    Deployed Version {currentDownstreamVersion.status === "failed" && "(Failed)"}
+                  </legend>
                   <table className="DownstreamVersionsTable">
                     <thead>
                       <tr key="header">
@@ -205,8 +230,10 @@ class AppVersionHistory extends Component {
                     </tbody>
                   </table>
                 </fieldset>
+              }
 
-                {/* Downstream version history */}
+              {/* Downstream version history */}
+              {versionHistory.length &&
                 <table className="DownstreamVersionsTable">
                   <thead className="separator">
                     <tr key="header">
@@ -235,27 +262,8 @@ class AppVersionHistory extends Component {
                     ))}
                   </tbody>
                 </table>
-              </div>
-              :
-              <div className="flex-column flex1">
-                <div className="EmptyState--wrapper flex-column flex1">
-                  <div className="EmptyState flex-column flex1 alignItems--center justifyContent--center">
-                    <div className="flex alignItems--center justifyContent--center">
-                      <span className="icon ship-complete-icon-gh"></span>
-                      <span className="deployment-or-text">OR</span>
-                      <span className="icon ship-medium-size"></span>
-                    </div>
-                    <div className="u-textAlign--center u-marginTop--10">
-                      <p className="u-fontSize--largest u-color--tuna u-lineHeight--medium u-fontWeight--bold u-marginBottom--10">No active downstreams</p>
-                      <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--medium u-fontWeight--medium">{app.name} has no downstream deployment clusters yet. {app.name} must be deployed to a cluster to get version histories.</p>
-                    </div>
-                    <div className="u-marginTop--20">
-                      <button className="btn secondary" onClick={handleAddNewCluster}>Add a deployment cluster</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
+              }
+            </div>
           </div>
         </div>
         <Modal

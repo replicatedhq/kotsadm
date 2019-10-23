@@ -210,4 +210,8 @@ $cell-width: 140px;
   border: 1px #44bb66 solid;
   border-radius: 8px;
   margin-bottom: 42px;
+
+  &.failed {
+    border: 1px red solid;
+  }
 }

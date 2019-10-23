@@ -247,7 +247,7 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
         : "deployed";
 
       await stores.kotsAppStore.createDownstream(kotsApp.id, downstream, cluster.id);
-      await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, 0, cluster.id, installationSpec.versionLabel, downstreamState, "Kots Create", await getDiffSummary(kotsApp));
+      await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, 0, cluster.id, installationSpec.versionLabel, downstreamState, "Kots Install", await getDiffSummary(kotsApp));
     }
 
     return kotsApp;
