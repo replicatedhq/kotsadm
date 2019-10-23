@@ -49,7 +49,7 @@ class AppVersionHistory extends Component {
     try {
       return JSON.parse(version.diffSummary);
     } catch (err) {
-      return null;
+      throw err;
     }
   }
 
@@ -80,11 +80,12 @@ class AppVersionHistory extends Component {
     const isCurrentVersion = version.sequence === downstream.currentVersion?.sequence;
     const isPendingVersion = find(downstream.pendingVersions, { sequence: version.sequence });
     const isPastVersion = find(downstream.pastVersions, { sequence: version.sequence });
+    const showActions = !isPastVersion || app.allowRollback;
     return (
       <div>
-        {!(isPastVersion && !app.allowRollback) &&
+        {showActions &&
           <button
-            className={`btn ${isPastVersion ? "secondary gray" : "primary green"}`}
+            className={classNames("btn", { "secondary gray": isPastVersion, "primary green": !isPastVersion })}
             disabled={isCurrentVersion}
             onClick={() => this.deployVersion(version)}
           >
