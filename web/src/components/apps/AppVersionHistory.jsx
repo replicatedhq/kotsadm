@@ -303,8 +303,8 @@ class AppVersionHistory extends Component {
                         <th>Environment</th>
                         <th>Received</th>
                         <th>Upstream</th>
-                        <th>Sequence</th>
-                        <th width="15%">Source</th>
+                        <th width="11%">Sequence</th>
+                        <th width="17%">Source</th>
                         <th>Deployed</th>
                         <th>Logs</th>
                         <th/>
@@ -315,8 +315,8 @@ class AppVersionHistory extends Component {
                         <td>{downstream.name}</td>
                         <td>{moment(currentDownstreamVersion.createdOn).format("MM/DD/YY hh:mm a")}</td>
                         <td>{currentDownstreamVersion.title}</td>
-                        <td>{currentDownstreamVersion.sequence}</td>
-                        <td width="15%">{currentDownstreamVersion.source}</td>
+                        <td width="11%">{currentDownstreamVersion.sequence}</td>
+                        <td width="17%">{currentDownstreamVersion.source}</td>
                         <td>{currentDownstreamVersion.deployedAt ? moment(currentDownstreamVersion.createdOn).format("MM/DD/YY hh:mm a") : ""}</td>
                         <td><button className="btn secondary u-marginRight--20" onClick={() => this.handleViewLogs(currentDownstreamVersion)}>View</button></td>
                         <td><Link className="link" to={`/app/${match.params.slug}/config`}>Edit config</Link></td>
@@ -334,8 +334,8 @@ class AppVersionHistory extends Component {
                       <th>Environment</th>
                       <th>Received</th>
                       <th>Upstream</th>
-                      <th>Sequence</th>
-                      <th width="15%">Source</th>
+                      <th width="11%">Sequence</th>
+                      <th width="17%">Source</th>
                       <th>Deployed</th>
                       <th>Status</th>
                       <th>Actions</th>
@@ -347,8 +347,8 @@ class AppVersionHistory extends Component {
                         <td>{downstream.name}</td>
                         <td>{moment(version.createdOn).format("MM/DD/YY hh:mm a")}</td>
                         <td>{version.title}</td>
-                        <td>{version.sequence}</td>
-                        <td width="15%">{this.renderSourceAndDiff(version)}</td>
+                        <td width="11%">{version.sequence}</td>
+                        <td width="17%">{this.renderSourceAndDiff(version)}</td>
                         <td>{version.deployedAt ? moment(version.createdOn).format("MM/DD/YY hh:mm a") : ""}</td>
                         <td>{this.renderVersionStatus(version)}</td>
                         <td>{this.renderVersionAction(version)}</td>
