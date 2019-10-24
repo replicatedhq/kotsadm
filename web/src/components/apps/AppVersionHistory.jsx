@@ -16,6 +16,7 @@ import MarkdownRenderer from "@src/components/shared/MarkdownRenderer";
 import { Utilities, hasPendingPreflight, getPreflightResultState } from "@src/utilities/utilities";
 
 import { getKotsDownstreamHistory, getKotsDownstreamOutput } from "../../queries/AppsQueries";
+import { checkForKotsUpdates } from "../../mutations/AppsMutations";
 
 import "@src/scss/components/watches/WatchVersionHistory.scss";
 dayjs.extend(relativeTime);
@@ -33,13 +34,12 @@ class AppVersionHistory extends Component {
     selectedDiffReleases: false,
     checkedReleasesToDiff: [],
     diffHovered: false,
+    checkingForUpdates: false,
+    checkingUpdateText: "Checking for updates",
+    errorCheckingUpdate: false,
   }
 
-  componentDidUpdate(lastProps) {
-    if (!this.props.checkingForUpdates && lastProps.checkingForUpdates) {
-      this.props.data.refetch();
-    }
-  }
+  loadingTextTimer = null;
 
   showReleaseNotes = () => {
     this.setState({
@@ -295,6 +295,39 @@ class AppVersionHistory extends Component {
     }
   }
 
+  onUploadNewVersion = () => {
+    this.props.history.push(`/${this.props.match.params.slug}/airgap`);
+  }
+
+  onCheckForUpdates = async () => {
+    const { client, app } = this.props;
+
+    this.setState({ checkingForUpdates: true });
+
+    this.loadingTextTimer = setTimeout(() => {
+      this.setState({ checkingUpdateText: "Almost there, hold tight..." });
+    }, 10000);
+
+    await client.mutate({
+      mutation: checkForKotsUpdates,
+      variables: {
+        appId: app.id,
+      }
+    }).catch(() => {
+      this.setState({ errorCheckingUpdate: true });
+    }).finally(() => {
+      clearTimeout(this.loadingTextTimer);
+      this.setState({
+        checkingForUpdates: false,
+        checkingUpdateText: "Checking for updates"
+      });
+      if (this.props.updateCallback) {
+        this.props.updateCallback();
+      }
+      this.props.data.refetch();
+    });
+  }
+
   renderDiffBtn = () => {
     const { diffHovered, selectedDiffReleases } = this.state;
     if (selectedDiffReleases) {
@@ -359,9 +392,6 @@ class AppVersionHistory extends Component {
   render() {
     const {
       app,
-      checkingForUpdates,
-      checkingUpdateText,
-      errorCheckingUpdate,
       handleAddNewCluster,
       data,
       match
@@ -377,7 +407,10 @@ class AppVersionHistory extends Component {
       showSkipModal,
       downstreamReleaseNotes,
       selectedDiffReleases,
-      checkedReleasesToDiff
+      checkedReleasesToDiff,
+      checkingForUpdates,
+      checkingUpdateText,
+      errorCheckingUpdate,
     } = this.state;
 
     if (!app) {
@@ -441,7 +474,7 @@ class AppVersionHistory extends Component {
               <div className="flex-auto flex-column alignItems--center justifyContent--center">
                 {checkingForUpdates
                   ? <Loader size="32" />
-                  : <button className="btn secondary green" onClick={isAirgap ? this.props.onUploadNewVersion : this.props.onCheckForUpdates}>{isAirgap ? "Upload new version" : "Check for updates"}</button>
+                  : <button className="btn secondary green" onClick={isAirgap ? this.onUploadNewVersion : this.onCheckForUpdates}>{isAirgap ? "Upload new version" : "Check for updates"}</button>
                 }
                 {updateText}
               </div>
