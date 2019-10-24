@@ -35,6 +35,12 @@ class AppVersionHistory extends Component {
     diffHovered: false,
   }
 
+  componentDidUpdate(lastProps) {
+    if (!this.props.checkingForUpdates && lastProps.checkingForUpdates) {
+      this.props.data.refetch();
+    }
+  }
+
   showReleaseNotes = () => {
     this.setState({
       viewReleaseNotes: true
@@ -80,13 +86,14 @@ class AppVersionHistory extends Component {
   }
 
   renderSourceAndDiff = version => {
+    const { match, history } = this.props;
     const diffSummary = this.getVersionDiffSummary(version);
     return (
       <div>
         {version.source}
         {diffSummary && (
           diffSummary.filesChanged > 0 ?
-            <div className="DiffSummary">
+            <div className="DiffSummary u-cursor--pointer" onClick={() => history.push(`/app/${match.params.slug}/version-history/diff/${version.sequence - 1}/${version.sequence}`)}>
               <span className="files">{diffSummary.filesChanged} files changed </span>
               <span className="lines-added">+{diffSummary.linesAdded} </span>
               <span className="lines-removed">-{diffSummary.linesRemoved}</span>
@@ -331,6 +338,24 @@ class AppVersionHistory extends Component {
     };
   }
 
+  getDiffSequences = () => {
+    const { checkedReleasesToDiff } = this.state;
+    let firstSequenceNumber, secondSequenceNumber;
+    if (checkedReleasesToDiff.length === 2) {
+      if (checkedReleasesToDiff[0].releaseSequence < checkedReleasesToDiff[1].releaseSequence) {
+        firstSequenceNumber = checkedReleasesToDiff[0].releaseSequence;
+        secondSequenceNumber = checkedReleasesToDiff[1].releaseSequence;
+      } else {
+        firstSequenceNumber = checkedReleasesToDiff[1].releaseSequence;
+        secondSequenceNumber = checkedReleasesToDiff[0].releaseSequence;
+      }
+    }
+    return {
+      firstSequenceNumber,
+      secondSequenceNumber
+    }
+  }
+
   render() {
     const {
       app,
@@ -376,21 +401,11 @@ class AppVersionHistory extends Component {
       updateText = null;
     }
 
-    let firstSequenceNumber, secondSequenceNumber;
-    if (checkedReleasesToDiff.length === 2) {
-      if (checkedReleasesToDiff[0].releaseSequence < checkedReleasesToDiff[1].releaseSequence) {
-        firstSequenceNumber = checkedReleasesToDiff[0].releaseSequence;
-        secondSequenceNumber = checkedReleasesToDiff[1].releaseSequence;
-      } else {
-        firstSequenceNumber = checkedReleasesToDiff[1].releaseSequence;
-        secondSequenceNumber = checkedReleasesToDiff[0].releaseSequence;
-      }
-    }
-
     const isAirgap = app.isAirgap;
     const downstream = app.downstreams.length && app.downstreams[0];
     const currentDownstreamVersion = downstream?.currentVersion;
     const versionHistory = data?.getKotsDownstreamHistory?.length ? data.getKotsDownstreamHistory : [];
+    const { firstSequenceNumber, secondSequenceNumber } = this.getDiffSequences();
 
     if (hasPendingPreflight(versionHistory)) {
       data?.startPolling(2000);
@@ -497,7 +512,12 @@ class AppVersionHistory extends Component {
               {versionHistory.length && selectedDiffReleases && 
                 <div className="flex u-marginBottom--20">
                   <button className="btn secondary gray u-marginRight--10" onClick={this.onCloseReleasesToDiff}>Cancel</button>
-                  <Link to={`/app/${match.params.slug}/version-history/diff/${firstSequenceNumber}/${secondSequenceNumber}`} className={classNames("btn primary blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 })}>Diff releases</Link>
+                  <Link 
+                    to={`/app/${match.params.slug}/version-history/diff/${firstSequenceNumber}/${secondSequenceNumber}`} 
+                    className={classNames("btn primary blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 })}
+                  >
+                    Diff releases
+                  </Link>
                 </div>
               }
 
