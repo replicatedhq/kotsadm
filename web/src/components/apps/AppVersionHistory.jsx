@@ -497,7 +497,7 @@ class AppVersionHistory extends Component {
               {versionHistory.length && selectedDiffReleases && 
                 <div className="flex u-marginBottom--20">
                   <button className="btn secondary gray u-marginRight--10" onClick={this.onCloseReleasesToDiff}>Cancel</button>
-                  <Link to={`/app/${match.params.slug}/diff/${firstSequenceNumber}/${secondSequenceNumber}`} className={classNames("btn primary blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 })}>Diff releases</Link>
+                  <Link to={`/app/${match.params.slug}/version-history/diff/${firstSequenceNumber}/${secondSequenceNumber}`} className={classNames("btn primary blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 })}>Diff releases</Link>
                 </div>
               }
 
