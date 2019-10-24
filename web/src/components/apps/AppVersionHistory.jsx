@@ -39,8 +39,6 @@ class AppVersionHistory extends Component {
     errorCheckingUpdate: false,
   }
 
-  loadingTextTimer = null;
-
   showReleaseNotes = () => {
     this.setState({
       viewReleaseNotes: true
