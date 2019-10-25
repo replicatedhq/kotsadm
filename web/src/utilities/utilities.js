@@ -104,44 +104,6 @@ export function isLicenseOutOfDate(currentWatchLicense, latestWatchLicense) {
 }
 
 /**
- * Checks if current Kots license is out of date (sync)
- *
- * @param {Object} currentAppLicense The application current license
- * @param {Object} latestAppLicense The application latest license from vendor
- * @return {Boolean}
- */
-export function isKotsLicenseOutOfDate(currentAppLicense, latestAppLicense) {
-  try {
-    if (
-      currentAppLicense.id !== latestAppLicense.id ||
-      getLicenseExpiryDate(currentAppLicense) !== getLicenseExpiryDate(latestAppLicense)
-    ) {
-      return true;
-    }
-
-    // check for entitlements
-    const latestEntitlements = latestAppLicense.entitlements;
-    const currentEntitlements = currentAppLicense.entitlements;
-    if (latestEntitlements && currentEntitlements) {
-      if (Object.keys(latestEntitlements).length !== Object.keys(currentEntitlements).length) {
-        return true;
-      }
-      const keys = Object.keys(latestEntitlements);
-      keys.forEach(key => {
-        if (!(key in currentEntitlements) || (currentEntitlements[key].value !== latestEntitlements[key].value)) {
-          return true;
-        }
-      })
-    }
-
-    return false;
-  } catch (error) {
-    console.error(error);
-    return true;
-  }
-}
-
-/**
  * Constructs the watch license from app's watch
  *
  * @param {String} watch The watched application to check

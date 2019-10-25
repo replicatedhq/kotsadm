@@ -82,16 +82,3 @@ export const updateKotsApp = gql`
     updateKotsApp(appId: $appId, appName: $appName, iconUri: $iconUri)
   }
 `;
-
-export const syncAppLicense = gql`
-  mutation syncAppLicense ($appId: String!, $licenseId: String!) {
-    syncAppLicense(appId: $appId, licenseId: $licenseId) {
-      id
-      expiresAt
-      entitlements {
-        title
-        value
-      }
-    }
-  }
-`;

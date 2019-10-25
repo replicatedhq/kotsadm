@@ -614,19 +614,7 @@ export const getAppLicense = gql`
       entitlements {
         title
         value
-      }
-    }
-  }
-`;
-
-export const getLatestAppLicense = gql`
-  query getLatestAppLicense($licenseId: String!) {
-    getLatestAppLicense(licenseId: $licenseId) {
-      id
-      expiresAt
-      entitlements {
-        title
-        value
+        label
       }
     }
   }

@@ -7,9 +7,5 @@ export function KotsLicenseQueries(stores: Stores) {
       const app = await context.getApp(appId);
       return await stores.kotsLicenseStore.getAppLicense(app.id);
     },
-    
-    async getLatestAppLicense(root: any, { licenseId }, context: Context) {
-      return await stores.kotsLicenseStore.getLatestAppLicense(licenseId);
-    },
   };
 }
