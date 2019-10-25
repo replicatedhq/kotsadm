@@ -370,6 +370,7 @@ export const getKotsAppRaw = `
       createdAt
       updatedAt
       slug
+      upstreamUri
       currentSequence
       hasPreflight
       isAirgap
