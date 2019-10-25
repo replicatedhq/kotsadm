@@ -64,6 +64,8 @@ export const Query = `
 
     validateUpstreamURL(upstream: String!): Boolean!
 
+    validateRegistryInfo(endpoint: String, username: String, password: String, org: String): String!
+
     listNotifications(watchId: String!): [Notification]
     getNotification(notificationId: String!): Notification
     pullRequestHistory(notificationId: String!): [PullRequestHistory]
@@ -82,5 +84,7 @@ export const Query = `
     getLatestKotsPreflightResult: PreflightResult
 
     getAirgapInstallStatus: AirgapInstallStatus
+
+    kurl: Kurl
   }
 `;

@@ -19,6 +19,7 @@ import { KotsLicenseStore } from "../klicenses";
 import { GithubInstallationsStore } from "../github_installation/github_installation_store";
 import { PreflightStore } from "../preflight/preflight_store";
 import { KotsAppStore } from "../kots_app/kots_app_store";
+import { KurlStore } from "../kurl/kurl_store";
 
 export interface Stores {
   sessionStore: SessionStore;
@@ -42,4 +43,5 @@ export interface Stores {
   githubInstall: GithubInstallationsStore,
   preflightStore: PreflightStore,
   kotsAppStore: KotsAppStore,
+  kurlStore: KurlStore,
 }

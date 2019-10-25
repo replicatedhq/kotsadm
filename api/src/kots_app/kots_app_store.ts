@@ -77,8 +77,8 @@ export class KotsAppStore {
 
   async getDownstreamOutput(appId: string, clusterId: string, sequence: number): Promise<KotsDownstreamOutput> {
     const q = `
-      select dryrun_stdout, dryrun_stderr, apply_stdout, apply_stderr 
-      from app_downstream_output 
+      select dryrun_stdout, dryrun_stderr, apply_stdout, apply_stderr
+      from app_downstream_output
       where app_id = $1 and cluster_id = $2 and downstream_sequence = $3
     `;
     const v = [
@@ -171,7 +171,7 @@ export class KotsAppStore {
     await this.pool.query(qq, vv);
   }
 
-  async createDownstreamVersion(id: string, parentSequence: number, clusterId: string, versionLabel: string, status: string): Promise<void> {
+  async createDownstreamVersion(id: string, parentSequence: number, clusterId: string, versionLabel: string, status: string, source: string, diffSummary: string): Promise<void> {
     const pg = await this.pool.connect();
 
     try {
@@ -199,7 +199,7 @@ export class KotsAppStore {
       if (preflightSpec) {
         status = "pending_preflight";
       }
-      const qqq = `insert into app_downstream_version (app_id, cluster_id, sequence, parent_sequence, created_at, version_label, status) values ($1, $2, $3, $4, $5, $6, $7)`;
+      const qqq = `insert into app_downstream_version (app_id, cluster_id, sequence, parent_sequence, created_at, version_label, status, source, diff_summary) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`;
       const vvv = [
         id,
         clusterId,
@@ -208,6 +208,8 @@ export class KotsAppStore {
         new Date(),
         versionLabel,
         status,
+        source,
+        diffSummary
       ];
       await pg.query(qqq, vvv);
       await pg.query("commit");
@@ -246,6 +248,8 @@ export class KotsAppStore {
          adv.sequence,
          adv.parent_sequence,
          adv.applied_at,
+         adv.source,
+         adv.diff_summary,
          adv.preflight_result,
          adv.preflight_result_created_at,
          ado.is_error AS has_error
@@ -278,8 +282,11 @@ export class KotsAppStore {
         title: row.version_label,
         status: row.has_error ? "failed" : row.status,
         createdOn: row.created_at,
+        parentSequence: row.parent_sequence,
         sequence: row.sequence,
         deployedAt: row.applied_at,
+        source: row.source,
+        diffSummary: row.diff_summary,
         releaseNotes: releaseNotes || "",
         preflightResult: row.preflight_result,
         preflightResultCreatedAt: row.preflight_result_created_at
@@ -316,6 +323,8 @@ export class KotsAppStore {
          sequence,
          parent_sequence,
          applied_at,
+         source,
+         diff_summary,
          preflight_result,
          preflight_result_created_at
         FROM
@@ -343,8 +352,11 @@ export class KotsAppStore {
         title: row.version_label,
         status: row.status,
         createdOn: row.created_at,
+        parentSequence: row.parent_sequence,
         sequence: row.sequence,
         deployedAt: row.applied_at,
+        source: row.source,
+        diffSummary: row.diff_summary,
         releaseNotes: releaseNotes || "",
         preflightResult: row.preflight_result,
         preflightResultCreatedAt: row.preflight_result_created_at
@@ -379,6 +391,8 @@ export class KotsAppStore {
          adv.sequence,
          adv.parent_sequence,
          adv.applied_at,
+         adv.source,
+         adv.diff_summary,
          adv.preflight_result,
          adv.preflight_result_created_at,
          ado.is_error AS has_error
@@ -414,8 +428,11 @@ export class KotsAppStore {
       title: row.version_label,
       status: row.has_error ? "failed" : row.status,
       createdOn: row.created_at,
+      parentSequence: row.parent_sequence,
       sequence: row.sequence,
       deployedAt: row.applied_at,
+      source: row.source,
+      diffSummary: row.diff_summary,
       releaseNotes: releaseNotes || "",
       preflightResult: row.preflight_result,
       preflightResultCreatedAt: row.preflight_result_created_at
@@ -446,12 +463,15 @@ export class KotsAppStore {
     ];
 
     result = await this.pool.query(q, v);
-    
+
     if (result.rows.length === 0) {
       throw new ReplicatedError(`No app version found`);
     }
 
     const row = result.rows[0];
+
+    // There is no parent sequence on midstream versions
+
     const versionItem: KotsVersion = {
       title: row.version_label,
       status: row.status || "",
@@ -521,13 +541,14 @@ export class KotsAppStore {
       await this.pool.query(q, v);
 
     const qq = `UPDATE app_downstream_version
-        SET status = 'deployed'
+        SET status = 'deployed', applied_at = $4
       WHERE sequence = $1 AND app_id = $2 AND cluster_id = $3`;
 
     const vv = [
       sequence,
       appId,
       clusterId,
+      new Date()
     ];
 
     await this.pool.query(qq, vv);
@@ -826,7 +847,7 @@ export class KotsAppStore {
 
   async getAirgapBundleGetUrl(filename: string): Promise<string> {
     const signed = await signGetRequest(this.params, this.params.airgapBucket, filename, 60);
-    return signed
+    return signed;
   }
 
   async getAirgapInstallStatus(): Promise<{ installStatus: string, currentMessage: string}> {

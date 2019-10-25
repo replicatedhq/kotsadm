@@ -22,6 +22,7 @@ import { Cluster } from "../cluster";
 import * as _ from "lodash";
 import yaml from "js-yaml";
 import { StatusServer } from "../airgap/status";
+import { getDiffSummary } from "../util/utilities";
 
 const GoString = Struct({
   p: "string",
@@ -30,9 +31,9 @@ const GoString = Struct({
 
 function kots() {
   return ffi.Library("/lib/kots.so", {
+    TestRegistryCredentials: ["void", [GoString, GoString, GoString, GoString, GoString]],
     PullFromLicense: ["void", [GoString, GoString, GoString, GoString]],
-    PullFromAirgap: ["void", [GoString, GoString, GoString, GoString, GoString, GoString, GoString]],
-    RewriteAndPushImageName: ["void", [GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString]],
+    PullFromAirgap: ["void", [GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString]],
     UpdateCheck: ["void", [GoString, GoString]],
     ReadMetadata: ["void", [GoString, GoString]],
     RemoveMetadata: ["void", [GoString, GoString]],
@@ -158,7 +159,8 @@ export async function kotsAppCheckForUpdate(currentCursor: string, app: KotsApp,
 
       const clusterIds = await stores.kotsAppStore.listClusterIDsForApp(app.id);
       for (const clusterId of clusterIds) {
-        await stores.kotsAppStore.createDownstreamVersion(app.id, newSequence, clusterId, installationSpec.versionLabel, "pending");
+        const diffSummary = await getDiffSummary(app);
+        await stores.kotsAppStore.createDownstreamVersion(app.id, newSequence, clusterId, installationSpec.versionLabel, "pending", "Upstream Update", diffSummary);
       }
     }
 
@@ -168,7 +170,7 @@ export async function kotsAppCheckForUpdate(currentCursor: string, app: KotsApp,
   }
 }
 
-export async function kotsAppFromLicenseData(licenseData: string, name: string, downstreamName: string, stores: Stores): Promise<KotsApp | void> {
+export async function kotsAppFromLicenseData(licenseData: string, name: string, downstreamName: string, stores: Stores): Promise<KotsApp> {
   const parsedLicense = yaml.safeLoad(licenseData);
   if (parsedLicense.spec.isAirgapSupported) {
     try {
@@ -273,9 +275,10 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
       const downstreamState = kotsApp.hasPreflight
         ? "pending_preflight"
         : "deployed";
+      const diffSummary = await getDiffSummary(kotsApp);
 
       await stores.kotsAppStore.createDownstream(kotsApp.id, downstream, cluster.id);
-      await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, 0, cluster.id, installationSpec.versionLabel, downstreamState);
+      await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, 0, cluster.id, installationSpec.versionLabel, downstreamState, "Kots Install", diffSummary);
     }
 
     return kotsApp;
@@ -284,7 +287,7 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
   }
 }
 
-export function kotsPullFromAirgap(socket: string, out: string, app: KotsApp, licenseData: string, airgapDir: string, downstreamName: string, stores: Stores, registryHost: string, registryNamespace: string): any {
+export function kotsPullFromAirgap(socket: string, out: string, app: KotsApp, licenseData: string, airgapDir: string, downstreamName: string, stores: Stores, registryHost: string, registryNamespace: string, username: string, password: string): any {
   const socketParam = new GoString();
   socketParam["p"] = socket;
   socketParam["n"] = socket.length;
@@ -313,7 +316,15 @@ export function kotsPullFromAirgap(socket: string, out: string, app: KotsApp, li
   registryNamespaceParam["p"] = registryNamespace;
   registryNamespaceParam["n"] = registryNamespace.length;
 
-  kots().PullFromAirgap(socketParam, licenseDataParam, airgapDirParam, downstreamParam, outParam, registryHostParam, registryNamespaceParam);
+  const usernameParam = new GoString();
+  usernameParam["p"] = username;
+  usernameParam["n"] = username.length;
+
+  const passwordParam = new GoString();
+  passwordParam["p"] = password;
+  passwordParam["n"] = password.length;
+
+  kots().PullFromAirgap(socketParam, licenseDataParam, airgapDirParam, downstreamParam, outParam, registryHostParam, registryNamespaceParam, usernameParam, passwordParam);
 
   // args are returned so they are not garbage collected before native code is done
   return {
@@ -324,6 +335,8 @@ export function kotsPullFromAirgap(socket: string, out: string, app: KotsApp, li
     outParam,
     registryHostParam,
     registryNamespaceParam,
+    usernameParam,
+    passwordParam,
   };
 }
 
@@ -368,8 +381,10 @@ export async function kotsAppFromAirgapData(out: string, app: KotsApp, stores: S
       continue;
     }
 
+    const diffSummary = await getDiffSummary(app);
+
     await stores.kotsAppStore.createDownstream(app.id, downstream, cluster.id);
-    await stores.kotsAppStore.createDownstreamVersion(app.id, 0, cluster.id, installationSpec.versionLabel, "deployed");
+    await stores.kotsAppStore.createDownstreamVersion(app.id, 0, cluster.id, installationSpec.versionLabel, "deployed", "Airgap", diffSummary);
   }
 
   await stores.kotsAppStore.setKotsAirgapAppInstalled(app.id);
@@ -379,50 +394,51 @@ export async function kotsAppFromAirgapData(out: string, app: KotsApp, stores: S
   };
 }
 
-export function kotsRewriteAndPushImageName(socket: string, imageFile: string, image: string, format: string, registryHost: string, registryOrg: string, username: string, password: string): any {
-  const socketParam = new GoString();
-  socketParam["p"] = socket;
-  socketParam["n"] = socket.length;
+export async function kotsTestRegistryCredentials(endpoint: string, username: string, password: string, repo: string): Promise<String> {
+  const tmpDir = tmp.dirSync();
+  try {
+    const statusServer = new StatusServer();
+    await statusServer.start(tmpDir.name);
 
-  const imageFileParam = new GoString();
-  imageFileParam["p"] = imageFile;
-  imageFileParam["n"] = imageFile.length;
+    const socketParam = new GoString();
+    socketParam["p"] = statusServer.socketFilename;
+    socketParam["n"] = statusServer.socketFilename.length;
 
-  const imageParam = new GoString();
-  imageParam["p"] = image;
-  imageParam["n"] = image.length;
+    const endpointParam = new GoString();
+    endpointParam["p"] = endpoint;
+    endpointParam["n"] = endpoint.length;
 
-  const formatParam = new GoString();
-  formatParam["p"] = format;
-  formatParam["n"] = format.length;
+    const usernameParam = new GoString();
+    usernameParam["p"] = username;
+    usernameParam["n"] = username.length;
 
-  const registryHostParam = new GoString();
-  registryHostParam["p"] = registryHost;
-  registryHostParam["n"] = registryHost.length;
+    const passwordParam = new GoString();
+    passwordParam["p"] = password;
+    passwordParam["n"] = password.length;
 
-  const registryOrgParam = new GoString();
-  registryOrgParam["p"] = registryOrg;
-  registryOrgParam["n"] = registryOrg.length;
+    const repoParam = new GoString();
+    repoParam["p"] = repo;
+    repoParam["n"] = repo.length;
 
-  const usernameParam = new GoString();
-  usernameParam["p"] = username;
-  usernameParam["n"] = username.length;
+    kots().TestRegistryCredentials(socketParam, endpointParam, usernameParam, passwordParam, repoParam);
 
-  const passwordParam = new GoString();
-  passwordParam["p"] = password;
-  passwordParam["n"] = password.length;
+    let testError = "";
+    await statusServer.connection();
+    await statusServer.termination((resolve, reject, obj): boolean => {
+      // Return true if completed
+      if (obj.status === "terminated") {
+        if (obj.exit_code !== 0) {
+          testError = obj.display_message;
+        }
+        resolve();
+        return true;
+      }
+      return false;
+    });
 
-  kots().RewriteAndPushImageName(socketParam, imageFileParam, imageParam, formatParam, registryHostParam, registryOrgParam, usernameParam, passwordParam);
+    return testError;
 
-  // args are returned so they are not garbage collected before native code is done
-  return {
-    socketParam,
-    imageFileParam,
-    imageParam,
-    formatParam,
-    registryHostParam,
-    registryOrgParam,
-    usernameParam,
-    passwordParam,
-  };
+  } finally {
+    tmpDir.removeCallback();
+  }
 }

@@ -22,9 +22,16 @@ import { Cluster } from "../../cluster";
 import { KotsApp, kotsAppFromLicenseData } from "../../kots_app";
 import { extractFromTgzStream, getImageFiles, getImageFormats, pathToShortImageName, pathToImageName } from "../../airgap/archive";
 import { StatusServer } from "../../airgap/status";
-import { kotsPullFromAirgap, kotsAppFromAirgapData, kotsRewriteAndPushImageName } from "../../kots_app/kots_ffi";
+import {
+  kotsPullFromAirgap,
+  kotsAppFromAirgapData,
+  kotsTestRegistryCredentials
+} from "../../kots_app/kots_ffi";
 import { Session } from "../../session";
+import { getDiffSummary } from "../../util/utilities";
 import yaml from "js-yaml";
+import * as k8s from "@kubernetes/client-node";
+import { decodeBase64 } from "../../util/utilities";
 
 interface CreateAppBody {
   metadata: string;
@@ -227,7 +234,7 @@ export class KotsAPI {
       }
 
       await request.app.locals.stores.kotsAppStore.createDownstream(kotsApp.id, downstream, cluster.id);
-      await request.app.locals.stores.kotsAppStore.createDownstreamVersion(kotsApp.id, 0, cluster.id, installationSpec.versionLabel, "deployed");
+      await request.app.locals.stores.kotsAppStore.createDownstreamVersion(kotsApp.id, 0, cluster.id, installationSpec.versionLabel, "deployed", "Kots Install", "");
     }
 
     return {
@@ -245,7 +252,7 @@ export class KotsAPI {
     const buffer = fs.readFileSync(file.path);
     const stores = request.app.locals.stores;
 
-    return uploadUpdate(stores, metadata.slug, buffer);
+    return uploadUpdate(stores, metadata.slug, buffer, "Kots Upload");
   }
 
   @Post("/airgap")
@@ -255,11 +262,44 @@ export class KotsAPI {
     @Req() request: Request,
     @Res() response: Response,
   ): Promise<any> {
-    const { registryHost, namespace, username, password } = body;
-
     const params = await Params.getParams();
 
     const app = await request.app.locals.stores.kotsAppStore.getPendingKotsAirgapApp();
+
+    let registryHost, namespace, username, password = "";
+
+    let needsRegistry = true;
+    try {
+      const kc = new k8s.KubeConfig();
+      kc.loadFromDefault();
+      const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+      const res = await k8sApi.readNamespacedSecret("registry-creds", "default");
+      if (res && res.body && res.body.data && res.body.data[".dockerconfigjson"]) {
+        needsRegistry = false;
+
+        // parse the dockerconfig secret
+        const parsed = JSON.parse(decodeBase64(res.body.data[".dockerconfigjson"]));
+        const auths = parsed.auths;
+        for (const hostname in auths) {
+          const config = auths[hostname];
+          if (config.username === "kurl") {
+            registryHost = hostname;
+            username = config.username;
+            password = config.password;
+            namespace = app.slug;
+          }
+        }
+      }
+    } catch {
+      /* no need to handle, rbac problem or not a path we can read registry */
+    }
+
+    if (needsRegistry) {
+      registryHost = body.registryHost;
+      namespace = body.namespace;
+      username = body.username;
+      password = body.password;
+    }
 
     const dstDir = tmp.dirSync();
     var appSlug: string;
@@ -297,28 +337,6 @@ export class KotsAPI {
         imageMap = imageMap.concat(m);
       }
 
-      for (const image of imageMap) {
-        const statusServer = new StatusServer();
-        await statusServer.start(dstDir.name);
-        const args = kotsRewriteAndPushImageName(statusServer.socketFilename, image.filePath, image.shortName, image.format, registryHost, namespace, username, password);
-        await statusServer.connection();
-        await statusServer.termination((resolve, reject, obj): boolean => {
-          // Return true if completed
-          if (obj.status === "running") {
-            Promise.all([request.app.locals.stores.kotsAppStore.setAirgapInstallStatus(obj.display_message)]);
-            return false;
-          } else if (obj.status === "terminated") {
-            if (obj.exit_code === 0) {
-              resolve();
-            } else {
-              reject(new Error(`process failed: ${obj.display_message}`));
-            }
-            return true;
-          }
-          return false;
-        });
-      }
-
       const clusters = await request.app.locals.stores.clusterStore.listAllUsersClusters();
       let downstream;
       for (const cluster of clusters) {
@@ -335,11 +353,14 @@ export class KotsAPI {
 
         const statusServer = new StatusServer();
         await statusServer.start(dstDir.name);
-        const args = kotsPullFromAirgap(statusServer.socketFilename, out, app, String(app.license), dstDir.name, downstream.title, request.app.locals.stores, registryHost, namespace);
+        const args = kotsPullFromAirgap(statusServer.socketFilename, out, app, String(app.license), dstDir.name, downstream.title, request.app.locals.stores, registryHost, namespace, username, password);
         await statusServer.connection();
         await statusServer.termination((resolve, reject, obj): boolean => {
           // Return true if completed
-          if (obj.status === "terminated") {
+          if (obj.status === "running") {
+            Promise.all([request.app.locals.stores.kotsAppStore.setAirgapInstallStatus(obj.display_message)]);
+            return false;
+          } else if (obj.status === "terminated") {
             if (obj.exit_code === 0) {
               resolve();
             } else {
@@ -395,9 +416,33 @@ export class KotsAPI {
     response.send(200);
   }
 
+  @Post("/registry")
+  async kotsValidateRegistryAuth(
+    @BodyParams("") body: any,
+    @Req() request: Request,
+    @Res() response: Response,
+    @HeaderParams("Authorization") auth: string,
+  ): Promise<any> {
+    const session: Session = await request.app.locals.stores.sessionStore.decode(auth);
+    if (!session || !session.userId) {
+      response.status(401);
+      return {};
+    }
+
+    const { registryHost, namespace, username, password } = body;
+
+    const testError = await kotsTestRegistryCredentials(registryHost, username, password, namespace);
+
+    if (!testError) {
+      response.send(200);
+    } else {
+      response.status(401);
+    }
+    return {error: testError};
+  }
 }
 
-export async function uploadUpdate(stores, slug, buffer) {
+export async function uploadUpdate(stores, slug, buffer, source) {
   // Todo this could use some proper not-found error handling stuffs
   const kotsApp = await stores.kotsAppStore.getApp(await stores.kotsAppStore.getIdFromSlug(slug));
 
@@ -436,7 +481,8 @@ export async function uploadUpdate(stores, slug, buffer) {
     const status = preflightSpec
       ? "pending_preflight"
       : "pending";
-    await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, newSequence, clusterId, installationSpec.versionLabel, status);
+    const diffSummary = await getDiffSummary(kotsApp);
+    await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, newSequence, clusterId, installationSpec.versionLabel, status, source, diffSummary);
   }
 
   return {

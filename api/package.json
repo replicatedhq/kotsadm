@@ -7,6 +7,7 @@
   "dependencies": {
     "@bugsnag/js": "^5.0.2",
     "@bugsnag/plugin-express": "^6.4.0",
+    "@kubernetes/client-node": "^0.11.0",
     "@octokit/rest": "^15.18.3",
     "@octokit/webhooks": "^6.2.2",
     "@tsed/common": "^5.32.1",
@@ -31,6 +32,7 @@
     "concat-stream": "^2.0.0",
     "cors": "^2.8.5",
     "date-fns": "^1.29.0",
+    "diff": "^4.0.1",
     "express": "^4.16.4",
     "ffi": "^2.3.0",
     "github": "^14.0.0",

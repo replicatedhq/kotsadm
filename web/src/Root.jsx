@@ -23,6 +23,7 @@ import ShipUnfork from "./components/ShipUnfork";
 import ShipInitCompleted from "./components/ShipInitCompleted";
 import WatchDetailPage from "./components/watches/WatchDetailPage";
 import AppDetailPage from "./components/apps/AppDetailPage";
+import ClusterNodes from "./components/apps/ClusterNodes";
 import ClusterScope from "./components/clusterscope/ClusterScope";
 import DownstreamTree from "./components/tree/ApplicationTree";
 import UnsupportedBrowser from "./components/static/UnsupportedBrowser";
@@ -189,6 +190,7 @@ class Root extends Component {
         appLogo: meta.data.getKotsMetadata.iconUri,
         selectedAppName: meta.data.getKotsMetadata.name,
         appNameSpace: meta.data.getKotsMetadata.namespace,
+        isKurlEnabled: meta.data.getKotsMetadata.isKurlEnabled,
         fetchingMetadata: false
       });
     } else {
@@ -271,7 +273,7 @@ class Root extends Component {
           }}>
             <Router history={history}>
               <div className="flex-column flex1">
-                <NavBar logo={themeState.navbarLogo || this.state.appLogo} refetchListApps={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />
+                <NavBar logo={themeState.navbarLogo || this.state.appLogo} refetchListApps={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} isKurlEnabled={this.state.isKurlEnabled} />
                 <div className="flex1 flex-column u-overflow--hidden">
                   <Switch>
 
@@ -288,11 +290,13 @@ class Root extends Component {
                     <Route exact path="/signup" component={Signup} />
                     <Route exact path="/secure-console" render={props => <SecureAdminConsole {...props} logo={this.state.appLogo} appName={this.state.selectedAppName} onLoginSuccess={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />} />
                     <Route exact path="/upload-license" render={props => <UploadLicenseFile {...props} logo={this.state.appLogo} appName={this.state.selectedAppName} fetchingMetadata={this.state.fetchingMetadata} onUploadSuccess={this.refetchListApps} />} />
-                    <Route exact path="/:slug/airgap" render={props => <UploadAirgapBundle {...props} logo={this.state.appLogo} appName={this.state.selectedAppName} onUploadSuccess={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />} />
+                    <Route exact path="/:slug/airgap" render={props => <UploadAirgapBundle {...props} showRegistry={true} logo={this.state.appLogo} appName={this.state.selectedAppName} onUploadSuccess={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />} />
+                    <Route exact path="/:slug/airgap-bundle" render={props => <UploadAirgapBundle {...props} showRegistry={false} logo={this.state.appLogo} appName={this.state.selectedAppName} onUploadSuccess={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />} />
                     <Route path="/auth/github" render={props => (<GitHubAuth {...props} refetchListApps={this.refetchListApps}/>)} />
                     <Route path="/install/github" component={GitHubInstall} />
                     <Route exact path="/clusterscope" component={ClusterScope} />
                     <Route path="/unsupported" component={UnsupportedBrowser} />
+                    <Route path="/cluster/manage" render={(props) => <ClusterNodes {...props} />} />
                     <Route path="/preflight/:owner/:name/:downstream" component={PreflightCheckPage}/>
                     <ProtectedRoute path="/clusters" render={(props) => <Clusters {...props} />} />
                     <ProtectedRoute path="/cluster/create" render={(props) => <CreateCluster {...props} />} />

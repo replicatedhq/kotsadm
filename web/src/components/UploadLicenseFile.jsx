@@ -3,7 +3,6 @@ import { graphql, compose, withApollo } from "react-apollo";
 import { withRouter } from "react-router-dom";
 import Dropzone from "react-dropzone";
 import isEmpty from "lodash/isEmpty";
-import yaml from "js-yaml";
 import { uploadKotsLicense } from "../mutations/AppsMutations";
 
 import "../scss/components/troubleshoot/UploadSupportBundleModal.scss";
@@ -23,28 +22,31 @@ class UploadLicenseFile extends React.Component {
   uploadLicenseFile = async () => {
     const { onUploadSuccess, history } = this.props;
     const { licenseValue } = this.state;
-    const yml = yaml.safeLoad(licenseValue);
-    const airgapEnabled = yml.spec.isAirgapSupported;
+
     this.setState({ fileUploading: true });
     try {
       const resp = await this.props.uploadKotsLicense(licenseValue);
-      const kotsApp = resp.data.uploadKotsLicense;
+      const data = resp.data.uploadKotsLicense;
 
       // When successful, refetch all the user's apps with onUploadSuccess
       onUploadSuccess().then(() => {
 
-        if (airgapEnabled) {
-          history.replace(`/${kotsApp.slug}/airgap`);
+        if (data.isAirgap) {
+          if (data.needsRegistry) {
+            history.replace(`/${data.slug}/airgap`);
+          } else {
+            history.replace(`/${data.slug}/airgap-bundle`);
+          }
           return;
         }
 
-        if (kotsApp.hasPreflight) {
+        if (data.hasPreflight) {
           history.replace("/preflight");
           return;
         }
 
         // No airgap or preflight? Go to the kotsApp detail view that was just uploaded
-        history.replace(`/app/${kotsApp.slug}`);
+        history.replace(`/app/${data.slug}`);
       });
 
     } catch (err) {
@@ -97,7 +99,7 @@ class UploadLicenseFile extends React.Component {
                     :
                     <div className="u-textAlign--center">
                       <p className="u-fontSize--normal u-color--tundora u-fontWeight--medium u-lineHeight--normal">Drag your license here or <span className="u-color--astral u-fontWeight--medium u-textDecoration--underlineOnHover">choose a file to upload</span></p>
-                      <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--normal u-lineHeight--normal u-marginTop--10">This will be a .yaml file {appName} provided. Contact them if you are unable to locate a license file.</p>
+                      <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--normal u-lineHeight--normal u-marginTop--10">This will be a .yaml file {appName} provided. Please contact your account rep if you are unable to locate your license file.</p>
                     </div>
                   }
                 </Dropzone>

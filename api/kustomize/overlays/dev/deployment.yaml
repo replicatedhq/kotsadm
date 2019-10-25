@@ -8,6 +8,8 @@ spec:
       containers:
         - name: kotsadm-api
           env:
+            - name: DEV_NAMESPACE
+              value: "test"
             - name: LOG_LEVEL
               value: debug
             - name: SESSION_KEY
@@ -70,6 +72,8 @@ spec:
             - name: ENABLE_SHIP
               value: "1"
             - name: ENABLE_KOTS
+              value: "1"
+            - name: ENABLE_KURL
               value: "1"
           volumeMounts:
             - name: github-app-private-key

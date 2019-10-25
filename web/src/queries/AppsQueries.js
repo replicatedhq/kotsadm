@@ -12,6 +12,7 @@ export const getKotsMetadataRaw = `
       name
       iconUri
       namespace
+      isKurlEnabled
     }
   }
 `;
@@ -373,6 +374,7 @@ export const getKotsAppRaw = `
       hasPreflight
       isAirgap
       isConfigurable
+      allowRollback
       currentVersion {
         title
         status
@@ -395,6 +397,8 @@ export const getKotsAppRaw = `
           createdOn
           sequence
           deployedAt
+          source
+          releaseNotes
         }
         pendingVersions {
           title
@@ -492,8 +496,11 @@ export const getKotsDownstreamHistoryRaw = `
       status
       createdOn
       sequence
+      parentSequence
       releaseNotes
       deployedAt
+      source
+      diffSummary
       preflightResult
       preflightResultCreatedAt
     }

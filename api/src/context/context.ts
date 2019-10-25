@@ -34,6 +34,14 @@ export class Context {
     return this.session.scmToken;
   }
 
+  public requireSingleTenantSession() {
+    if (!this.session) {
+      throw new ReplicatedError("Unauthorized");
+    }
+
+    return true;
+  }
+
   public hasValidSession(): ReplicatedError | null {
     if (this.getGitHubToken().length === 0) {
       return new ReplicatedError("Unauthorized");
@@ -44,7 +52,7 @@ export class Context {
       return new ReplicatedError("Expired session");
     }
 
-    return null
+    return null;
   }
 
   public async getUsername(): Promise<string> {

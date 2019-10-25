@@ -1,8 +1,11 @@
 FROM node:8
 WORKDIR /src
 ADD . /src
-RUN make deps build
 
+RUN make deps build
+RUN rm -rf node_modules
+RUN make deps-prod
+RUN curl -L https://install.goreleaser.com/github.com/tj/node-prune.sh | bash && ./bin/node-prune
 
 FROM node:8-buster-slim
 COPY --from=0 /src/build /src/build
@@ -24,7 +27,7 @@ RUN curl -L "https://github.com/kubernetes-sigs/kustomize/releases/download/v2.0
   mv /tmp/kustomize /usr/local/bin
 
 # Install kots.so
-RUN curl -L "https://github.com/replicatedhq/kots/releases/download/v0.9.10/kots.so_linux_amd64.tar.gz" > /tmp/kots.tar.gz && \
+RUN curl -L "https://github.com/replicatedhq/kots/releases/download/v0.9.12/kots.so_linux_amd64.tar.gz" > /tmp/kots.tar.gz && \
   cd /tmp && tar xzvf kots.tar.gz && \
   mv /tmp/kots.so /lib/kots.so
 
@@ -37,11 +40,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-# Install skopeo
-ADD ./deploy/skopeo /bin/skopeo
 ADD ./deploy/policy.json /etc/containers/policy.json
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
-    ca-certificates libgpgme-dev libdevmapper-dev \
+    libgpgme-dev libdevmapper-dev \
   && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 3000

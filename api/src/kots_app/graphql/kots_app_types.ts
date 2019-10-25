@@ -1,3 +1,12 @@
+const KotsAppUpload = `
+  type KotsAppUpload {
+    hasPreflight: Boolean
+    isAirgap: Boolean
+    needsRegistry: Boolean
+    slug: String
+  }
+`;
+
 const KotsApp = `
   type KotsApp {
     id: String
@@ -14,6 +23,7 @@ const KotsApp = `
     currentVersion: KotsVersion
     hasPreflight: Boolean
     isConfigurable: Boolean
+    allowRollback: Boolean
   }
 `;
 
@@ -41,8 +51,11 @@ const KotsVersion = `
     status: String!
     createdOn: String!
     sequence: Int
+    parentSequence: Int
     releaseNotes: String
     deployedAt: String
+    source: String
+    diffSummary: String
     preflightResult: String
     preflightResultCreatedAt: String
     hasError: Boolean
@@ -54,6 +67,7 @@ const KotsAppMetadata = `
     name: String!
     iconUri: String!
     namespace: String!
+    isKurlEnabled: Boolean
   }
 `;
 
@@ -176,6 +190,7 @@ const KotsDownstreamOutput = `
 `;
 
 export default [
+  KotsAppUpload,
   KotsApp,
   KotsAppLink,
   KotsDownstream,
