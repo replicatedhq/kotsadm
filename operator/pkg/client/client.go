@@ -78,15 +78,6 @@ func (c *Client) Run() error {
 }
 
 func (c *Client) runAppStateMonitor() error {
-	// +++ DEBUG CODE
-	go func() {
-		c.appStateMonitor.Apply([]types.StatusInformer{
-			{Kind: "deployments", Namespace: "test", Name: "sentry-web"},
-			{Kind: "deployments", Namespace: "test", Name: "sentry-worker"},
-		})
-	}()
-	// --- DEBUG CODE
-
 	throttled := util.NewThrottle(time.Second)
 
 	for appStatus := range c.appStateMonitor.AppStatusChan() {
