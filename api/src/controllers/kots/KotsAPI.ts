@@ -207,17 +207,17 @@ export class KotsAPI {
     const kotsAppLicense = await extractKotsAppLicenseFromTarball(buffer);
 
     await request.app.locals.stores.kotsAppStore.createMidstreamVersion(
-      kotsApp.id, 
-      0, 
-      installationSpec.versionLabel, 
-      installationSpec.releaseNotes, 
-      installationSpec.cursor, 
-      supportBundleSpec, 
-      preflightSpec, 
-      appSpec, 
-      kotsAppSpec, 
-      kotsAppLicense, 
-      appTitle, 
+      kotsApp.id,
+      0,
+      installationSpec.versionLabel,
+      installationSpec.releaseNotes,
+      installationSpec.cursor,
+      supportBundleSpec,
+      preflightSpec,
+      appSpec,
+      kotsAppSpec,
+      kotsAppLicense,
+      appTitle,
       appIcon
     );
 
@@ -462,17 +462,17 @@ export async function uploadUpdate(stores, slug, buffer, source) {
   const kotsAppLicense = await extractKotsAppLicenseFromTarball(buffer);
 
   await stores.kotsAppStore.createMidstreamVersion(
-    kotsApp.id, 
-    newSequence, 
-    installationSpec.versionLabel, 
-    installationSpec.releaseNotes, 
-    installationSpec.cursor, 
-    supportBundleSpec, 
-    preflightSpec, 
-    appSpec, 
-    kotsAppSpec, 
+    kotsApp.id,
+    newSequence,
+    installationSpec.versionLabel,
+    installationSpec.releaseNotes,
+    installationSpec.cursor,
+    supportBundleSpec,
+    preflightSpec,
+    appSpec,
+    kotsAppSpec,
     kotsAppLicense,
-    appTitle, 
+    appTitle,
     appIcon
   );
 
