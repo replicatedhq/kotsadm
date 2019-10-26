@@ -18,7 +18,8 @@ class UploadAirgapBundle extends React.Component {
     bundleFile: {},
     fileUploading: false,
     registryDetails: {},
-    preparingOnlineInstall: false
+    preparingOnlineInstall: false,
+    isCheckingRegistryCredentials: false
   }
 
   clearFile = () => {
@@ -28,7 +29,7 @@ class UploadAirgapBundle extends React.Component {
   uploadAirgapBundle = async () => {
     const { onUploadSuccess, match, showRegistry } = this.props;
 
-    this.setState({ fileUploading: true, errorMessage: "" });
+    this.setState({ errorMessage: "" });
 
     // Reset the airgap upload state
     const resetUrl = `${window.env.REST_ENDPOINT}/v1/kots/airgap/reset/${match.params.slug}`;
@@ -41,6 +42,9 @@ class UploadAirgapBundle extends React.Component {
     });
 
     if (showRegistry) {
+      this.setState({
+        isCheckingRegistryCredentials: true
+      });
       const validated = await this.props.client.query({
         query: validateRegistryInfo,
         variables: {
@@ -50,11 +54,14 @@ class UploadAirgapBundle extends React.Component {
           org: this.state.registryDetails.namespace,
         }
       });
+      debugger;
+      // There was an error checking registry credentials
       if (validated.data.validateRegistryInfo) {
         this.setState({
           fileUploading: false,
           uploadSent: 0,
           uploadTotal: 0,
+          isCheckingRegistryCredentials: false,
           errorMessage: validated.data.validateRegistryInfo,
         });
         return;
@@ -88,6 +95,7 @@ class UploadAirgapBundle extends React.Component {
       this.setState({
         fileUploading: false,
         uploadSent: 0,
+        isCheckingRegistryCredentials: false,
         uploadTotal: 0,
         errorMessage: "An error occurred while uploading your airgap bundle. Please try again"
       });
@@ -113,6 +121,9 @@ class UploadAirgapBundle extends React.Component {
 
     xhr.open("POST", url);
     xhr.send(formData);
+    this.setState({
+      fileUploading: true
+    })
   }
 
   getRegistryDetails = (fields) => {
@@ -165,9 +176,10 @@ class UploadAirgapBundle extends React.Component {
         "invalid username/password": "Registry credentials are invalid",
         "no such host": "No such host"
       };
-
+      let isCommonError = false;
       Object.entries(COMMON_ERRORS).forEach( ([errorString, message]) => {
         if (errorMessage.includes(errorString)){
+          isCommonError = true;
           errorMessage = message;
         }
       });
@@ -176,7 +188,12 @@ class UploadAirgapBundle extends React.Component {
         errorMessage,
         fileUploading: false,
         uploadSent: 0,
+        isCheckingRegistryCredentials: false,
         uploadTotal: 0
+      }, () => {
+        if (!isCommonError) {
+          this.props.history.push("/airgap-error/support");
+        }
       });
     }, 0);
   }
@@ -196,7 +213,8 @@ class UploadAirgapBundle extends React.Component {
       uploadTotal,
       errorMessage,
       registryDetails,
-      preparingOnlineInstall
+      preparingOnlineInstall,
+      isCheckingRegistryCredentials
     } = this.state;
 
     const hasFile = bundleFile && !isEmpty(bundleFile);
@@ -272,9 +290,9 @@ class UploadAirgapBundle extends React.Component {
                     type="button"
                     className="btn primary large flex-auto"
                     onClick={this.uploadAirgapBundle}
-                    disabled={fileUploading || !hasFile}
+                    disabled={fileUploading || !hasFile || isCheckingRegistryCredentials}
                   >
-                    {fileUploading ? "Uploading" : "Upload airgap bundle"}
+                    {isCheckingRegistryCredentials ? "Checking registry credentials..." : "Upload airgap bundle"}
                   </button>
                 </div>
               }

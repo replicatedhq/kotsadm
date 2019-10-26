@@ -31,6 +31,7 @@ import NotFound from "./components/static/NotFound";
 import { Utilities } from "./utilities/utilities";
 import { ShipClientGQL } from "./ShipClientGQL";
 import SecureAdminConsole from "./components/SecureAdminConsole";
+import AirgapStaticError from "./components/AirgapStaticError";
 
 import { ping, getKotsMetadata, listApps } from "@src/queries/AppsQueries";
 import Footer from "./components/shared/Footer";
@@ -304,6 +305,7 @@ class Root extends Component {
                     <ProtectedRoute path="/preflight/:owner/:name/:downstream" component={PreflightCheckPage}/>
                     <ProtectedRoute path="/gitops" render={(props) => <Clusters {...props} />} />
                     <ProtectedRoute path="/cluster/create" render={(props) => <CreateCluster {...props} />} />
+                    <ProtectedRoute exact path="/airgap-error/support" render={props => <AirgapStaticError {...props} />}/>
                     <ProtectedRoute
                       path="/watches"
                       render={
