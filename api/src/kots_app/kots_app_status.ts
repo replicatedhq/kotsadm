@@ -3,7 +3,7 @@ export enum State {
   Ready = "ready",
   Degraded = "degraded",
   Unavailable = "unavailable",
-	Missing = "missing",
+  Missing = "missing",
 }
 
 export interface ResourceState {

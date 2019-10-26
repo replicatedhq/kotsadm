@@ -28,7 +28,6 @@ export class KotsAppStatusStore {
   }
 
   async setKotsAppStatus(appId: string, resourceStates: string, updatedAt: Date): Promise<void> {
-    console.log('!!! setKotsAppStatus', appId, resourceStates, updatedAt);
     const q = `
     insert into app_status (app_id, resource_states, updated_at) values ($1, $2, $3)
     on conflict (app_id) do update set resource_states = $2, updated_at = $3

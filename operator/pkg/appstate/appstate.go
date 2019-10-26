@@ -81,7 +81,7 @@ func (m *Monitor) run(ctx context.Context) {
 		case appInformer := <-m.appInformersCh:
 			appMonitor, ok := appMonitors[appInformer.appID]
 			if !ok {
-				appMonitor = NewAppMonitor(m.clientset, m.defaultNamespace)
+				appMonitor = NewAppMonitor(m.clientset, m.defaultNamespace, appInformer.appID)
 				go func() {
 					for appStatus := range appMonitor.AppStatusChan() {
 						m.appStatusCh <- appStatus
@@ -95,17 +95,18 @@ func (m *Monitor) run(ctx context.Context) {
 }
 
 type AppMonitor struct {
-	appID            string
 	clientset        kubernetes.Interface
 	defaultNamespace string
+	appID            string
 	informersCh      chan []types.StatusInformer
 	appStatusCh      chan types.AppStatus
 	cancel           context.CancelFunc
 }
 
-func NewAppMonitor(clientset kubernetes.Interface, defaultNamespace string) *AppMonitor {
+func NewAppMonitor(clientset kubernetes.Interface, defaultNamespace, appID string) *AppMonitor {
 	ctx, cancel := context.WithCancel(context.Background())
 	m := &AppMonitor{
+		appID:            appID,
 		clientset:        clientset,
 		defaultNamespace: defaultNamespace,
 		informersCh:      make(chan []types.StatusInformer),

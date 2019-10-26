@@ -178,9 +178,9 @@ func (c *Client) connect() error {
 		return errors.Wrap(err, "error in support bundle handler")
 	}
 
-	err = socketClient.On("inform", func(h *socket.Channel, args InformRequest) {
+	err = socketClient.On("appInformers", func(h *socket.Channel, args InformRequest) {
 		log.Printf("received an inform event: %#v", args)
-		if err := c.applyInformers(args.AppID, args.Informers); err != nil {
+		if err := c.applyAppInformers(args.AppID, args.Informers); err != nil {
 			log.Printf("error running informer: %s", err.Error())
 		}
 	})
@@ -317,7 +317,7 @@ func runPreflight(preflightURI string) error {
 	return kubernetesApplier.Preflight(preflightURI)
 }
 
-func (c *Client) applyInformers(appID string, informers []types.StatusInformer) error {
+func (c *Client) applyAppInformers(appID string, informers []types.StatusInformer) error {
 	c.appStateMonitor.Apply(appID, informers)
 	return nil
 }

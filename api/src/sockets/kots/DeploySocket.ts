@@ -127,7 +127,7 @@ export class KotsDeploySocketService {
             try {
               const kotsAppSpec = await app.getKotsAppSpec(cluster.id, this.kotsAppStore)
               if (kotsAppSpec && kotsAppSpec.spec && kotsAppSpec.spec.statusInformers) {
-                this.io.in(clusterSocketHistory.clusterId).emit("inform", {
+                this.io.in(clusterSocketHistory.clusterId).emit("appInformers", {
                   app_id: app.id,
                   informers: kotsAppSpec.spec.statusInformers,
                 });

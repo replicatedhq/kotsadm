@@ -17,7 +17,7 @@ export class AppStatusAPI {
     @Res() response: Express.Response,
     @HeaderParams("Authorization") auth: string,
     @BodyParams("") body: any,
-  ): Promise<any | ErrorResponse> {
+  ): Promise<void | ErrorResponse> {
     const credentials: BasicAuth.Credentials = BasicAuth.parse(auth);
 
     try {
@@ -26,10 +26,11 @@ export class AppStatusAPI {
     } catch (err) {
       // TODO error type
       response.status(401);
-      return {};
+      return;
     }
 
     const kotsAppStatusStore: KotsAppStatusStore = request.app.locals.stores.kotsAppStatusStore;
     await kotsAppStatusStore.setKotsAppStatus(body.app_id, body.resource_states, body.updated_at);
+    response.status(201);
   }
 }
