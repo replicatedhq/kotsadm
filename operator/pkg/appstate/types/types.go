@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 var (
 	StateReady       State = "ready"
 	StateDegraded    State = "degraded"
@@ -13,7 +15,13 @@ type StatusInformer struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
-type AppStatus []ResourceState
+type AppStatus struct {
+	AppID          string         `json:"app_id"`
+	ResourceStates ResourceStates `json:"resource_states"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+}
+
+type ResourceStates []ResourceState
 
 type ResourceState struct {
 	Kind      string `json:"kind"`
@@ -24,11 +32,11 @@ type ResourceState struct {
 
 type State string
 
-func (a AppStatus) Len() int {
+func (a ResourceStates) Len() int {
 	return len(a)
 }
 
-func (a AppStatus) Less(i, j int) bool {
+func (a ResourceStates) Less(i, j int) bool {
 	if a[i].Kind < a[j].Kind {
 		return true
 	}
@@ -41,6 +49,6 @@ func (a AppStatus) Less(i, j int) bool {
 	return false
 }
 
-func (a AppStatus) Swap(i, j int) {
+func (a ResourceStates) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }

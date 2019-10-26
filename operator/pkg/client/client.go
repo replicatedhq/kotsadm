@@ -21,6 +21,7 @@ import (
 	"github.com/replicatedhq/kotsadm/operator/pkg/socket/transport"
 	"github.com/replicatedhq/kotsadm/operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
@@ -50,6 +51,7 @@ type SupportBundleRequest struct {
 }
 
 type InformRequest struct {
+	AppID     string                 `json:"app_id"`
 	Informers []types.StatusInformer `json:"informers"`
 }
 
@@ -78,9 +80,14 @@ func (c *Client) Run() error {
 }
 
 func (c *Client) runAppStateMonitor() error {
-	throttled := util.NewThrottle(time.Second)
+	m := map[string]func(f func()){}
 
 	for appStatus := range c.appStateMonitor.AppStatusChan() {
+		throttled, ok := m[appStatus.AppID]
+		if !ok {
+			throttled = util.NewThrottle(time.Second)
+			m[appStatus.AppID] = throttled
+		}
 		throttled(func() {
 			log.Printf("Sending app status %#v", appStatus)
 			if err := c.sendAppStatus(appStatus); err != nil {
@@ -121,15 +128,16 @@ func (c *Client) connect() error {
 		targetNamespace = corev1.NamespaceDefault
 	}
 
-	config, err := rest.InClusterConfig()
+	restconfig, err := rest.InClusterConfig()
 	if err != nil {
 		return errors.Wrap(err, "failed to get in cluster config")
 	}
-
-	c.appStateMonitor, err = appstate.NewMonitor(config, targetNamespace)
+	clientset, err := kubernetes.NewForConfig(restconfig)
 	if err != nil {
-		return errors.Wrap(err, "failed to create appstate monitor")
+		return errors.Wrap(err, "failed to get new kubernetes client")
 	}
+
+	c.appStateMonitor = appstate.NewMonitor(clientset, targetNamespace)
 	defer c.appStateMonitor.Shutdown()
 
 	go c.runAppStateMonitor()
@@ -172,7 +180,7 @@ func (c *Client) connect() error {
 
 	err = socketClient.On("inform", func(h *socket.Channel, args InformRequest) {
 		log.Printf("received an inform event: %#v", args)
-		if err := c.applyInformers(args.Informers); err != nil {
+		if err := c.applyInformers(args.AppID, args.Informers); err != nil {
 			log.Printf("error running informer: %s", err.Error())
 		}
 	})
@@ -309,19 +317,13 @@ func runPreflight(preflightURI string) error {
 	return kubernetesApplier.Preflight(preflightURI)
 }
 
-func (c *Client) applyInformers(informers []types.StatusInformer) error {
-	c.appStateMonitor.Apply(informers)
+func (c *Client) applyInformers(appID string, informers []types.StatusInformer) error {
+	c.appStateMonitor.Apply(appID, informers)
 	return nil
 }
 
 func (c *Client) sendAppStatus(appStatus types.AppStatus) error {
-	appStatusRequest := struct {
-		AppStatus types.AppStatus `json:"app_status"`
-	}{
-		AppStatus: appStatus,
-	}
-
-	b, err := json.Marshal(appStatusRequest)
+	b, err := json.Marshal(appStatus)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal request")
 	}
