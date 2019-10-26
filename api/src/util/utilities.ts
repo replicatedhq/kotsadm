@@ -39,6 +39,11 @@ export function getLicenseInfoFromYaml(licenseData): KLicense {
     if (spec.entitlements && spec.entitlements.expires_at) {
       license.expiresAt = spec.entitlements.expires_at.value;
     }
+
+    license.channelName = "";
+    if (spec.channelName) {
+      license.channelName = spec.channelName;
+    }
   
     const entitlements: KEntitlement[] = [];
     if (spec.entitlements) {
