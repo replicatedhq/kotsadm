@@ -54,7 +54,6 @@ class UploadAirgapBundle extends React.Component {
           org: this.state.registryDetails.namespace,
         }
       });
-      debugger;
       // There was an error checking registry credentials
       if (validated.data.validateRegistryInfo) {
         this.setState({
