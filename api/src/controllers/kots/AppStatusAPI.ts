@@ -21,7 +21,6 @@ export class AppStatusAPI {
     const credentials: BasicAuth.Credentials = BasicAuth.parse(auth);
 
     try {
-      // auth???
       await request.app.locals.stores.clusterStore.getFromDeployToken(credentials.pass);
     } catch (err) {
       // TODO error type

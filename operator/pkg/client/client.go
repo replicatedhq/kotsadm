@@ -51,8 +51,8 @@ type SupportBundleRequest struct {
 }
 
 type InformRequest struct {
-	AppID     string                 `json:"app_id"`
-	Informers []types.StatusInformer `json:"informers"`
+	AppID     string                       `json:"app_id"`
+	Informers []types.StatusInformerString `json:"informers"`
 }
 
 type Client struct {
@@ -317,7 +317,15 @@ func runPreflight(preflightURI string) error {
 	return kubernetesApplier.Preflight(preflightURI)
 }
 
-func (c *Client) applyAppInformers(appID string, informers []types.StatusInformer) error {
+func (c *Client) applyAppInformers(appID string, informerStrings []types.StatusInformerString) error {
+	var informers []types.StatusInformer
+	for _, str := range informerStrings {
+		informer, err := str.Parse()
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse informer %s", str)
+		}
+		informers = append(informers, informer)
+	}
 	c.appStateMonitor.Apply(appID, informers)
 	return nil
 }
