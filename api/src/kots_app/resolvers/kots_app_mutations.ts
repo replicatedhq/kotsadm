@@ -76,6 +76,7 @@ export function KotsMutations(stores: Stores) {
         isAirgap: parsedLicense.spec.isAirgapSupported,
         needsRegistry,
         slug: kotsApp.slug,
+        isConfigurable: kotsApp.isAppConfigurable(),
       }
     },
 
@@ -89,7 +90,7 @@ export function KotsMutations(stores: Stores) {
       return true;
     },
 
-    async resumeInstallOnline(root: any, args: any, context: Context): Promise<KotsApp> {
+    async resumeInstallOnline(root: any, args: any, context: Context) {
       const { slug } = args;
       const appId = await stores.kotsAppStore.getIdFromSlug(slug);
       const app = await context.getApp(appId);
@@ -102,7 +103,10 @@ export function KotsMutations(stores: Stores) {
       }
       const kotsApp = await kotsFinalizeApp(app, downstream.title, stores);
       await stores.kotsAppStore.setKotsAppInstallState(appId, "installed");
-      return kotsApp;
+      return {
+        ...kotsApp,
+        isConfigurable: kotsApp.isAppConfigurable()
+      };
     },
 
     async deployKotsVersion(root: any, args: any, context: Context) {
@@ -133,10 +137,10 @@ export function KotsMutations(stores: Stores) {
     },
 
     async updateAppConfig(root: any, args: any, context: Context) {
-      const { slug, sequence, configGroups } = args;
+      const { slug, sequence, configGroups, createNewVersion } = args;
       const appId = await stores.kotsAppStore.getIdFromSlug(slug);
       const app = await context.getApp(appId);
-      await app.updateAppConfig(stores, slug, sequence, configGroups);
+      await app.updateAppConfig(stores, slug, sequence, configGroups, createNewVersion);
       return true;
     },
 
