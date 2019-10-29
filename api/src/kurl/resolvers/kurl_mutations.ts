@@ -11,9 +11,6 @@ import {
   V1Pod } from "@kubernetes/client-node";
 import { logger } from "../../server/logger";
 
-const waitAndRetryErr = new Error("Wait and retry: PolicyDisruptionBudget may be temporarily blocking deletion");
-const misconfiguredPolicyDisruptionBudgetErr = new Error("Eviction not possible: pod may have misconfigured PolicyDisruptionBudget");
-
 export function KurlMutations(stores: Stores, params: Params) {
   return {
     async drainNode(root: any, { name }, context: Context) {

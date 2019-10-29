@@ -210,7 +210,7 @@ export class Server extends ServerLoader {
         context: res.locals.context,
         cacheControl: true,
         formatError: (error: any) => {
-          // logger.error({msg: error.message, error, "stack": error.stack});
+          logger.error({msg: error.message, error, "stack": error.stack});
           return {
             state: error.originalError && error.originalError.state,
             locations: error.locations,
