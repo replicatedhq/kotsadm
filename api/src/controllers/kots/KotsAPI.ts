@@ -396,8 +396,8 @@ export class KotsAPI {
     response.status(200);
     return {
       slug: appSlug,
-      hasPreflight: hasPreflight,
-      isConfigurable: isConfigurable,
+      hasPreflight,
+      isConfigurable,
     };
   }
 

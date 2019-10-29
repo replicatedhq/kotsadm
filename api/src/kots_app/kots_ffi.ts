@@ -282,6 +282,7 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
     }
 
     kotsApp.currentSequence = 0;
+    kotsApp.isConfigurable = await kotsApp.isAppConfigurable();
 
     return kotsApp;
   } finally {
@@ -396,7 +397,7 @@ export async function kotsAppFromAirgapData(out: string, app: KotsApp, stores: S
 
   return {
     hasPreflight: !!preflightSpec,
-    isConfigurable: isConfigurable,
+    isConfigurable,
   };
 }
 

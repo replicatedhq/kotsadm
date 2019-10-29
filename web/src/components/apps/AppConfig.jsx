@@ -128,7 +128,7 @@ export default withRouter(compose(
   }),
   graphql(getKotsApp, {
     name: "getKotsApp",
-    skip: ({ app }) => app !== undefined,
+    skip: ({ app }) => !!app,
     options: ({ match }) => {
       const slug = match.params.slug;
       return {
