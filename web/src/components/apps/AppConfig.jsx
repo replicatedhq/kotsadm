@@ -25,10 +25,23 @@ class AppConfig extends Component {
     }
   }
 
+  componentWillMount() {
+    const { app, history } = this.props;
+    if (app && !app.isConfigurable) { // url entered manually - redirect
+      history.replace(`/app/${app.slug}`);
+    }
+  }
+
   componentDidUpdate(lastProps) {
     const { getKotsConfigGroups } = this.props.getKotsConfigGroups;
     if (getKotsConfigGroups && getKotsConfigGroups !== lastProps.getKotsConfigGroups.getKotsConfigGroups) {
       this.setState({ configGroups: getKotsConfigGroups });
+    }
+    if (this.props.getKotsApp) {
+      const { getKotsApp } = this.props.getKotsApp;
+      if (getKotsApp && !getKotsApp.isConfigurable) { // url entered manually - redirect
+        this.props.history.replace(`/app/${getKotsApp.slug}`);
+      }
     }
   }
 
