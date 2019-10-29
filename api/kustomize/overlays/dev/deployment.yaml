@@ -11,7 +11,7 @@ spec:
             - name: DEV_NAMESPACE
               value: "test"
             - name: LOG_LEVEL
-              value: info
+              value: debug
             - name: SESSION_KEY
               valueFrom:
                 secretKeyRef:
