@@ -27,7 +27,7 @@ class AppConfig extends Component {
 
   componentWillMount() {
     const { app, history } = this.props;
-    if (app && !app.isConfigurable) { // url entered manually - redirect
+    if (app && !app.isConfigurable) { // app not configurable - redirect
       history.replace(`/app/${app.slug}`);
     }
   }
@@ -39,7 +39,7 @@ class AppConfig extends Component {
     }
     if (this.props.getKotsApp) {
       const { getKotsApp } = this.props.getKotsApp;
-      if (getKotsApp && !getKotsApp.isConfigurable) { // url entered manually - redirect
+      if (getKotsApp && !getKotsApp.isConfigurable) { // app not configurable - redirect
         this.props.history.replace(`/app/${getKotsApp.slug}`);
       }
     }
