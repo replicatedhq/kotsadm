@@ -42,7 +42,7 @@ async function drain(name: string) {
   kc.loadFromDefault();
   const coreV1Client: CoreV1Api = kc.makeApiClient(CoreV1Api);
 
-  // 1. cordon the node
+  // cordon the node
   let { response, body: node } = await coreV1Client.readNode(name);
 
   if (response.statusCode !== 200) {
@@ -61,7 +61,7 @@ async function drain(name: string) {
     throw new ReplicatedError(`Cordon node: ${response.statusCode}`);
   }
 
-  // 2. List and evict pods
+  // list and evict pods
   let waitAndRetry = false;
   let misconfiguredPolicyDisruptionBudget = false;
   const labelSelectors = [
