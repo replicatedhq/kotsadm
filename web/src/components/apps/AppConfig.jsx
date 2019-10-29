@@ -49,8 +49,8 @@ class AppConfig extends Component {
     this.setState({ savingConfig: true });
 
     const { match, app, fromLicenseFlow, history, getKotsApp } = this.props;
-    const sequence = match.params.sequence || app.currentSequence;
-    const slug = match.params.slug || app.slug;
+    const sequence = fromLicenseFlow ? 0 : app.currentSequence;
+    const slug = fromLicenseFlow ? match.params.slug : app.slug;
 
     this.props.client.mutate({
       mutation: updateAppConfig,
@@ -114,9 +114,9 @@ export default withRouter(compose(
   withRouter,
   graphql(getKotsConfigGroups, {
     name: "getKotsConfigGroups",
-    options: ({ match, app }) => {
-      const sequence = match.params.sequence || app.currentSequence;
-      const slug = match.params.slug || app.slug;
+    options: ({ match, app, fromLicenseFlow }) => {
+      const sequence = fromLicenseFlow ? 0 : app.currentSequence;
+      const slug = fromLicenseFlow ? match.params.slug : app.slug;
       return {
         variables: {
           slug: slug,

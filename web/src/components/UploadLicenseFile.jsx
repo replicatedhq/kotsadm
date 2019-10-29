@@ -42,7 +42,7 @@ class UploadLicenseFile extends React.Component {
         }
 
         if (data.isConfigurable) {
-          history.replace(`/${data.slug}/config/0`);
+          history.replace(`/${data.slug}/config`);
           return;
         }
 
