@@ -5,9 +5,10 @@ metadata:
   labels:
     app: kotsadm-web
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
   - name: http
+    nodePort: 30065
     port: 3000
     targetPort: http
   selector:
