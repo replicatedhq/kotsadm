@@ -108,16 +108,16 @@ func makeStatefulSetResourceState(r *appsv1.StatefulSet, state types.State) type
 
 func calculateStatefulSetState(r *appsv1.StatefulSet) types.State {
 	// https://github.com/kubernetes/kubernetes/blob/badcd4af3f592376ce891b7c1b7a43ed6a18a348/pkg/printers/internalversion/printers.go#L1098
-	var replicas int32
+	var desiredReplicas int32
 	if r.Spec.Replicas == nil {
-		replicas = 1
+		desiredReplicas = 1
 	} else {
-		replicas = *r.Spec.Replicas
+		desiredReplicas = *r.Spec.Replicas
 	}
-	if replicas == 0 {
+	if desiredReplicas == 0 {
 		// TODO: what to do here?
 	}
-	if r.Status.ReadyReplicas >= replicas {
+	if r.Status.ReadyReplicas >= desiredReplicas {
 		return types.StateReady
 	}
 	if r.Status.ReadyReplicas > 0 {
