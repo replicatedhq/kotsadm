@@ -94,8 +94,9 @@ class AppConfig extends Component {
     }
 
     return (
-      <div className={classNames("flex1 flex-column u-overflow--auto u-padding--20 justifyContent--flexStart alignItems--center", { "justifyContent--center": fromLicenseFlow })}>
-        <div className="ConfigOuterWrapper flex u-padding--15" >
+      <div className={classNames("flex1 flex-column u-padding--20 justifyContent--flexStart alignItems--center", { "justifyContent--center": fromLicenseFlow })}>
+        {fromLicenseFlow && getKotsApp?.getKotsApp && <span className="u-fontSize--larger u-color--tuna u-fontWeight--bold">Configure {getKotsApp.getKotsApp.name}</span>}
+        <div className={classNames("ConfigOuterWrapper flex u-padding--15 u-overflow--auto", { "u-marginTop--20": fromLicenseFlow })}>
           <div className="ConfigInnerWrapper flex1 u-padding--15">
             <div className="flex1">
               <ShipConfigRenderer groups={configGroups} />
