@@ -144,7 +144,8 @@ export default withRouter(compose(
         variables: {
           slug,
           sequence,
-        }
+        },
+        fetchPolicy: "no-cache"
       }
     }
   }),
@@ -156,7 +157,8 @@ export default withRouter(compose(
       return {
         variables: {
           slug,
-        }
+        },
+        fetchPolicy: "no-cache"
       }
     }
   }),
