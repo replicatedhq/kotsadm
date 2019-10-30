@@ -11,15 +11,17 @@ const DefaultGraphStepPoints: number = 80;
 
 export interface MetricGraph {
   Title: string;
-  Targets: MetricTarget[];
+  Query?: string;
+  Legend?: string;
+  Queries?: MetricQuery[];
   DurationSeconds?: number;
   YAxisFormat?: AxisFormat;
   YAxisTemplate?: string;
 }
 
-export interface MetricTarget {
-  PrometheusQuery: string;
-  LegendTemplate?: string;
+export interface MetricQuery {
+  Query: string;
+  Legend?: string;
 }
 
 // this lib is dope
@@ -27,28 +29,33 @@ export interface MetricTarget {
 export enum AxisFormat {
   Bytes = "bytes",
   Short = "short",
+  Long = "long",
 }
 
 const DefaultMetricGraphs: MetricGraph[] = [
   {
     Title: "Disk Usage",
-    Targets: [{
-      PrometheusQuery: `sum((node_filesystem_size_bytes{job="node-exporter",fstype!="",instance!=""} - node_filesystem_avail_bytes{job="node-exporter", fstype!=""})) by (instance)`,
-      LegendTemplate: "Used: {{ instance }}",
+    Queries: [{
+      Query: `sum((node_filesystem_size_bytes{job="node-exporter",fstype!="",instance!=""} - node_filesystem_avail_bytes{job="node-exporter", fstype!=""})) by (instance)`,
+      Legend: "Used: {{ instance }}",
     },
     {
-      PrometheusQuery: `sum((node_filesystem_avail_bytes{job="node-exporter",fstype!="",instance!=""})) by (instance)`,
-      LegendTemplate: "Available: {{ instance }}",
+      Query: `sum((node_filesystem_avail_bytes{job="node-exporter",fstype!="",instance!=""})) by (instance)`,
+      Legend: "Available: {{ instance }}",
     }],
     YAxisFormat: AxisFormat.Bytes,
     YAxisTemplate: "{{ value }} bytes",
   },
   {
     Title: "CPU Usage",
-    Targets: [{
-      PrometheusQuery: `sum(rate(container_cpu_usage_seconds_total{namespace="default",container_name!="POD",pod_name!=""}[5m])) by (pod_name)`,
-      LegendTemplate: "{{ pod_name }}"
-    }],
+    Query: `sum(rate(container_cpu_usage_seconds_total{namespace="default",container_name!="POD",pod_name!=""}[5m])) by (pod_name)`,
+    Legend: "{{ pod_name }}",
+    YAxisFormat: AxisFormat.Short,
+  },
+  {
+    Title: "Memory Usage",
+    Query: `sum(container_memory_usage_bytes{namespace="default",container_name!="POD",pod_name!=""}) by (pod_name)`,
+    Legend: "{{ pod_name }}",
     YAxisFormat: AxisFormat.Short,
   },
 ];
@@ -66,11 +73,21 @@ export class MetricStore {
     const endTime = new Date().getTime() / 1000;
     const charts = await Promise.all(DefaultMetricGraphs.map(async (graph: MetricGraph): Promise<MetricChart | void> => {
       try {
-        const series = await Promise.all(graph.Targets.map(async (target: MetricTarget): Promise<Series[]> => {
+        const queries: MetricQuery[] = [];
+        if (graph.Query) {
+          queries.push({
+            Query: graph.Query,
+            Legend: graph.Legend,
+          })
+        }
+        if (graph.Queries) {
+          graph.Queries.forEach(query => queries.push(query));
+        }
+        const series = await Promise.all(queries.map(async (target: MetricQuery): Promise<Series[]> => {
           const duration = graph.DurationSeconds || DefaultQueryDurationSeconds;
           const matrix = await prometheusQueryRange(
             this.params.prometheusAddress,
-            target.PrometheusQuery,
+            target.Query,
             (endTime - duration),
             endTime, duration / DefaultGraphStepPoints,
           );
@@ -89,7 +106,7 @@ export class MetricStore {
               };
             });
             return {
-              legendTemplate: target.LegendTemplate || "",
+              legendTemplate: target.Legend || "",
               metric: metric,
               data: data,
             };
