@@ -675,8 +675,8 @@ query getKotsAppDashboard($slug: String!) {
       series {
         legendTemplate
         metric {
-          Name
-          Value
+          name
+          value
         }
         data {
           timestamp
