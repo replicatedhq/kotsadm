@@ -4,90 +4,37 @@ import { Params } from "../server/params";
 import rp from "request-promise";
 import { StatusCodeError } from "request-promise/errors";
 import { logger } from "../server/logger";
-import { getPostgresPool } from "../util/persistence/db";
+import { MetricGraph, MetricQuery } from "../kots_app/kots_app_spec";
 
 const DefaultQueryDurationSeconds: number = 15 * 60; // 15 minutes
 const DefaultGraphStepPoints: number = 80;
 
-export interface MetricGraph {
-  Title: string;
-  Query?: string;
-  Legend?: string;
-  Queries?: MetricQuery[];
-  DurationSeconds?: number;
-  YAxisFormat?: AxisFormat;
-  YAxisTemplate?: string;
-}
-
-export interface MetricQuery {
-  Query: string;
-  Legend?: string;
-}
-
-// this lib is dope
-// https://github.com/grafana/grafana/blob/009d58c4a228b89046fdae02aa82cf5ff05e5e69/packages/grafana-ui/src/utils/valueFormats/categories.ts
-export enum AxisFormat {
-  Bytes = "bytes",
-  Short = "short",
-  Long = "long",
-}
-
-const DefaultMetricGraphs: MetricGraph[] = [
-  {
-    Title: "Disk Usage",
-    Queries: [{
-      Query: `sum((node_filesystem_size_bytes{job="node-exporter",fstype!="",instance!=""} - node_filesystem_avail_bytes{job="node-exporter", fstype!=""})) by (instance)`,
-      Legend: "Used: {{ instance }}",
-    },
-    {
-      Query: `sum((node_filesystem_avail_bytes{job="node-exporter",fstype!="",instance!=""})) by (instance)`,
-      Legend: "Available: {{ instance }}",
-    }],
-    YAxisFormat: AxisFormat.Bytes,
-    YAxisTemplate: "{{ value }} bytes",
-  },
-  {
-    Title: "CPU Usage",
-    Query: `sum(rate(container_cpu_usage_seconds_total{namespace="default",container_name!="POD",pod_name!=""}[5m])) by (pod_name)`,
-    Legend: "{{ pod_name }}",
-    YAxisFormat: AxisFormat.Short,
-  },
-  {
-    Title: "Memory Usage",
-    Query: `sum(container_memory_usage_bytes{namespace="default",container_name!="POD",pod_name!=""}) by (pod_name)`,
-    Legend: "{{ pod_name }}",
-    YAxisFormat: AxisFormat.Short,
-  },
-];
-
 export class MetricStore {
   constructor(private readonly pool: pg.Pool, private readonly params: Params) {}
 
-  async getKotsAppMetricCharts(appId: string): Promise<MetricChart[]> {
+  async getKotsAppMetricCharts(graphs: MetricGraph[]): Promise<MetricChart[]> {
     if (!this.params.prometheusAddress) {
       return [];
     }
 
-    // TODO: app metrics
-
     const endTime = new Date().getTime() / 1000;
-    const charts = await Promise.all(DefaultMetricGraphs.map(async (graph: MetricGraph): Promise<MetricChart | void> => {
+    const charts = await Promise.all(graphs.map(async (graph: MetricGraph): Promise<MetricChart | void> => {
       try {
         const queries: MetricQuery[] = [];
-        if (graph.Query) {
+        if (graph.query) {
           queries.push({
-            Query: graph.Query,
-            Legend: graph.Legend,
+            query: graph.query,
+            legend: graph.legend,
           })
         }
-        if (graph.Queries) {
-          graph.Queries.forEach(query => queries.push(query));
+        if (graph.queries) {
+          graph.queries.forEach(query => queries.push(query));
         }
-        const series = await Promise.all(queries.map(async (target: MetricQuery): Promise<Series[]> => {
-          const duration = graph.DurationSeconds || DefaultQueryDurationSeconds;
+        const series = await Promise.all(queries.map(async (query: MetricQuery): Promise<Series[]> => {
+          const duration = graph.durationSeconds || DefaultQueryDurationSeconds;
           const matrix = await prometheusQueryRange(
             this.params.prometheusAddress,
-            target.Query,
+            query.query,
             (endTime - duration),
             endTime, duration / DefaultGraphStepPoints,
           );
@@ -106,21 +53,21 @@ export class MetricStore {
               };
             });
             return {
-              legendTemplate: target.Legend || "",
+              legendTemplate: query.legend || "",
               metric: metric,
               data: data,
             };
           })
         }));
         return {
-          title: graph.Title,
-          tickFormat: graph.YAxisFormat || "",
-          tickTemplate: graph.YAxisTemplate || "",
+          title: graph.title,
+          tickFormat: graph.yAxisFormat || "",
+          tickTemplate: graph.yAxisTemplate || "",
           series: ([]).concat.apply([], series),
         };
       } catch(err) {
         // render all graphs that we can, catch errors and return void
-        logger.error(`Failed to render graph "${graph.Title}": ${err}`);
+        logger.error(`Failed to render graph "${graph.title}": ${err}`);
         return;
       }
     }));
@@ -157,17 +104,3 @@ async function prometheusQueryRange(address: string, query: string, start: numbe
     throw new Error(err.error);
   }
 }
-
-// TODO: take this out when Ethan is done deving
-// (async () => {
-//   const pool = await getPostgresPool();
-//   const store = new MetricStore(pool, await Params.getParams());
-//   setInterval(async () => {
-//     try {
-//       const charts = await store.getKotsAppMetricCharts("");
-//       console.log(JSON.stringify(charts));
-//     } catch (err) {
-//       console.log("CATCH", err);
-//     }
-//   }, 15000);
-// })();
