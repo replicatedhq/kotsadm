@@ -1,12 +1,13 @@
 import React, { Component } from "react";
-import { ShipConfigRenderer } from "@replicatedhq/ship-init";
+import { ShipConfigRenderer } from "./temp/src";
 import { compose, withApollo, graphql } from "react-apollo";
 import { withRouter } from "react-router-dom";
 import PropTypes from "prop-types";
 import classNames from "classnames";
+import debounce from "lodash/debounce";
 
 import Loader from "../shared/Loader";
-import { getKotsConfigGroups, getKotsApp } from "../../queries/AppsQueries";
+import { getKotsConfigGroups, getKotsApp, refreshConfigGroups } from "../../queries/AppsQueries";
 import { updateAppConfig } from "../../mutations/AppsMutations";
 
 import "../../scss/components/watches/WatchConfig.scss";
@@ -23,6 +24,8 @@ class AppConfig extends Component {
       configGroups: [],
       savingConfig: false
     }
+
+    this.handleConfigChange = debounce(this.handleConfigChange, 250);
   }
 
   componentWillMount() {
@@ -81,6 +84,26 @@ class AppConfig extends Component {
       });
   }
 
+  handleConfigChange = groups => {
+    const { match, app, fromLicenseFlow } = this.props;
+    const sequence = fromLicenseFlow ? 0 : app.currentSequence;
+    const slug = fromLicenseFlow ? match.params.slug : app.slug;
+
+    this.props.client.query({
+      query: refreshConfigGroups,
+      variables: {
+        slug: slug,
+        sequence: sequence,
+        configGroups: groups
+      },
+      fetchPolicy: "no-cache"
+    }).then(response => {
+      this.setState({ configGroups: response.data.refreshConfigGroups });
+    }).catch((error) => {
+      console.log(error);
+    });
+  }
+
   render() {
     const { configGroups, savingConfig } = this.state;
     const { fromLicenseFlow, getKotsApp } = this.props;
@@ -99,7 +122,7 @@ class AppConfig extends Component {
         <div className={classNames("ConfigOuterWrapper flex u-padding--15 u-overflow--auto", { "u-marginTop--20": fromLicenseFlow })}>
           <div className="ConfigInnerWrapper flex1 u-padding--15">
             <div className="flex1">
-              <ShipConfigRenderer groups={configGroups} />
+              <ShipConfigRenderer groups={configGroups} getData={this.handleConfigChange} />
             </div>
           </div>
         </div>
@@ -119,10 +142,9 @@ export default withRouter(compose(
       const slug = fromLicenseFlow ? match.params.slug : app.slug;
       return {
         variables: {
-          slug: slug,
-          sequence: sequence,
-        },
-        fetchPolicy: "no-cache"
+          slug,
+          sequence,
+        }
       }
     }
   }),
@@ -133,9 +155,8 @@ export default withRouter(compose(
       const slug = match.params.slug;
       return {
         variables: {
-          slug: slug,
-        },
-        fetchPolicy: "no-cache"
+          slug,
+        }
       }
     }
   }),

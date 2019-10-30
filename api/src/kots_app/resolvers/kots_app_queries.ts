@@ -170,5 +170,12 @@ export function KotsQueries(stores: Stores) {
         throw err;
       }
     },
+
+    async refreshConfigGroups(root: any, args: any, context: Context): Promise<any> {
+      const { slug, sequence, configGroups } = args;
+      const appId = await stores.kotsAppStore.getIdFromSlug(slug)
+      const app = await context.getApp(appId);
+      return await app.refreshConfigGroups(sequence, configGroups);
+    },
   }
 }
