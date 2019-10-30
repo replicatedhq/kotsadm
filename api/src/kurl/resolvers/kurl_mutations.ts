@@ -1,3 +1,4 @@
+import { inspect } from "util";
 import fs from "fs";
 import * as _ from "lodash";
 import { Stores } from "../../schema/stores";
@@ -194,15 +195,18 @@ async function purge(name: string) {
 
   ({ response } = await coreV1Client.deleteNode(name));
 
-  if (response.statusCode !== 204) {
+  if (response.statusCode !== 200) {
     throw new Error(`Delete node returned status code ${response.statusCode}`);
   }
 
   await purgeOSD(coreV1Client, appsV1Client, name);
 
-  const isMaster = node.metadata!.labels && node.metadata!.labels!["node-role.kubernetes.io/master"];
+  const isMaster = _.has(node.metadata!.labels!, "node-role.kubernetes.io/master");
   if (isMaster) {
+    logger.debug(`Node ${name} is a master: running etcd and kubeadm endpoints purge steps`);
     await purgeMaster(coreV1Client, node);
+  } else {
+    logger.debug(`Node ${name} is not a master: skipping etcd and kubeadm endpoints purge steps`);
   }
 }
 
@@ -210,8 +214,8 @@ async function purgeMaster(coreV1Client: CoreV1Api, node: V1Node) {
   const remainingMasterIPs: Array<string> = [];
   let purgedMasterIP = "";
 
-  // 1. Remove the purged endpoint from kubeadm's list of API endpoints in the kubeadm-config 
-  // ConfigMap in the kube-system  namespace. Keep the list of all master IPs for step 2.
+  // 1. Remove the purged endpoint from kubeadm's list of API endpoints in the kubeadm-config
+  // ConfigMap in the kube-system namespace. Keep the list of all master IPs for step 2.
   const configMapName = "kubeadm-config";
   const configMapNS = "kube-system";
   const configMapKey = "ClusterStatus";
@@ -230,18 +234,39 @@ async function purgeMaster(coreV1Client: CoreV1Api, node: V1Node) {
   });
   delete(clusterStatus.apiEndpoints[node.metadata!.name!]);
   kubeadmCM.data![configMapKey] = yaml.safeDump(clusterStatus);
-  await coreV1Client.replaceNamespacedConfigMap(configMapName, configMapNS, kubeadmCM);
+  const { response: cmReplaceResp } = await coreV1Client.replaceNamespacedConfigMap(configMapName, configMapNS, kubeadmCM);
+
+  if (!purgedMasterIP) {
+    logger.warn(`Failed to find IP of deleted master node from kubeadm-config: skipping etcd peer removal step`);
+    return;
+  }
+  if (!remainingMasterIPs.length) {
+    logger.error(`Cannot remove etcd peer: no remaining etcd endpoints available to connect to`);
+    return;
+  }
 
   // 2. Use the credentials from the mounted etcd client cert secret to connect to the remaining
   // etcd members and tell them to forget the purged member.
   const etcd = new Etcd3({
     credentials: {
-      rootCertificate: fs.readFileSync("/etc/kubernetes/pki/etcd/tls.crt"),
-      privateKey: fs.readFileSync("/etc/kubernetes/pki/etcd/tls.key"),
+      rootCertificate: fs.readFileSync("/etc/kubernetes/pki/etcd/ca.crt"),
+      privateKey: fs.readFileSync("/etc/kubernetes/pki/etcd/client.key"),
+      certChain: fs.readFileSync("/etc/kubernetes/pki/etcd/client.crt"),
     },
     hosts: _.map(remainingMasterIPs, (ip) => `https://${ip}:2379`),
   });
   const peerURL = `https://${purgedMasterIP}:2380`;
+  const { members } = await etcd.cluster.memberList();
+  const purgedMember = _.find(members, (member) => {
+    return _.includes(member.peerURLs, peerURL);
+  });
+  if (!purgedMember) {
+    logger.info(`Purged node was not a member of etcd cluster`);
+    return;
+  }
+
+  logger.info(`Removing etcd member ${purgedMember.ID} ${purgedMember.name}`);
+  await etcd.cluster.memberRemove({ ID: purgedMember.ID });
 }
 
 async function purgeOSD(coreV1Client: CoreV1Api, appsV1Client: AppsV1Api, nodeName: string) {
@@ -250,7 +275,9 @@ async function purgeOSD(coreV1Client: CoreV1Api, appsV1Client: AppsV1Api, nodeNa
   // before deleting it.
   const osdLabelSelector = "app=rook-ceph-osd";
   let { response, body: deployments } = await appsV1Client.listNamespacedDeployment(namespace, undefined, undefined, undefined, undefined, osdLabelSelector);
-
+  if (response.statusCode === 404) {
+    return;
+  }
   if (response.statusCode !== 200) {
     throw new Error(`List osd deployments in rook-ceph namespace returned status code ${response.statusCode}`);
   }
@@ -258,12 +285,12 @@ async function purgeOSD(coreV1Client: CoreV1Api, appsV1Client: AppsV1Api, nodeNa
   let osdID = "";
 
   for (let i = 0; i < deployments.items.length; i++) {
-    const deploy = deployments.items[0];
-    const nodeSelectors = deploy.spec!.template!.spec!.nodeSelector;
-    const hostname = nodeSelectors ? nodeSelectors["kubernetes.io/hostname"] : "";
+    const deploy = deployments.items[i];
+    const hostname = deploy.spec!.template!.spec!.nodeSelector!["kubernetes.io/hostname"]
 
     if (hostname === nodeName) {
       osdID = deploy.metadata!.labels!["ceph-osd-id"];
+      logger.info(`Deleting OSD deployment on host ${nodeName}`);
       ({ response } = await appsV1Client.deleteNamespacedDeployment(deploy.metadata!.name!, namespace, undefined, undefined, undefined, undefined, "Background"));
       if (response.statusCode !== 200) {
         throw new Error(`Got response status code ${response.statusCode}`);
@@ -271,6 +298,13 @@ async function purgeOSD(coreV1Client: CoreV1Api, appsV1Client: AppsV1Api, nodeNa
       break;
     }
   }
+
+  if (osdID === "") {
+    logger.info("Failed to find ceph osd id for node");
+    return;
+  }
+
+  logger.info(`Purging ceph OSD with id ${osdID}`);
 
   // 2. Using the osd ID discovered in step 1, exec into the Rook operator pod and run the ceph
   // command to purge the OSD
@@ -286,11 +320,19 @@ async function purgeOSD(coreV1Client: CoreV1Api, appsV1Client: AppsV1Api, nodeNa
     return;
   }
   const pod = pods.items[0];
-  ({ response: resp } = await coreV1Client.connectPostNamespacedPodExec(pod.metadata!.name!, namespace, `ceph osd purge ${osdID}`));
+  try {
+    ({ response: resp } = await coreV1Client.connectPostNamespacedPodExec(pod.metadata!.name!, namespace, `ceph osd purge ${osdID}`));
 
-  if (resp.statusCode !== 200) {
+    // TODO remove
+    logger.debug(`exec response code ${resp.statusCode}`);
     const output = await readAll(resp);
-    throw new Error(`Failed to exec "ceph osd purge": ${output}`);
+    logger.debug(output);
+    if (resp.statusCode !== 200) {
+      throw new Error(`Failed to exec "ceph osd purge": ${output}`);
+    }
+  } catch(err) {
+    logger.debug(inspect(err, true, 100));
+    throw err;
   }
 }
 
