@@ -643,9 +643,9 @@ export const getKotsAppStatus = gql`
   }
 `;
 
-export const refreshConfigGroups = gql`
-  query refreshConfigGroups($slug: String!, $sequence: Int!, $configGroups: [KotsConfigGroupInput]!) {
-    refreshConfigGroups(slug: $slug, sequence: $sequence, configGroups: $configGroups) {
+export const getConfigForGroups = gql`
+  query getConfigForGroups($slug: String!, $sequence: Int!, $configGroups: [KotsConfigGroupInput]!) {
+    getConfigForGroups(slug: $slug, sequence: $sequence, configGroups: $configGroups) {
       name
       title
       description

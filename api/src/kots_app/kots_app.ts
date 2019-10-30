@@ -282,7 +282,7 @@ export class KotsApp {
     }
   }
 
-  async refreshConfigGroups(sequence: string, updatedConfigGroups: KotsConfigGroup[]): Promise<KotsConfigGroup[]> {
+  async getConfigForGroups(sequence: string, updatedConfigGroups: KotsConfigGroup[]): Promise<KotsConfigGroup[]> {
     const paths: string[] = await this.getFilesPaths(sequence);
     const files: FilesAsString = await this.getFiles(sequence, paths);
 

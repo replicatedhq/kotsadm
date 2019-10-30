@@ -7,7 +7,7 @@ import classNames from "classnames";
 import debounce from "lodash/debounce";
 
 import Loader from "../shared/Loader";
-import { getKotsConfigGroups, getKotsApp, refreshConfigGroups } from "../../queries/AppsQueries";
+import { getKotsConfigGroups, getKotsApp, getConfigForGroups } from "../../queries/AppsQueries";
 import { updateAppConfig } from "../../mutations/AppsMutations";
 
 import "../../scss/components/watches/WatchConfig.scss";
@@ -90,7 +90,7 @@ class AppConfig extends Component {
     const slug = fromLicenseFlow ? match.params.slug : app.slug;
 
     this.props.client.query({
-      query: refreshConfigGroups,
+      query: getConfigForGroups,
       variables: {
         slug: slug,
         sequence: sequence,
@@ -98,7 +98,7 @@ class AppConfig extends Component {
       },
       fetchPolicy: "no-cache"
     }).then(response => {
-      this.setState({ configGroups: response.data.refreshConfigGroups });
+      this.setState({ configGroups: response.data.getConfigForGroups });
     }).catch((error) => {
       console.log(error);
     });
