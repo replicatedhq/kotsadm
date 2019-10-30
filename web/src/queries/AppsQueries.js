@@ -661,26 +661,27 @@ export const getConfigForGroups = gql`
 `;
 
 export const getKotsAppDashboard = gql`
-query getKotsAppDashboard($slug: String!) {
-  getKotsAppDashboard(slug: $slug) {
-    appStatus {
-      appId
-      updatedAt
-      state
-    }
-    metrics {
-      title
-      tickFormat
-      tickTemplate
-      series {
-        legendTemplate
-        metric {
-          name
-          value
-        }
-        data {
-          timestamp
-          value
+  query getKotsAppDashboard($slug: String!) {
+    getKotsAppDashboard(slug: $slug) {
+      appStatus {
+        appId
+        updatedAt
+        state
+      }
+      metrics {
+        title
+        tickFormat
+        tickTemplate
+        series {
+          legendTemplate
+          metric {
+            name
+            value
+          }
+          data {
+            timestamp
+            value
+          }
         }
       }
     }

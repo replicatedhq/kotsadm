@@ -256,7 +256,6 @@ class Dashboard extends Component {
       );
     }
 
-
     return (
       <div className="flex-column flex1 u-position--relative u-overflow--auto u-padding--20">
         <Helmet>
@@ -287,7 +286,7 @@ class Dashboard extends Component {
                 cardName="Application"
                 application={true}
                 cardIcon="applicationIcon"
-                appStatus={this.props.getKotsAppStatus.getKotsAppStatus?.state}
+                appStatus={this.props.getKotsAppDashboard.getKotsAppDashboard.appStatus?.state}
                 url={this.props.match.url}
                 links={links}
               />
