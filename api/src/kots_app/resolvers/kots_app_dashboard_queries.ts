@@ -20,11 +20,6 @@ interface KotsAppDashboard {
 
 export function KotsDashboardQueries(stores: Stores) {
   return {
-    // TODO: remove this in favor of getKotsAppDashboard
-    async getKotsAppStatus(root: any, args: any, context: Context): Promise<KotsAppStatusSchema> {
-      return getKotsAppStatus(stores, root, args, context);
-    },
-
     async getKotsAppDashboard(root: any, args: any, context: Context): Promise<KotsAppDashboard> {
       return {
         appStatus: async (): Promise<KotsAppStatusSchema> => {

@@ -626,23 +626,6 @@ export const getAppLicense = gql`
   }
 `;
 
-// TODO: remove this in favor of getKotsAppDashboard
-export const getKotsAppStatus = gql`
-  query getKotsAppStatus($slug: String!) {
-    getKotsAppStatus(slug: $slug) {
-      appId
-      updatedAt
-      state
-      resourceStates {
-        kind
-        name
-        namespace
-        state
-      }
-    }
-  }
-`;
-
 export const getConfigForGroups = gql`
   query getConfigForGroups($slug: String!, $sequence: Int!, $configGroups: [KotsConfigGroupInput]!) {
     getConfigForGroups(slug: $slug, sequence: $sequence, configGroups: $configGroups) {
@@ -692,8 +675,8 @@ query getKotsAppDashboard($slug: String!) {
       series {
         legendFormat
         metric {
-          name
-          value
+          Name
+          Value
         }
         data {
           timestamp
