@@ -287,12 +287,8 @@ export class KotsApp {
     const files: FilesAsString = await this.getFiles(sequence, paths);
 
     const { configPath, configContent, configValuesContent } = await this.getConfigData(files);
-
-    const parsedConfig = yaml.safeLoad(configContent);
     const parsedConfigValues = yaml.safeLoad(configValuesContent);
-
     const configValues = parsedConfigValues.spec.values;
-    const configGroups = parsedConfig.spec.groups;
     
     updatedConfigGroups.forEach(group => {
       group.items.forEach(async item => {
