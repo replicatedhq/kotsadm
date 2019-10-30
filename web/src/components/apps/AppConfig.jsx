@@ -5,6 +5,7 @@ import { withRouter } from "react-router-dom";
 import PropTypes from "prop-types";
 import classNames from "classnames";
 import debounce from "lodash/debounce";
+import map from "lodash/map";
 
 import Loader from "../shared/Loader";
 import { getKotsConfigGroups, getKotsApp, getConfigForGroups } from "../../queries/AppsQueries";
@@ -84,6 +85,18 @@ class AppConfig extends Component {
       });
   }
 
+  getItemInConfigGroups = (configGroups, itemName) => {
+    let foundItem;
+    map(configGroups, group => {
+      map(group.items, item => {
+        if (item.name === itemName) {
+          foundItem = item;
+        }
+      });
+    })
+    return foundItem;
+  }
+
   handleConfigChange = groups => {
     const { match, app, fromLicenseFlow } = this.props;
     const sequence = fromLicenseFlow ? 0 : app.currentSequence;
@@ -98,7 +111,17 @@ class AppConfig extends Component {
       },
       fetchPolicy: "no-cache"
     }).then(response => {
-      this.setState({ configGroups: response.data.getConfigForGroups });
+      const oldGroups = this.state.configGroups;
+      const newGroups = response.data.getConfigForGroups;
+      map(oldGroups, group => {
+        group.items.forEach(item => {
+          if (item.type === "password") {
+            const newItem = this.getItemInConfigGroups(newGroups, item.name);
+            newItem.value = item.value;
+          }
+        });
+      });
+      this.setState({ configGroups: newGroups });
     }).catch((error) => {
       console.log(error);
     });
