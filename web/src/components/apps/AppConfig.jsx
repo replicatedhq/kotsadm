@@ -113,11 +113,13 @@ class AppConfig extends Component {
     }).then(response => {
       const oldGroups = this.state.configGroups;
       const newGroups = response.data.getConfigForGroups;
-      map(oldGroups, group => {
-        group.items.forEach(oldItem => {
-          if (oldItem.type === "password") {
-            const newItem = this.getItemInConfigGroups(newGroups, oldItem.name);
-            newItem.value = oldItem.value;
+      map(newGroups, group => {
+        group.items.forEach(newItem => {
+          if (newItem.type === "password") {
+            const oldItem = this.getItemInConfigGroups(oldGroups, newItem.name);
+            if (oldItem) {
+              newItem.value = oldItem.value;
+            }
           }
         });
       });

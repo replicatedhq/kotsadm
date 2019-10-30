@@ -182,7 +182,7 @@ export class KotsApp {
   }
 
   shouldUpdateConfigValues(configGroups: KotsConfigGroup[], configValues: any, item: KotsConfigItem): boolean {
-    if (item.hidden || (item.type === "password" && item.value === this.getPasswordMask())) {
+    if (item.hidden || item.when === "false" || (item.type === "password" && item.value === this.getPasswordMask())) {
       return false;
     }
     if (item.name in configValues) {
