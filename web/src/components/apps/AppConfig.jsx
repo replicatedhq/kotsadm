@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { ShipConfigRenderer } from "./temp/src";
+import { ShipConfigRenderer } from "@replicatedhq/ship-init";
 import { compose, withApollo, graphql } from "react-apollo";
 import { withRouter } from "react-router-dom";
 import PropTypes from "prop-types";
