@@ -149,27 +149,6 @@ export function KotsQueries(stores: Stores) {
       const clusterId = await stores.clusterStore.getIdFromSlug(args.clusterSlug);
       return await stores.kotsAppStore.getDownstreamOutput(app.id, clusterId, args.sequence);
     },
-<<<<<<< HEAD
-
-    async getKotsAppStatus(root: any, args: any, context: Context): Promise<KotsAppStatusSchema> {
-      const { slug } = args;
-      const appId = await stores.kotsAppStore.getIdFromSlug(slug)
-      const app = await context.getApp(appId);
-      try {
-        const appStatus = await stores.kotsAppStatusStore.getKotsAppStatus(app.id);
-        return appStatus.toSchema();
-      } catch (err) {
-        if (ReplicatedError.isNotFound(err)) {
-          return {
-            appId,
-            updatedAt: new Date(),
-            resourceStates: [],
-            state: State.Missing,
-          };
-        }
-        throw err;
-      }
-    },
 
     async getConfigForGroups(root: any, args: any, context: Context): Promise<any> {
       const { slug, sequence, configGroups } = args;
@@ -177,8 +156,5 @@ export function KotsQueries(stores: Stores) {
       const app = await context.getApp(appId);
       return await app.getConfigForGroups(sequence, configGroups);
     },
-  }
-=======
   };
->>>>>>> Metrics graphs for kots apps
 }
