@@ -626,7 +626,7 @@ export const getAppLicense = gql`
   }
 `;
 
-
+// TODO: remove this in favor of getKotsAppDashboard
 export const getKotsAppStatus = gql`
   query getKotsAppStatus($slug: String!) {
     getKotsAppStatus(slug: $slug) {
@@ -671,6 +671,32 @@ export const getConfigForGroups = gql`
           title
           recommended
           default
+        }
+      }
+    }
+  }
+`;
+
+export const getKotsAppDashboard = gql`
+query getKotsAppDashboard($slug: String!) {
+  getKotsAppDashboard(slug: $slug) {
+    appStatus {
+      appId
+      updatedAt
+      state
+    }
+    metrics {
+      title
+      tickFormat
+      tickTemplate
+      series {
+        legendFormat
+        metric {
+          name
+          value
+        }
+        data {
+          timestamp
           value
         }
       }

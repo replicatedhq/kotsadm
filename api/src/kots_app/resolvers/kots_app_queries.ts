@@ -7,7 +7,6 @@ import { Cluster } from "../../cluster";
 import { kotsAppGetBranding } from "../kots_ffi";
 import yaml from "js-yaml";
 import { logger } from "../../server/logger";
-import { State, KotsAppStatusSchema } from "../kots_app_status";
 
 export function KotsQueries(stores: Stores) {
   return {
@@ -150,6 +149,7 @@ export function KotsQueries(stores: Stores) {
       const clusterId = await stores.clusterStore.getIdFromSlug(args.clusterSlug);
       return await stores.kotsAppStore.getDownstreamOutput(app.id, clusterId, args.sequence);
     },
+<<<<<<< HEAD
 
     async getKotsAppStatus(root: any, args: any, context: Context): Promise<KotsAppStatusSchema> {
       const { slug } = args;
@@ -178,4 +178,7 @@ export function KotsQueries(stores: Stores) {
       return await app.getConfigForGroups(sequence, configGroups);
     },
   }
+=======
+  };
+>>>>>>> Metrics graphs for kots apps
 }
