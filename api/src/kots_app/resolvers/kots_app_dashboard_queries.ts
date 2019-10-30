@@ -88,12 +88,12 @@ const DefaultMetricGraphs: MetricGraph[] = [
 ];
 
 async function getKotsAppMetricCharts(stores: Stores, root: any, args: any, context: Context): Promise<MetricChart[]> {
-  const { slug } = args;
+  const { slug, clusterId } = args;
   const appId = await stores.kotsAppStore.getIdFromSlug(slug)
   const app = await context.getApp(appId);
   let kotsAppSpec: ApplicationSpec | undefined;
   try {
-    kotsAppSpec = await app.getKotsAppSpec("TODO: cluster.id", stores.kotsAppStore)
+    kotsAppSpec = await app.getKotsAppSpec(clusterId, stores.kotsAppStore)
   } catch (err) {
     logger.error("[getKotsAppMetricCharts] - Unable to retrieve kots app spec", err);
   }
