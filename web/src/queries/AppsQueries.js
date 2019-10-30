@@ -673,7 +673,7 @@ query getKotsAppDashboard($slug: String!) {
       tickFormat
       tickTemplate
       series {
-        legendFormat
+        legendTemplate
         metric {
           Name
           Value

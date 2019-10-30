@@ -9,14 +9,14 @@ const MetricChart = `
 
 const Metric = `
   type Metric {
-    Name: String!
-    Value: String!
+    name: String!
+    value: String!
   }
 `;
 
 const Series = `
   type Series {
-    legendFormat: String
+    legendTemplate: String
     metric: [Metric]!
     data: [ValuePair]!
   }
