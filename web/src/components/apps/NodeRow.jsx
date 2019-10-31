@@ -1,6 +1,8 @@
 import React from "react";
 import classNames from "classnames";
 
+import { kbToGb, getMemoryAsNumber, getPercentageStatus } from '../../utilities/utilities';
+
 export default function NodeRow(props) {
   const { node } = props;
 
@@ -21,16 +23,29 @@ export default function NodeRow(props) {
             <span className="icon versionHistoryIcon"></span>
             {node.kubeletVersion}
           </p>
-          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
-            <span className="icon analysis-os_cpu"></span>
-            {`${node.cpu.capacity} ${node.cpu.capacity === "1" ? "core" : "cores"}`}
+          <p className={classNames("flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10", {
+            "u-color--orange": getPercentageStatus(node.cpu.allocatable, node.cpu.capacity) === "warning",
+            "u-color--red": getPercentageStatus(node.cpu.allocatable, node.cpu.capacity) === "danger",
+          })}>
+            <span className={"icon analysis-os_cpu"} />
+            {`${node.cpu.allocatable} / ${node.cpu.capacity} ${node.cpu.allocatable === "1" ? "core available" : "cores available"}`}
           </p>
-          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna">
-            <span className="icon analysis-os_memory"></span>
-            {node.memory.capacity}
+          <p className={classNames("flex1 u-fontSize--small u-fontWeight--medium u-color--tuna", {
+            "u-color--orange": getPercentageStatus(getMemoryAsNumber(node.memory.allocatable), getMemoryAsNumber(node.memory.capacity)) === "warning",
+            "u-color--red": getPercentageStatus(getMemoryAsNumber(node.memory.allocatable), getMemoryAsNumber(node.memory.capacity)) === "danger",
+          })}>
+            <span className={"icon analysis-os_memory"} />
+            {`${kbToGb(node.memory.allocatable)} / ${kbToGb(node.memory.capacity)} available`}
           </p>
         </div>
         <div className="flex flex1 alignItems--center u-marginTop--10 NodeRow--items">
+          <p className={classNames("flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10", {
+            "u-color--orange": getPercentageStatus(node.pods.allocatable, node.pods.capacity) === "warning",
+            "u-color--red": getPercentageStatus(node.pods.allocatable, node.pods.capacity) === "danger",
+          })}>
+            <span className={classNames("icon kubernetesLogoSmall")} />
+            {`${node.pods.allocatable} / ${node.pods.capacity} pods available`}
+          </p>
           <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
             <span className={classNames("icon", {
               "analysis-disk": !node.conditions.diskPressure,
@@ -38,7 +53,6 @@ export default function NodeRow(props) {
             })} />
             {node.conditions.diskPressure ? "No Space on Device" : "No Disk Pressure"}
           </p>
-          {console.log(node)}
           <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
             <span className={classNames("icon", {
               "checkmark-icon": !node.conditions.memoryPressure,
@@ -46,7 +60,7 @@ export default function NodeRow(props) {
             })} />
             {node.conditions.memoryPressure ? "No Space on Memory" : "No Memory Pressure"}
           </p>
-          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
+          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna">
             <span className={classNames("icon", {
               "checkmark-icon": !node.conditions.pidPressure,
               "exclamationMark--icon": node.conditions.pidPressure,
