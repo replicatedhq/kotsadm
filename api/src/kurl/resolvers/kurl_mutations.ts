@@ -6,13 +6,16 @@ import { Params } from "../../server/params";
 import { ReplicatedError } from "../../server/errors";
 import { Context } from "../../context";
 import {
+  Exec,
   KubeConfig,
   AppsV1Api,
   CoreV1Api,
   V1beta1Eviction,
   V1Node,
   V1OwnerReference,
-  V1Pod } from "@kubernetes/client-node";
+  V1Pod,
+  V1Status,
+} from "@kubernetes/client-node";
 import { logger } from "../../server/logger";
 import { IncomingMessage } from "http";
 import { Etcd3 } from "etcd3";
@@ -186,6 +189,7 @@ async function purge(name: string) {
   kc.loadFromDefault();
   const coreV1Client: CoreV1Api = kc.makeApiClient(CoreV1Api);
   const appsV1Client: AppsV1Api = kc.makeApiClient(AppsV1Api);
+  const exec: Exec = new Exec(kc);
 
   let { response, body: node } = await coreV1Client.readNode(name);
 
@@ -199,7 +203,7 @@ async function purge(name: string) {
     throw new Error(`Delete node returned status code ${response.statusCode}`);
   }
 
-  await purgeOSD(coreV1Client, appsV1Client, name);
+  await purgeOSD(coreV1Client, appsV1Client, exec, name);
 
   const isMaster = _.has(node.metadata!.labels!, "node-role.kubernetes.io/master");
   if (isMaster) {
@@ -269,7 +273,7 @@ async function purgeMaster(coreV1Client: CoreV1Api, node: V1Node) {
   await etcd.cluster.memberRemove({ ID: purgedMember.ID });
 }
 
-async function purgeOSD(coreV1Client: CoreV1Api, appsV1Client: AppsV1Api, nodeName: string) {
+async function purgeOSD(coreV1Client: CoreV1Api, appsV1Client: AppsV1Api, exec: Exec, nodeName: string): Promise<void> {
   const namespace = "rook-ceph";
   // 1. Find the Deployment for the OSD on the purged node and lookup its osd ID from labels
   // before deleting it.
@@ -320,20 +324,26 @@ async function purgeOSD(coreV1Client: CoreV1Api, appsV1Client: AppsV1Api, nodeNa
     return;
   }
   const pod = pods.items[0];
-  try {
-    ({ response: resp } = await coreV1Client.connectPostNamespacedPodExec(pod.metadata!.name!, namespace, `ceph osd purge ${osdID}`));
 
-    // TODO remove
-    logger.debug(`exec response code ${resp.statusCode}`);
-    const output = await readAll(resp);
-    logger.debug(output);
-    if (resp.statusCode !== 200) {
-      throw new Error(`Failed to exec "ceph osd purge": ${output}`);
-    }
-  } catch(err) {
-    logger.debug(inspect(err, true, 100));
-    throw err;
-  }
+  await new Promise((resolve, reject) => {
+    exec.exec(
+      "rook-ceph",
+      pod.metadata!.name!,
+      "rook-ceph-operator",
+      ["ceph", "osd", "purge", osdID, "--force"],
+      process.stdout,
+      process.stderr,
+      null,
+      false,
+      (v1Status: V1Status) => {
+        if (v1Status.status === "Failure") {
+          reject(new Error(v1Status.message));
+          return;
+        }
+        resolve();
+      },
+    );
+  })
 }
 
 function readAll(stream: IncomingMessage): Promise<string> {
