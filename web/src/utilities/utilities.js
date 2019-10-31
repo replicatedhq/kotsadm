@@ -204,34 +204,14 @@ export function sortAnalyzers(bundleInsight) {
 }
 
 /**
- * @param {String} strValue - example: 30875684Ki
- * @return {Number} 30875684
- */
-export function getMemoryAsNumber(strValue) {
-  if (strValue.length < 2) {
-    return -1;
-  }
-  return parseInt(strValue.substring(0, strValue.length - 2));
-}
-
-/**
- * @param {String} strValue - example: 30875684Ki
- * @return {String} example: 31GB
- */
-export function kbToGb(strValue) {
-  if (strValue.length < 2) {
-    return "";
-  }
-  const number = getMemoryAsNumber(strValue);
-  return `${(number / 976562.5).toFixed(1)}GB`;
-}
-
-/**
  * @param {Number} numerator
  * @param {Number} denominator
  * @return {String} danger, warning or check
  */
 export function getPercentageStatus(numerator, denominator) {
+  if (!numerator || !denominator) {
+    return "unknown";
+  }
   const percentage = numerator / denominator;
   return percentage < 0.1 ? "danger" : percentage < 0.25 ? "warning" : "check";
 }
