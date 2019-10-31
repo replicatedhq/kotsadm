@@ -13,21 +13,45 @@ export default function NodeRow(props) {
           </p>
         </div>
         <div className="flex flex1 alignItems--center u-marginTop--10 NodeRow--items">
-          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--30">
+          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
             <span className={classNames("node-status", { "disconnected": !node.isConnected })}></span>
             {node.isConnected ? "Connected" : "Disconnected"}
           </p>
-          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--30">
+          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
             <span className="icon versionHistoryIcon"></span>
             {node.kubeletVersion}
           </p>
-          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--30">
+          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
             <span className="icon analysis-os_cpu"></span>
             {`${node.cpu.capacity} ${node.cpu.capacity === "1" ? "core" : "cores"}`}
           </p>
           <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna">
             <span className="icon analysis-os_memory"></span>
             {node.memory.capacity}
+          </p>
+        </div>
+        <div className="flex flex1 alignItems--center u-marginTop--10 NodeRow--items">
+          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
+            <span className={classNames("icon", {
+              "analysis-disk": !node.conditions.diskPressure,
+              "analysis-disk_full": node.conditions.diskPressure,
+            })} />
+            {node.conditions.diskPressure ? "No Space on Device" : "No Disk Pressure"}
+          </p>
+          {console.log(node)}
+          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
+            <span className={classNames("icon", {
+              "checkmark-icon": !node.conditions.memoryPressure,
+              "exclamationMark--icon": node.conditions.memoryPressure,
+            })} />
+            {node.conditions.memoryPressure ? "No Space on Memory" : "No Memory Pressure"}
+          </p>
+          <p className="flex1 u-fontSize--small u-fontWeight--medium u-color--tuna u-marginRight--10">
+            <span className={classNames("icon", {
+              "checkmark-icon": !node.conditions.pidPressure,
+              "exclamationMark--icon": node.conditions.pidPressure,
+            })} />
+            {node.conditions.pidPressure ? "Pressure on CPU" : "No CPU Pressure"}
           </p>
         </div>
         <div className="u-marginTop--10">
