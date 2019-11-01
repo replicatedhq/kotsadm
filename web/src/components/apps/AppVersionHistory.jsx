@@ -14,6 +14,7 @@ import map from "lodash/map";
 import Loader from "../shared/Loader";
 import Tooltip from "../shared/Tooltip";
 import MarkdownRenderer from "@src/components/shared/MarkdownRenderer";
+import DownstreamWatchVersionDiff from "@src/components/watches/DownstreamWatchVersionDiff";
 import { Utilities, hasPendingPreflight, getPreflightResultState } from "@src/utilities/utilities";
 
 import { getKotsDownstreamHistory, getKotsDownstreamOutput } from "../../queries/AppsQueries";
@@ -38,6 +39,9 @@ class AppVersionHistory extends Component {
     checkingForUpdates: false,
     checkingUpdateText: "Checking for updates",
     errorCheckingUpdate: false,
+    showDiffOverlay: false,
+    firstSequence: 0,
+    secondSequence: 0
   }
 
   showReleaseNotes = () => {
@@ -87,14 +91,13 @@ class AppVersionHistory extends Component {
   }
 
   renderSourceAndDiff = version => {
-    const { match, history } = this.props;
     const diffSummary = this.getVersionDiffSummary(version);
     return (
       <div>
         {version.source}
         {diffSummary && (
           diffSummary.filesChanged > 0 ?
-            <div className="DiffSummary u-cursor--pointer" onClick={() => history.push(`/app/${match.params.slug}/version-history/diff/${version.parentSequence - 1}/${version.parentSequence}`)}>
+            <div className="DiffSummary u-cursor--pointer" onClick={() => this.setState({ showDiffOverlay: true, firstSequence: version.parentSequence - 1, secondSequence: version.parentSequence })}>
               <span className="files">{diffSummary.filesChanged} files changed </span>
               <span className="lines-added">+{diffSummary.linesAdded} </span>
               <span className="lines-removed">-{diffSummary.linesRemoved}</span>
@@ -174,9 +177,9 @@ class AppVersionHistory extends Component {
             <Loader size="20" />
           </span>
           : app.hasPreflight && version.status === "pending" &&
-            <Link to={`/app/${match.params.slug}/downstreams/${clusterSlug}/version-history/preflight/${version.sequence}`}>
-              <span className="link" style={{ fontSize: 12 }}>Preflight results</span>
-            </Link>
+          <Link to={`/app/${match.params.slug}/downstreams/${clusterSlug}/version-history/preflight/${version.sequence}`}>
+            <span className="link" style={{ fontSize: 12 }}>Preflight results</span>
+          </Link>
         }
         {version.status === "failed" &&
           <span className="link" style={{ fontSize: 12, marginTop: 2 }} onClick={() => this.handleViewLogs(version)}>View logs</span>
@@ -257,6 +260,12 @@ class AppVersionHistory extends Component {
     });
   }
 
+  hideDiffModal = () => {
+    this.setState({
+      showDiffOverlay: false
+    });
+  }
+
   onSelectReleasesToDiff = () => {
     this.setState({
       selectedDiffReleases: true,
@@ -268,7 +277,8 @@ class AppVersionHistory extends Component {
     this.setState({
       selectedDiffReleases: false,
       checkedReleasesToDiff: [],
-      diffHovered: false
+      diffHovered: false,
+      showDiffOverlay: false
     });
   }
 
@@ -374,19 +384,19 @@ class AppVersionHistory extends Component {
 
   getDiffSequences = () => {
     const { checkedReleasesToDiff } = this.state;
-    let firstSequenceNumber, secondSequenceNumber;
+    let firstSequence, secondSequence;
     if (checkedReleasesToDiff.length === 2) {
       if (checkedReleasesToDiff[0].releaseSequence < checkedReleasesToDiff[1].releaseSequence) {
-        firstSequenceNumber = checkedReleasesToDiff[0].releaseSequence;
-        secondSequenceNumber = checkedReleasesToDiff[1].releaseSequence;
+        firstSequence = checkedReleasesToDiff[0].releaseSequence;
+        secondSequence = checkedReleasesToDiff[1].releaseSequence;
       } else {
-        firstSequenceNumber = checkedReleasesToDiff[1].releaseSequence;
-        secondSequenceNumber = checkedReleasesToDiff[0].releaseSequence;
+        firstSequence = checkedReleasesToDiff[1].releaseSequence;
+        secondSequence = checkedReleasesToDiff[0].releaseSequence;
       }
     }
     return {
-      firstSequenceNumber,
-      secondSequenceNumber
+      firstSequence,
+      secondSequence
     }
   }
 
@@ -412,6 +422,9 @@ class AppVersionHistory extends Component {
       checkingForUpdates,
       checkingUpdateText,
       errorCheckingUpdate,
+      showDiffOverlay,
+      firstSequence,
+      secondSequence
     } = this.state;
 
     if (!app) {
@@ -439,7 +452,6 @@ class AppVersionHistory extends Component {
     const downstream = app.downstreams.length && app.downstreams[0];
     const currentDownstreamVersion = downstream?.currentVersion;
     const versionHistory = data?.getKotsDownstreamHistory?.length ? data.getKotsDownstreamHistory : [];
-    const { firstSequenceNumber, secondSequenceNumber } = this.getDiffSequences();
 
     if (hasPendingPreflight(versionHistory)) {
       data?.startPolling(2000);
@@ -448,7 +460,7 @@ class AppVersionHistory extends Component {
     }
 
     return (
-      <div className="flex-column flex1 u-position--relative u-overflow--auto u-padding--20">
+      <div className="flex flex-column flex1 u-position--relative u-overflow--auto u-padding--20">
         <Helmet>
           <title>{`${app.name} Version History`}</title>
         </Helmet>
@@ -482,9 +494,9 @@ class AppVersionHistory extends Component {
             }
           </div>
         </div>
-        <div className="flex-column flex1">
-          <div className="flex1">
-            <div className="flex-column alignItems--center">
+        <div className="flex flex-column flex1">
+          <div className="flex flex1">
+            <div className="flex flex1 flex-column alignItems--center">
               {/* When no downstreams exit */}
               {!downstream &&
                 <div className="flex-column flex1 u-marginBottom--30">
@@ -523,7 +535,7 @@ class AppVersionHistory extends Component {
                         <th width="17%">Source</th>
                         <th>Deployed</th>
                         <th>Logs</th>
-                        <th/>
+                        <th />
                       </tr>
                     </thead>
                     <tbody>
@@ -552,66 +564,84 @@ class AppVersionHistory extends Component {
               {versionHistory.length && selectedDiffReleases &&
                 <div className="flex u-marginBottom--20">
                   <button className="btn secondary gray u-marginRight--10" onClick={this.onCloseReleasesToDiff}>Cancel</button>
-                  <Link
-                    to={`/app/${match.params.slug}/version-history/diff/${firstSequenceNumber}/${secondSequenceNumber}`}
+                  <button
                     className={classNames("btn primary blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 })}
+                    onClick={() => {
+                      const { firstSequence, secondSequence } = this.getDiffSequences();
+                      this.setState({ showDiffOverlay: true, firstSequence, secondSequence });
+                    }}
                   >
                     Diff releases
-                  </Link>
+                  </button>
                 </div>
               }
 
-              {/* Downstream version history */}
-              {versionHistory.length &&
-                <table className="DownstreamVersionsTable u-position--relative">
-                  <thead className="separator">
-                    <tr key="header">
-                      {selectedDiffReleases && <th width="12px" />}
-                      <th>Environment</th>
-                      <th>Received</th>
-                      <th>Upstream</th>
-                      <th width="11%">Sequence</th>
-                      <th width="17%"><div className="flex">Source {versionHistory.length > 1 && this.renderDiffBtn()}</div></th>
-                      <th>Deployed</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {versionHistory.map((version) => {
-                      const isChecked = !!checkedReleasesToDiff.find(diffRelease => diffRelease.releaseSequence === version.parentSequence);
-                      return (
-                        <tr
-                          key={version.sequence}
-                          className={classNames({ "overlay": selectedDiffReleases, "selected": isChecked })}
-                          onClick={() => selectedDiffReleases && this.handleSelectReleasesToDiff(version.parentSequence, !isChecked)}
-                        >
-                          {selectedDiffReleases && <td width="12px"><div className={classNames("checkbox", { "checked": isChecked })} /></td>}
-                          <td>{changeCase.title(downstream.name)}</td>
-                          <td>
-                            {moment(version.createdOn).format("MM/DD/YY")}<br />
-                            <span className="u-fontSize--small u-marginLeft--5">{moment(version.createdOn).format("hh:mm a")}</span>
-                          </td>
-                          <td>{version.title}</td>
-                          <td width="11%">{this.renderVersionSequence(version)}</td>
-                          <td width="17%">{this.renderSourceAndDiff(version)}</td>
-                          <td>
-                            {version.deployedAt ?
-                              <span>
-                                {moment(version.deployedAt).format("MM/DD/YY")}<br />
-                                <span className="u-fontSize--small u-marginLeft--5">{moment(version.deployedAt).format("hh:mm a")}</span>
-                              </span>
-                              : ""
-                            }
-                          </td>
-                          <td>{this.renderVersionStatus(version)}</td>
-                          <td>{this.renderVersionAction(version)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              }
+              <div className="TableDiff--Wrapper flex flex1">
+                {/* Downstream version history */}
+                {versionHistory.length &&
+                  <table className="DownstreamVersionsTable u-position--relative">
+                    <thead className="separator">
+                      <tr key="header">
+                        {selectedDiffReleases && <th width="12px" />}
+                        <th>Environment</th>
+                        <th>Received</th>
+                        <th>Upstream</th>
+                        <th width="11%">Sequence</th>
+                        <th width="17%"><div className="flex">Source {versionHistory.length > 1 && this.renderDiffBtn()}</div></th>
+                        <th>Deployed</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {versionHistory.map((version) => {
+                        const isChecked = !!checkedReleasesToDiff.find(diffRelease => diffRelease.releaseSequence === version.parentSequence);
+                        return (
+                          <tr
+                            key={version.sequence}
+                            className={classNames({ "overlay": selectedDiffReleases, "selected": isChecked })}
+                            onClick={() => selectedDiffReleases && this.handleSelectReleasesToDiff(version.parentSequence, !isChecked)}
+                          >
+                            {selectedDiffReleases && <td width="12px"><div className={classNames("checkbox", { "checked": isChecked })} /></td>}
+                            <td>{changeCase.title(downstream.name)}</td>
+                            <td>
+                              {moment(version.createdOn).format("MM/DD/YY")}<br />
+                              <span className="u-fontSize--small u-marginLeft--5">{moment(version.createdOn).format("hh:mm a")}</span>
+                            </td>
+                            <td>{version.title}</td>
+                            <td width="11%">{this.renderVersionSequence(version)}</td>
+                            <td width="17%">{this.renderSourceAndDiff(version)}</td>
+                            <td>
+                              {version.deployedAt ?
+                                <span>
+                                  {moment(version.deployedAt).format("MM/DD/YY")}<br />
+                                  <span className="u-fontSize--small u-marginLeft--5">{moment(version.deployedAt).format("hh:mm a")}</span>
+                                </span>
+                                : ""
+                              }
+                            </td>
+                            <td>{this.renderVersionStatus(version)}</td>
+                            <td>{this.renderVersionAction(version)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                }
+
+                {/* Diff overlay */}
+                {showDiffOverlay &&
+                  <div className="DiffOverlay" style={{ background: "wheat" }}>
+                    <DownstreamWatchVersionDiff
+                      slug={match.params.slug}
+                      firstSequence={firstSequence}
+                      secondSequence={secondSequence}
+                      onBackClick={this.hideDiffModal}
+                    />
+                  </div>
+                }
+              </div>
+
             </div>
           </div>
         </div>
