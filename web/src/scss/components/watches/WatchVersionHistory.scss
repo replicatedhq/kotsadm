@@ -146,8 +146,8 @@ $cell-width: 140px;
 }
 
 .DiffOverlay {
-  width: 100%;
-  min-height: 100%;
+  width: calc(100% + 2px);
+  height: 100%;
   position: absolute;
   left: 0;
   top: 0;

@@ -494,9 +494,9 @@ class AppVersionHistory extends Component {
             }
           </div>
         </div>
-        <div className="flex flex-column flex1">
+        <div className="flex-column flex1">
           <div className="flex flex1">
-            <div className="flex flex1 flex-column alignItems--center">
+            <div className="flex1 flex-column alignItems--center">
               {/* When no downstreams exit */}
               {!downstream &&
                 <div className="flex-column flex1 u-marginBottom--30">
@@ -565,7 +565,7 @@ class AppVersionHistory extends Component {
                 <div className="flex u-marginBottom--20">
                   <button className="btn secondary gray u-marginRight--10" onClick={this.onCloseReleasesToDiff}>Cancel</button>
                   <button
-                    className={classNames("btn primary blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 })}
+                    className={classNames("btn primary blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 || showDiffOverlay })}
                     onClick={() => {
                       const { firstSequence, secondSequence } = this.getDiffSequences();
                       this.setState({ showDiffOverlay: true, firstSequence, secondSequence });
@@ -576,7 +576,7 @@ class AppVersionHistory extends Component {
                 </div>
               }
 
-              <div className="TableDiff--Wrapper flex flex1">
+              <div className="TableDiff--Wrapper flex-column flex1">
                 {/* Downstream version history */}
                 {versionHistory.length &&
                   <table className="DownstreamVersionsTable u-position--relative">
@@ -631,7 +631,7 @@ class AppVersionHistory extends Component {
 
                 {/* Diff overlay */}
                 {showDiffOverlay &&
-                  <div className="DiffOverlay" style={{ background: "wheat" }}>
+                  <div className="DiffOverlay">
                     <DownstreamWatchVersionDiff
                       slug={match.params.slug}
                       firstSequence={firstSequence}

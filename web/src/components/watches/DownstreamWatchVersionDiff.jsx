@@ -198,6 +198,7 @@ class DownstreamWatchVersionDiff extends React.Component {
 
   render() {
     const { firstSeqFileContents, secondSeqFileContents, fileLoading } = this.state;
+    const { firstSequence, secondSequence } = this.props;
 
     if (fileLoading || size(firstSeqFileContents) === 0 || size(secondSeqFileContents) === 0) {
       return (
@@ -213,10 +214,13 @@ class DownstreamWatchVersionDiff extends React.Component {
     const filesByKey = groupBy(flatMap(changedFiles), "key");
 
     return (
-      <div className="u-position--relative u-height--full u-width--full" style={{ background: "black" }}>
-        <div className="u-fontWeight--bold u-color--astral u-cursor--pointer u-marginBottom--15" onClick={this.goBack}>
-          <span className="icon clickable backArrow-icon u-marginRight--10" style={{ verticalAlign: "0" }} />
-          Back
+      <div className="u-position--relative u-height--full u-width--full">
+        <div className="flex u-marginBottom--15">
+          <div className="u-fontWeight--bold u-color--astral u-cursor--pointer" onClick={this.goBack}>
+            <span className="icon clickable backArrow-icon u-marginRight--10" style={{ verticalAlign: "0" }} />
+            Back
+          </div>
+          <span className="u-fontWeight--bold u-marginLeft--20 u-color--tuna">Diffing releases {firstSequence} and {secondSequence}</span>
         </div>
         {size(filesByKey) > 0 ?
           map(filesByKey, (value, key) => {
