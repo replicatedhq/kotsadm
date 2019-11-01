@@ -272,7 +272,7 @@ class AppVersionHistory extends Component {
     });
   }
 
-  hideDiffModal = () => {
+  hideDiffOverlay = () => {
     this.setState({
       showDiffOverlay: false
     });
@@ -648,7 +648,7 @@ class AppVersionHistory extends Component {
                       slug={match.params.slug}
                       firstSequence={firstSequence}
                       secondSequence={secondSequence}
-                      onBackClick={this.hideDiffModal}
+                      onBackClick={this.hideDiffOverlay}
                     />
                   </div>
                 }
