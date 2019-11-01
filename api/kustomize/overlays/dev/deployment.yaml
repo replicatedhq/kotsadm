@@ -75,8 +75,6 @@ spec:
               value: "1"
             - name: ENABLE_KURL
               value: "1"
-            - name: PROMETHEUS_ADDRESS
-              value: "http://35.223.228.120:30900"
           volumeMounts:
             - name: github-app-private-key
               mountPath: /keys/github
