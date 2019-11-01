@@ -44,6 +44,18 @@ class AppVersionHistory extends Component {
     secondSequence: 0
   }
 
+  componentDidMount() {
+    const url = window.location.pathname;
+    if (url.includes("/diff")) {
+      const { params } = this.props.match;
+      const firstSequence = params.firstSequence;
+      const secondSequence = params.secondSequence;
+      if (firstSequence !== undefined && secondSequence !== undefined) { // undefined because a sequence can be zero!
+        this.setState({ showDiffOverlay: true, firstSequence, secondSequence });
+      }
+    }
+  }
+
   showReleaseNotes = () => {
     this.setState({
       viewReleaseNotes: true

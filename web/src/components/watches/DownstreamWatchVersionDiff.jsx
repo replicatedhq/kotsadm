@@ -85,14 +85,10 @@ class DownstreamWatchVersionDiff extends React.Component {
       this.fetchKotsApplicationTree();
     }
     if (firstSeqFiles !== lastState.firstSeqFiles && firstSeqFiles) {
-      if (firstSequence !== undefined) {
-        this.allFilesForSequence(firstSeqFiles, firstSequence, true);
-      }
+      this.allFilesForSequence(firstSeqFiles, firstSequence, true);
     }
     if (secondSeqFiles !== lastState.secondSeqFiles && secondSeqFiles) {
-      if (secondSequence !== undefined) {
-        this.allFilesForSequence(secondSeqFiles, secondSequence, false);
-      }
+      this.allFilesForSequence(secondSeqFiles, secondSequence, false);
     }
   }
 
@@ -109,11 +105,25 @@ class DownstreamWatchVersionDiff extends React.Component {
     if (slug) {
       this.fetchKotsApplicationTree();
     }
-    if (firstSeqFiles && firstSequence !== undefined) {
+    if (firstSeqFiles) {
       this.allFilesForSequence(firstSeqFiles, firstSequence, true);
     }
-    if (secondSeqFiles && secondSequence !== undefined) {
+    if (secondSeqFiles) {
       this.allFilesForSequence(secondSeqFiles, secondSequence, false);
+    }
+
+    const url = window.location.pathname;
+    if (!url.includes("/diff")) {
+      window.history.replaceState("", "", `${url}/diff/${firstSequence}/${secondSequence}`);
+    }
+  }
+
+  componentWillUnmount() {
+    const url = window.location.pathname;
+    if (url.includes("/diff")) {
+      const { firstSequence, secondSequence } = this.props;
+      const diffPath = `/diff/${firstSequence}/${secondSequence}`;
+      window.history.replaceState("", "", url.substring(0, url.indexOf(diffPath)));
     }
   }
 
