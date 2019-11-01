@@ -420,7 +420,7 @@ async function generateWorkerAddNodeCommand(): Promise<Command> {
   // data.upload_certs_expiration
 
   const command = [
-    `curl -sSL ${data.kurl_url}/${data.installer_id}/join | sudo bash -s`,
+    `curl -sSL ${data.kurl_url}/${data.installer_id}/join.sh | sudo bash -s`,
     `kubernetes-master-address=${data.kubernetes_api_address}`,
     `kubeadm-token=${data.bootstrap_token}`,
     `kubeadm-token-ca-hash=${data.ca_hash}`,
