@@ -14,10 +14,11 @@ export function KotsLicenseQueries(stores: Stores) {
     async hasLicenseUpdates(root: any, args: any, context: Context) {
       const { appSlug } = args;
       const appId = await stores.kotsAppStore.getIdFromSlug(appSlug);
-      const license = await stores.kotsLicenseStore.getAppLicenseSpec(appId);
+      const app = await context.getApp(appId);
+      const license = await stores.kotsLicenseStore.getAppLicenseSpec(app.id);
 
       if (!license) {
-        throw new ReplicatedError(`License not found for app with an ID of ${appId}`);
+        throw new ReplicatedError(`License not found for app with an ID of ${app.id}`);
       }
       
       const currentLicense = yaml.safeLoad(license);

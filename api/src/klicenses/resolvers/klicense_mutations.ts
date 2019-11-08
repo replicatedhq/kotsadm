@@ -13,7 +13,7 @@ export function KotsLicenseMutations(stores: Stores) {
     async syncAppLicense(root: any, args: any, context: Context): Promise<KLicense> {
       const { appSlug, airgapLicense } = args;
       const appId = await stores.kotsAppStore.getIdFromSlug(appSlug);
-      const app = await stores.kotsAppStore.getApp(appId);
+      const app = await context.getApp(appId)
       const license = await stores.kotsLicenseStore.getAppLicenseSpec(app.id);
 
       if (!license) {
