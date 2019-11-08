@@ -29,19 +29,21 @@ class AppLicense extends Component {
   }
 
   componentDidMount() {
-    const { getAppLicense } = this.props.getAppLicense;
-    if (getAppLicense) {
-      this.setState({ appLicense: getAppLicense });
-    }
+    this.getAppLicense();
   }
 
-  componentDidUpdate(lastProps) {
-    if (this.props.getAppLicense !== lastProps.getAppLicense && this.props.getAppLicense) {
-      const { getAppLicense } = this.props.getAppLicense;
-      if (getAppLicense) {
-        this.setState({ appLicense: getAppLicense });
+  getAppLicense = () => {
+    const { app } = this.props;
+    this.props.client.query({
+      query: getAppLicense,
+      fetchPolicy: "no-cache",
+      variables: {
+        appId: app.id,
       }
-    }
+    })
+    .then(response => {
+      this.setState({ appLicense: response.data.getAppLicense });
+    });
   }
 
   onDrop = async (files) => {
@@ -215,17 +217,6 @@ class AppLicense extends Component {
 
 export default compose(
   withApollo,
-  graphql(getAppLicense, {
-    name: "getAppLicense",
-    options: props => {
-      return {
-        variables: {
-          appId: props.app.id
-        },
-        fetchPolicy: "no-cache"
-      };
-    }
-  }),
   graphql(syncAppLicense, {
     props: ({ mutate }) => ({
       syncAppLicense: (appSlug, airgapLicense) => mutate({ variables: { appSlug, airgapLicense } })

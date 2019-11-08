@@ -41,7 +41,7 @@ function kots() {
     TemplateConfig: [GoString, [GoString, GoString, GoString]],
     EncryptString: [GoString, [GoString, GoString]],
     DecryptString: [GoString, [GoString, GoString]],
-    GetLatestLicense: [GoString, [GoString]],
+    GetLatestLicense: [GoString, [GoString, GoString]],
     VerifyAirgapLicense: [GoString, [GoString]],
   });
 }
@@ -520,16 +520,41 @@ export async function kotsDecryptString(cipherString: string, message: string): 
 }
 
 export async function getLatestLicense(licenseData: string): Promise<string> {
-  const licenseDataParam = new GoString();
-  licenseDataParam["p"] = licenseData;
-  licenseDataParam["n"] = String(licenseData).length;
+  const tmpDir = tmp.dirSync();
+  try {
+    const statusServer = new StatusServer();
+    await statusServer.start(tmpDir.name);
 
-  const license = kots().GetLatestLicense(licenseDataParam);
-  if (license == "" || license["p"] == "") {
-    throw new ReplicatedError("failed to get latest license");
+    const socketParam = new GoString();
+    socketParam["p"] = statusServer.socketFilename;
+    socketParam["n"] = statusServer.socketFilename.length;
+
+    const licenseDataParam = new GoString();
+    licenseDataParam["p"] = licenseData;
+    licenseDataParam["n"] = String(licenseData).length;
+
+    kots().GetLatestLicense(socketParam, licenseDataParam);
+
+    let license = "";
+    await statusServer.connection();
+    await statusServer.termination((resolve, reject, obj): boolean => {
+      // Return true if completed
+      if (obj.status === "terminated") {
+        license = obj.data;
+        if (obj.exit_code !== -1) {
+          resolve();
+        } else {
+          reject(new ReplicatedError("failed to get latest license"));
+        }
+        return true;
+      }
+      return false;
+    });
+
+    return license;
+  } finally {
+    tmpDir.removeCallback();
   }
-
-  return license["p"];
 }
 
 export async function verifyAirgapLicense(licenseData: string): Promise<boolean> {
@@ -538,7 +563,7 @@ export async function verifyAirgapLicense(licenseData: string): Promise<boolean>
   licenseDataParam["n"] = String(licenseData).length;
 
   const license = kots().VerifyAirgapLicense(licenseDataParam);
-  if (license == "" || license["p"] == "") {
+  if (license == "" || license["p"] == null) {
     throw new ReplicatedError("failed to verify airgap license signature");
   }
 
