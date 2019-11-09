@@ -31,6 +31,7 @@ class UploadAirgapBundle extends React.Component {
     preparingOnlineInstall: false,
     supportBundleCommand: undefined,
     showSupportBundleCommand: false,
+    onlineInstallErrorMessage: "",
     viewOnlineInstallErrorMessage: false
   }
 
