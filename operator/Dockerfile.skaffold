@@ -34,11 +34,16 @@ RUN kubectl krew install support-bundle
 
 ENV PROJECTPATH=/go/src/github.com/replicatedhq/kotsadm/operator
 WORKDIR $PROJECTPATH
-ADD Makefile $PROJECTPATH/
-ADD go.mod $PROJECTPATH/
-ADD go.sum $PROJECTPATH/
-ADD cmd $PROJECTPATH/cmd
-ADD pkg $PROJECTPATH/pkg
+
+USER root
+RUN chown -R kotsadm-operator.kotsadm-operator $PROJECTPATH
+USER kotsadm-operator
+
+ADD --chown=kotsadm-operator:kotsadm-operator Makefile $PROJECTPATH/
+ADD --chown=kotsadm-operator:kotsadm-operator go.mod $PROJECTPATH/
+ADD --chown=kotsadm-operator:kotsadm-operator go.sum $PROJECTPATH/
+ADD --chown=kotsadm-operator:kotsadm-operator cmd $PROJECTPATH/cmd
+ADD --chown=kotsadm-operator:kotsadm-operator pkg $PROJECTPATH/pkg
 
 RUN make build
 ENTRYPOINT ["./bin/kotsadm-operator"]
