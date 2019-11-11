@@ -46,4 +46,6 @@ ADD --chown=kotsadm-operator:kotsadm-operator cmd $PROJECTPATH/cmd
 ADD --chown=kotsadm-operator:kotsadm-operator pkg $PROJECTPATH/pkg
 
 RUN make build
-ENTRYPOINT ["./bin/kotsadm-operator"]
+
+WORKDIR "/"
+ENTRYPOINT ["/go/src/github.com/replicatedhq/kotsadm/operator/bin/kotsadm-operator"]
