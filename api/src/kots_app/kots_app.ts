@@ -229,13 +229,20 @@ export class KotsApp {
     return configGroups;
   }
 
-  async getConfigGroups(sequence: string): Promise<KotsConfigGroup[]> {
+  async getConfig(sequence: string): Promise<KotsConfig> {
     try {
       const paths: string[] = await this.getFilesPaths(sequence);
       const files: FilesAsString = await this.getFiles(sequence, paths);
 
-      const { configPath, configContent, configValuesContent } = await this.getConfigData(files);
-      return await this.applyConfigValues(configPath, configContent, configValuesContent);
+      const configData = await this.getConfigData(files);
+      const { configPath, configContent, configValuesContent } = configData;
+
+      const configGroups = await this.applyConfigValues(configPath, configContent, configValuesContent);
+
+      return {
+        configGroups: configGroups,
+        configData: JSON.stringify(configData)
+      };
     } catch(err) {
       throw new ReplicatedError(`Failed to get config groups ${err}`);
     }
@@ -300,21 +307,27 @@ export class KotsApp {
     }
   }
 
-  async getConfigForGroups(sequence: string, updatedConfigGroups: KotsConfigGroup[]): Promise<KotsConfigGroup[]> {
+  async templateConfigGroups(sequence: string, configGroups: KotsConfigGroup[], configData?: string): Promise<KotsConfigGroup[]> {
     const paths: string[] = await this.getFilesPaths(sequence);
     const files: FilesAsString = await this.getFiles(sequence, paths);
 
-    const { configPath, configContent, configValuesContent } = await this.getConfigData(files);
+    let configDataJson: ConfigData;
+    if (configData && configData !== "") {
+      configDataJson = JSON.parse(configData);
+    } else {
+      configDataJson = await this.getConfigData(files);
+    }
+    const { configPath, configContent, configValuesContent } = configDataJson;
 
     const parsedConfig = yaml.safeLoad(configContent);
     const parsedConfigValues = yaml.safeLoad(configValuesContent);
 
-    const configValues = parsedConfigValues.spec.values;
-    const configGroups = parsedConfig.spec.groups;
+    const specConfigValues = parsedConfigValues.spec.values;
+    const specConfigGroups = parsedConfig.spec.groups;
 
-    updatedConfigGroups.forEach(group => {
+    configGroups.forEach(group => {
       group.items.forEach(async item => {
-        if (this.shouldUpdateConfigValues(configGroups, configValues, item)) {
+        if (this.shouldUpdateConfigValues(specConfigGroups, specConfigValues, item)) {
           let configVal = {}
           if (item.value) {
             configVal["value"] = item.value;
@@ -322,7 +335,7 @@ export class KotsApp {
           if (item.default) {
             configVal["default"] = item.default;
           }
-          configValues[item.name] = configVal;
+          specConfigValues[item.name] = configVal;
         }
       });
     });
@@ -624,8 +637,13 @@ export interface KotsDownstreamOutput {
 }
 
 export interface ConfigData {
-  configContent: string,
-  configPath: string,
-  configValuesContent: string,
-  configValuesPath: string
+  configContent: string;
+  configPath: string;
+  configValuesContent: string;
+  configValuesPath: string;
+}
+
+export interface KotsConfig {
+  configGroups: KotsConfigGroup[];
+  configData: string;
 }

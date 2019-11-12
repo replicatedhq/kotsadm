@@ -582,35 +582,38 @@ export const getAirgapInstallStatusRaw = `
 
 export const getAirgapInstallStatus = gql(getAirgapInstallStatusRaw);
 
-export const getKotsConfigGroups = gql`
-  query getKotsConfigGroups($slug: String!, $sequence: Int!) {
-    getKotsConfigGroups(slug: $slug, sequence: $sequence) {
-      name
-      title
-      description
-      items {
+export const getKotsConfig = gql`
+  query getKotsConfig($slug: String!, $sequence: Int!) {
+    getKotsConfig(slug: $slug, sequence: $sequence) {
+      configData
+      configGroups {
         name
-        type
         title
-        helpText
-        recommended
-        default
-        value
-        multiValue
-        readOnly
-        writeOnce
-        when
-        multiple
-        hidden
-        position
-        affix
-        required
+        description
         items {
           name
+          type
           title
+          helpText
           recommended
           default
           value
+          multiValue
+          readOnly
+          writeOnce
+          when
+          multiple
+          hidden
+          position
+          affix
+          required
+          items {
+            name
+            title
+            recommended
+            default
+            value
+          }
         }
       }
     }
@@ -650,9 +653,9 @@ export const hasLicenseUpdates = gql`
   }
 `;
 
-export const getConfigForGroups = gql`
-  query getConfigForGroups($slug: String!, $sequence: Int!, $configGroups: [KotsConfigGroupInput]!) {
-    getConfigForGroups(slug: $slug, sequence: $sequence, configGroups: $configGroups) {
+export const templateConfigGroups = gql`
+  query templateConfigGroups($slug: String!, $sequence: Int!, $configGroups: [KotsConfigGroupInput]!, $configData: String) {
+    templateConfigGroups(slug: $slug, sequence: $sequence, configGroups: $configGroups, configData: $configData) {
       name
       title
       description

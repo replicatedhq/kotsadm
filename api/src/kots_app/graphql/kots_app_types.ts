@@ -242,7 +242,14 @@ type KotsAppDashboard {
   metrics: [MetricChart]
   prometheusAddress: String
 }
-`
+`;
+
+const KotsConfig = `
+type KotsConfig {
+  configGroups: [KotsConfigGroup]!
+  configData: String
+}
+`;
 
 export default [
   KotsAppUpload,
@@ -267,6 +274,7 @@ export default [
   KotsConfigItemInput,
   KotsConfigGroup,
   KotsConfigGroupInput,
+  KotsConfig,
 
   KotsAppStatus,
   KotsAppDashboard,
