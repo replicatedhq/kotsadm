@@ -235,7 +235,7 @@ export class KotsApp {
       const files: FilesAsString = await this.getFiles(sequence, paths);
 
       const configData = await this.getConfigDataFromFiles(files);
-      await stores.kotsAppStore.updateAppConfigCache(appId, configData);
+      await stores.kotsAppStore.updateAppConfigCache(appId, sequence, configData);
 
       const { configPath, configContent, configValuesContent } = configData;
       return await this.applyConfigValues(configPath, configContent, configValuesContent);
@@ -303,8 +303,8 @@ export class KotsApp {
     }
   }
 
-  async templateConfigGroups(stores: Stores, appId: string, configGroups: KotsConfigGroup[]): Promise<KotsConfigGroup[]> {
-    const configData = await stores.kotsAppStore.getAppConfigCache(appId);
+  async templateConfigGroups(stores: Stores, appId: string, sequence: string, configGroups: KotsConfigGroup[]): Promise<KotsConfigGroup[]> {
+    const configData = await stores.kotsAppStore.getAppConfigCache(appId, sequence);
     const { configPath, configContent, configValuesContent } = configData;
 
     const parsedConfig = yaml.safeLoad(configContent);

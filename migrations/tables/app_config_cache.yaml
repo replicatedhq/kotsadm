@@ -12,9 +12,14 @@ spec:
     postgres:
       primaryKey:
         - app_id
+        - sequence
       columns:
       - name: app_id
         type: text
+        constraints:
+          notNull: true
+      - name: sequence
+        type: integer
         constraints:
           notNull: true
       - name: config_path

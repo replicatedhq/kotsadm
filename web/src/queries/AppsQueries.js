@@ -651,8 +651,8 @@ export const hasLicenseUpdates = gql`
 `;
 
 export const templateConfigGroups = gql`
-  query templateConfigGroups($slug: String!, $configGroups: [KotsConfigGroupInput]!) {
-    templateConfigGroups(slug: $slug, configGroups: $configGroups) {
+  query templateConfigGroups($slug: String!, $sequence: Int!, $configGroups: [KotsConfigGroupInput]!) {
+    templateConfigGroups(slug: $slug, sequence: $sequence, configGroups: $configGroups) {
       name
       title
       description

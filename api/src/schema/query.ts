@@ -58,7 +58,7 @@ export const Query = `
     getKotsFiles(slug: String!, sequence: Int!, fileNames: [String!]): String
     getAppConfigGroups(slug: String!, sequence: Int!): [KotsConfigGroup]
     getKotsDownstreamOutput(appSlug: String!, clusterSlug: String!, sequence: Int!): KotsDownstreamOutput
-    templateConfigGroups(slug: String!, configGroups: [KotsConfigGroupInput]!): [KotsConfigGroup]
+    templateConfigGroups(slug: String!, sequence: Int!, configGroups: [KotsConfigGroupInput]!): [KotsConfigGroup]
 
     listPendingWatchVersions(watchId: String!): [Version]
     listPastWatchVersions(watchId: String!): [Version]

@@ -151,10 +151,10 @@ export function KotsQueries(stores: Stores) {
     },
 
     async templateConfigGroups(root: any, args: any, context: Context): Promise<KotsConfigGroup[]> {
-      const { slug, configGroups } = args;
+      const { slug, sequence, configGroups } = args;
       const appId = await stores.kotsAppStore.getIdFromSlug(slug)
       const app = await context.getApp(appId);
-      return await app.templateConfigGroups(stores, app.id, configGroups);
+      return await app.templateConfigGroups(stores, app.id, sequence, configGroups);
     },
   };
 }

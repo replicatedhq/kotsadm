@@ -52,12 +52,31 @@ class AppConfig extends Component {
     }
   }
 
+  getSequence = () => {
+    const { match, app, fromLicenseFlow } = this.props;
+    if (fromLicenseFlow) {
+      return 0;
+    }
+    if (match.params.sequence !== undefined) {
+      return match.params.sequence;
+    }
+    return app.currentSequence;
+  }
+
+  getSlug = () => {
+    const { match, app, fromLicenseFlow } = this.props;
+    if (fromLicenseFlow) {
+      return match.params.slug;
+    }
+    return app.slug;
+  }
+
   handleSave = () => {
     this.setState({ savingConfig: true });
 
-    const { match, app, fromLicenseFlow, history, getKotsApp } = this.props;
-    const sequence = fromLicenseFlow ? 0 : app.currentSequence;
-    const slug = fromLicenseFlow ? match.params.slug : app.slug;
+    const { fromLicenseFlow, history, getKotsApp } = this.props;
+    const sequence = this.getSequence();
+    const slug = this.getSlug();
 
     this.props.client.mutate({
       mutation: updateAppConfig,
@@ -116,13 +135,14 @@ class AppConfig extends Component {
   }
 
   handleConfigChange = groups => {
-    const { match, app, fromLicenseFlow } = this.props;
-    const slug = fromLicenseFlow ? match.params.slug : app.slug;
+    const sequence = this.getSequence();
+    const slug = this.getSlug();
 
     this.props.client.query({
       query: templateConfigGroups,
       variables: {
         slug: slug,
+        sequence: sequence,
         configGroups: groups
       },
       fetchPolicy: "no-cache"
@@ -180,7 +200,14 @@ export default withRouter(compose(
   graphql(getAppConfigGroups, {
     name: "getAppConfigGroups",
     options: ({ match, app, fromLicenseFlow }) => {
-      const sequence = fromLicenseFlow ? 0 : app.currentSequence;
+      let sequence;
+      if (fromLicenseFlow) {
+        sequence = 0;
+      } else if (match.params.sequence != undefined) {
+        sequence = match.params.sequence;
+      } else {
+        sequence = app.currentSequence;
+      }
       const slug = fromLicenseFlow ? match.params.slug : app.slug;
       return {
         variables: {

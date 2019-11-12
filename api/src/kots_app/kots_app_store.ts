@@ -598,10 +598,10 @@ export class KotsAppStore {
     return result.rows[0].app_spec;
   }
 
-  async updateAppConfigCache(appId: string, configData: ConfigData) {
+  async updateAppConfigCache(appId: string, sequence: string, configData: ConfigData) {
     const q = `
-      INSERT INTO app_config_cache VALUES ($1, $2, $3, $4, $5, $6) 
-      ON CONFLICT(app_id) DO UPDATE SET 
+      INSERT INTO app_config_cache VALUES ($1, $2, $3, $4, $5, $6, $7) 
+      ON CONFLICT(app_id, sequence) DO UPDATE SET 
       config_path = EXCLUDED.config_path, 
       config_content = EXCLUDED.config_content, 
       config_values_path = EXCLUDED.config_values_path, 
@@ -610,6 +610,7 @@ export class KotsAppStore {
     `;
     const v = [
       appId,
+      sequence,
       configData.configPath,
       configData.configContent,
       configData.configValuesPath,
@@ -619,10 +620,11 @@ export class KotsAppStore {
     await this.pool.query(q, v);
   }
 
-  async getAppConfigCache(appId: string): Promise<ConfigData> {
-    const q = `select config_path, config_content, config_values_path, config_values_content from app_config_cache where app_id = $1`;
+  async getAppConfigCache(appId: string, sequence: string): Promise<ConfigData> {
+    const q = `select config_path, config_content, config_values_path, config_values_content from app_config_cache where app_id = $1 and sequence = $2`;
     const v = [
       appId,
+      sequence
     ];
 
     const result = await this.pool.query(q, v);
