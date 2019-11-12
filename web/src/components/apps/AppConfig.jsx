@@ -8,7 +8,7 @@ import debounce from "lodash/debounce";
 import map from "lodash/map";
 
 import Loader from "../shared/Loader";
-import { getKotsConfig, getKotsApp, templateConfigGroups } from "../../queries/AppsQueries";
+import { getAppConfigGroups, getKotsApp, templateConfigGroups } from "../../queries/AppsQueries";
 import { updateAppConfig } from "../../mutations/AppsMutations";
 
 import "../../scss/components/watches/WatchConfig.scss";
@@ -24,7 +24,6 @@ class AppConfig extends Component {
     this.state = {
       initialConfigGroups: [],
       configGroups: [],
-      configData: "",
       savingConfig: false,
       changed: false
     }
@@ -40,10 +39,10 @@ class AppConfig extends Component {
   }
 
   componentDidUpdate(lastProps) {
-    const { getKotsConfig } = this.props.getKotsConfig;
-    if (getKotsConfig && getKotsConfig !== lastProps.getKotsConfig.getKotsConfig) {
-      const initialConfigGroups = JSON.parse(JSON.stringify(getKotsConfig.configGroups)); // quick deep copy
-      this.setState({ configGroups: getKotsConfig.configGroups, configData: getKotsConfig.configData, initialConfigGroups });
+    const { getAppConfigGroups } = this.props.getAppConfigGroups;
+    if (getAppConfigGroups && getAppConfigGroups !== lastProps.getAppConfigGroups.getAppConfigGroups) {
+      const initialConfigGroups = JSON.parse(JSON.stringify(getAppConfigGroups)); // quick deep copy
+      this.setState({ configGroups: getAppConfigGroups, initialConfigGroups });
     }
     if (this.props.getKotsApp) {
       const { getKotsApp } = this.props.getKotsApp;
@@ -118,16 +117,13 @@ class AppConfig extends Component {
 
   handleConfigChange = groups => {
     const { match, app, fromLicenseFlow } = this.props;
-    const sequence = fromLicenseFlow ? 0 : app.currentSequence;
     const slug = fromLicenseFlow ? match.params.slug : app.slug;
 
     this.props.client.query({
       query: templateConfigGroups,
       variables: {
         slug: slug,
-        sequence: sequence,
-        configGroups: groups,
-        configData: this.state.configData
+        configGroups: groups
       },
       fetchPolicy: "no-cache"
     }).then(response => {
@@ -181,8 +177,8 @@ class AppConfig extends Component {
 export default withRouter(compose(
   withApollo,
   withRouter,
-  graphql(getKotsConfig, {
-    name: "getKotsConfig",
+  graphql(getAppConfigGroups, {
+    name: "getAppConfigGroups",
     options: ({ match, app, fromLicenseFlow }) => {
       const sequence = fromLicenseFlow ? 0 : app.currentSequence;
       const slug = fromLicenseFlow ? match.params.slug : app.slug;

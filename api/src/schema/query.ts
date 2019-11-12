@@ -56,9 +56,9 @@ export const Query = `
 
     getKotsApplicationTree(slug: String!, sequence: Int!): String
     getKotsFiles(slug: String!, sequence: Int!, fileNames: [String!]): String
-    getKotsConfig(slug: String!, sequence: Int!): KotsConfig
+    getAppConfigGroups(slug: String!, sequence: Int!): [KotsConfigGroup]
     getKotsDownstreamOutput(appSlug: String!, clusterSlug: String!, sequence: Int!): KotsDownstreamOutput
-    templateConfigGroups(slug: String!, sequence: Int!, configGroups: [KotsConfigGroupInput]!, configData: String): [KotsConfigGroup]
+    templateConfigGroups(slug: String!, configGroups: [KotsConfigGroupInput]!): [KotsConfigGroup]
 
     listPendingWatchVersions(watchId: String!): [Version]
     listPastWatchVersions(watchId: String!): [Version]

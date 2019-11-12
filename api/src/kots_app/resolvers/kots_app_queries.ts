@@ -2,7 +2,7 @@ import _ from "lodash";
 import { Stores } from "../../schema/stores";
 import { Context } from "../../context";
 import { ReplicatedError } from "../../server/errors";
-import { KotsApp, KotsVersion, KotsAppMetadata, KotsAppRegistryDetails, KotsConfig, KotsConfigGroup, KotsDownstreamOutput } from "../";
+import { KotsApp, KotsVersion, KotsAppMetadata, KotsAppRegistryDetails, KotsConfigGroup, KotsDownstreamOutput } from "../";
 import { Cluster } from "../../cluster";
 import { kotsAppGetBranding } from "../kots_ffi";
 import yaml from "js-yaml";
@@ -133,10 +133,10 @@ export function KotsQueries(stores: Stores) {
       return jsonFiles;
     },
 
-    async getKotsConfig(root: any, args: any, context: Context): Promise<KotsConfig> {
+    async getAppConfigGroups(root: any, args: any, context: Context): Promise<KotsConfigGroup[]> {
       const appId = await stores.kotsAppStore.getIdFromSlug(args.slug);
       const app = await context.getApp(appId);
-      return await app.getConfig(args.sequence);
+      return await app.getAppConfigGroups(stores, app.id, args.sequence);
     },
 
     async getAirgapInstallStatus(root: any, args: any, context: Context): Promise<{ currentMessage: string, installStatus: string}> {
@@ -151,10 +151,10 @@ export function KotsQueries(stores: Stores) {
     },
 
     async templateConfigGroups(root: any, args: any, context: Context): Promise<KotsConfigGroup[]> {
-      const { slug, sequence, configGroups, configData } = args;
+      const { slug, configGroups } = args;
       const appId = await stores.kotsAppStore.getIdFromSlug(slug)
       const app = await context.getApp(appId);
-      return await app.templateConfigGroups(sequence, configGroups, configData);
+      return await app.templateConfigGroups(stores, app.id, configGroups);
     },
   };
 }

@@ -147,7 +147,7 @@ export class KotsApp {
     return null;
   }
 
-  private async getConfigData(files: FilesAsString): Promise<ConfigData> {
+  private async getConfigDataFromFiles(files: FilesAsString): Promise<ConfigData> {
     let configContent: string = "",
         configPath: string = "",
         configValuesContent: string = "",
@@ -229,20 +229,16 @@ export class KotsApp {
     return configGroups;
   }
 
-  async getConfig(sequence: string): Promise<KotsConfig> {
+  async getAppConfigGroups(stores: Stores, appId: string, sequence: string): Promise<KotsConfigGroup[]> {
     try {
       const paths: string[] = await this.getFilesPaths(sequence);
       const files: FilesAsString = await this.getFiles(sequence, paths);
 
-      const configData = await this.getConfigData(files);
+      const configData = await this.getConfigDataFromFiles(files);
+      await stores.kotsAppStore.updateAppConfigCache(appId, configData);
+
       const { configPath, configContent, configValuesContent } = configData;
-
-      const configGroups = await this.applyConfigValues(configPath, configContent, configValuesContent);
-
-      return {
-        configGroups: configGroups,
-        configData: JSON.stringify(configData)
-      };
+      return await this.applyConfigValues(configPath, configContent, configValuesContent);
     } catch(err) {
       throw new ReplicatedError(`Failed to get config groups ${err}`);
     }
@@ -253,7 +249,7 @@ export class KotsApp {
       const paths: string[] = await this.getFilesPaths(sequence);
       const files: FilesAsString = await this.getFiles(sequence, paths);
 
-      const { configContent, configValuesContent, configValuesPath } = await this.getConfigData(files);
+      const { configContent, configValuesContent, configValuesPath } = await this.getConfigDataFromFiles(files);
 
       const parsedConfig = yaml.safeLoad(configContent);
       const parsedConfigValues = yaml.safeLoad(configValuesContent);
@@ -307,17 +303,9 @@ export class KotsApp {
     }
   }
 
-  async templateConfigGroups(sequence: string, configGroups: KotsConfigGroup[], configData?: string): Promise<KotsConfigGroup[]> {
-    const paths: string[] = await this.getFilesPaths(sequence);
-    const files: FilesAsString = await this.getFiles(sequence, paths);
-
-    let configDataJson: ConfigData;
-    if (configData && configData !== "") {
-      configDataJson = JSON.parse(configData);
-    } else {
-      configDataJson = await this.getConfigData(files);
-    }
-    const { configPath, configContent, configValuesContent } = configDataJson;
+  async templateConfigGroups(stores: Stores, appId: string, configGroups: KotsConfigGroup[]): Promise<KotsConfigGroup[]> {
+    const configData = await stores.kotsAppStore.getAppConfigCache(appId);
+    const { configPath, configContent, configValuesContent } = configData;
 
     const parsedConfig = yaml.safeLoad(configContent);
     const parsedConfigValues = yaml.safeLoad(configValuesContent);
@@ -488,7 +476,7 @@ export class KotsApp {
     }
     const paths: string[] = await this.getFilesPaths(sequence);
     const files: FilesAsString = await this.getFiles(sequence, paths);
-    const { configPath } = await this.getConfigData(files);
+    const { configPath } = await this.getConfigDataFromFiles(files);
     return configPath !== "";
   }
 
@@ -641,9 +629,4 @@ export interface ConfigData {
   configPath: string;
   configValuesContent: string;
   configValuesPath: string;
-}
-
-export interface KotsConfig {
-  configGroups: KotsConfigGroup[];
-  configData: string;
 }

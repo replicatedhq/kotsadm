@@ -244,13 +244,6 @@ type KotsAppDashboard {
 }
 `;
 
-const KotsConfig = `
-type KotsConfig {
-  configGroups: [KotsConfigGroup]!
-  configData: String
-}
-`;
-
 export default [
   KotsAppUpload,
   KotsApp,
@@ -274,7 +267,6 @@ export default [
   KotsConfigItemInput,
   KotsConfigGroup,
   KotsConfigGroupInput,
-  KotsConfig,
 
   KotsAppStatus,
   KotsAppDashboard,
