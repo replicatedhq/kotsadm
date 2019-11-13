@@ -35,11 +35,13 @@ WORKDIR /src
 RUN npm i --silent
 
 WORKDIR /src
-ADD . /src
+ADD ./src /src/src
+ADD ./tsconfig.json /src/
+ADD ./Makefile /src/
 
 RUN make build
 
-# COPY ./kots.so /lib/kots.so
+COPY ./kots.so /lib/kots.so
 # COPY ./troubleshoot.so /lib/troubleshoot.so
 
 ENTRYPOINT ["node", "--no-deprecation", "/src/build/server/index.js"]
