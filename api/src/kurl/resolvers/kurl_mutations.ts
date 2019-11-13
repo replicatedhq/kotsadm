@@ -50,6 +50,10 @@ export function KurlMutations(stores: Stores, params: Params) {
     async generateWorkerAddNodeCommand(root: any, args: any, context: Context): Promise<Command> {
       return await generateWorkerAddNodeCommand();
     },
+
+    async generateMasterAddNodeCommand(root: any, args: any, context: Context): Promise<Command> {
+      return await generateMasterAddNodeCommand();
+    }
   }
 }
 
@@ -377,6 +381,34 @@ export interface Command {
 
 // worker: kubernetes-master-address=${KUBERNETES_API_ADDRESS} kubeadm-token=${BOOTSTRAP_TOKEN} kubeadm-token-ca-hash=$KUBEADM_TOKEN_CA_HASH kubernetes-version=$KUBERNETES_VERSION ${dockerRegistryIP}
 
+async function generateMasterAddNodeCommand(): Promise<Command> {
+  var cmd: Command = { command: [], expiry: 0};
+
+  const kc = new KubeConfig();
+  kc.loadFromDefault();
+
+  const versionClient: VersionApi = kc.makeApiClient(VersionApi);
+  const versionInfo = await versionClient.getCode();
+
+  const kubernetesVersion = versionInfo.body.gitVersion;
+
+  let data = await readKurlConfigMap();
+
+  // if the token expires withing the period, regenerate it
+  const regeneratePeriod = 10 * 60 * 1000; // 10 minutes
+  const nowUnix = (new Date()).getTime();
+
+  let bootstrapTokenExpiration = Date.parse(data.bootstrap_token_expiration);
+  if (isNaN(bootstrapTokenExpiration)) {
+    console.log(`Failed to parse bootstrap_token_expiration ${data.bootstrap_token_expiration}`);
+    bootstrapTokenExpiration = 0;
+  }
+
+  let caSecret
+
+  return cmd;
+}
+
 async function generateWorkerAddNodeCommand(): Promise<Command> {
   const kc = new KubeConfig();
   kc.loadFromDefault();
@@ -389,14 +421,14 @@ async function generateWorkerAddNodeCommand(): Promise<Command> {
   let data = await readKurlConfigMap();
 
   // if the token expires withing the period, regenerate it
-  const regeneratePreiod = 10 * 60 * 1000; // 10 minutes
+  const regeneratePeriod = 10 * 60 * 1000; // 10 minutes
   const nowUnix = (new Date()).getTime();
   let bootstrapTokenExpiration = Date.parse(data.bootstrap_token_expiration);
   if (isNaN(bootstrapTokenExpiration)) {
     console.log(`Failed to parse bootstrap_token_expiration ${data.bootstrap_token_expiration}`);
     bootstrapTokenExpiration = 0;
   }
-  if (nowUnix + regeneratePreiod > bootstrapTokenExpiration) {
+  if (nowUnix + regeneratePeriod > bootstrapTokenExpiration) {
     console.log(`Bootstrap token expired ${new Date(bootstrapTokenExpiration)}, regenerating`);
     try {
       await runKurlUtilJobAndWait(["/usr/local/bin/join"]);

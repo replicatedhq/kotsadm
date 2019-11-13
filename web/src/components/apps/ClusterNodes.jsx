@@ -8,7 +8,7 @@ import CodeSnippet from "../shared/CodeSnippet";
 import NodeRow from "./NodeRow";
 import Loader from "../shared/Loader";
 import { kurl } from "../../queries/KurlQueries";
-import { drainNode, deleteNode, generateWorkerAddNodeCommand } from "../../mutations/KurlMutations"
+import { drainNode, deleteNode, generateWorkerAddNodeCommand, generateMasterAddNodeCommand } from "../../mutations/KurlMutations"
 
 import "@src/scss/components/apps/ClusterNodes.scss";
 
@@ -55,15 +55,22 @@ export class ClusterNodes extends Component {
   }
 
   generateMasterAddNodeCommand = () => {
-    this.setState({ generating: false, command: [], expiry: null });
+    this.setState({ generating: true, command: "", expiry: null });
+
+    this.props.generateMasterAddNodeCommand()
+      then(resp) => {
+        const data = resp.data.generateMasterAddNodeCommand;
+        this.setState({ generating: false, command: data.command, expiry: data.expiry });
+      })
+      .catch((error) => {
+        this.setState({ generating: false });
+        console.log(error);
+      });
   }
-  
+
   onAddNodeClick = () => {
     this.setState({
       displayAddNode: true
-    }, () => {
-      // TODO: Remove this autofiring statement when master node commands are in
-      this.generateWorkerAddNodeCommand();
     });
   }
   
