@@ -120,6 +120,8 @@ export async function kotsAppCheckForUpdates(app: KotsApp, currentCursor: string
     currentCursorParam["p"] = currentCursor;
     currentCursorParam["n"] = currentCursor.length;
 
+    console.log(`Check for updates current cursor = ${currentCursor}`)
+
     kots().ListUpdates(socketParam, archiveParam, currentCursorParam);
 
     await statusServer.connection();
@@ -135,6 +137,7 @@ export async function kotsAppCheckForUpdates(app: KotsApp, currentCursor: string
       return false;
     });
     if (update) {
+      console.log(`Check for updates got updates ${JSON.stringify(update)}`)
       return update;
     }
     return [];
