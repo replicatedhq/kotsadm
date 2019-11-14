@@ -123,7 +123,7 @@ export async function kotsAppCheckForUpdates(app: KotsApp, currentCursor: string
     kots().ListUpdates(socketParam, archiveParam, currentCursorParam);
 
     await statusServer.connection();
-    return await statusServer.termination((resolve, reject, obj): boolean => {
+    const update: Update[] = await statusServer.termination((resolve, reject, obj): boolean => {
       if (obj.status === "terminated") {
         if (obj.exit_code === 0) {
           resolve(JSON.parse(obj.data) as Update[]);
@@ -134,6 +134,10 @@ export async function kotsAppCheckForUpdates(app: KotsApp, currentCursor: string
       }
       return false;
     });
+    if (update) {
+      return update;
+    }
+    return [];
   } finally {
     tmpDir.removeCallback();
   }

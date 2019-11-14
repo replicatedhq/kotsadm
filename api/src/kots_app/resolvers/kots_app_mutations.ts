@@ -44,7 +44,7 @@ export function KotsMutations(stores: Stores) {
       return publicKey;
     },
 
-    async checkForKotsUpdates(root: any, args: any, context: Context): Promise<boolean> {
+    async checkForKotsUpdates(root: any, args: any, context: Context): Promise<number> {
       const { appId } = args;
 
       const app = await context.getApp(appId);
@@ -55,7 +55,7 @@ export function KotsMutations(stores: Stores) {
       // do not await...
       kotsAppDownloadUpdates(updatesAvailable, app, stores);
 
-      return updatesAvailable.length > 0;
+      return updatesAvailable.length;
     },
 
     async createKotsDownstream(root: any, args: any, context: Context) {
