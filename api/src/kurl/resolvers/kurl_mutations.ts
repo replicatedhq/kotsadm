@@ -48,11 +48,11 @@ export function KurlMutations(stores: Stores, params: Params) {
     },
 
     async generateWorkerAddNodeCommand(root: any, args: any, context: Context): Promise<Command> {
-      return await generateWorkerAddNodeCommand();
+      return await generateAddNodeCommand(false);
     },
 
     async generateMasterAddNodeCommand(root: any, args: any, context: Context): Promise<Command> {
-      return await generateMasterAddNodeCommand();
+      return await generateAddNodeCommand(true);
     }
   }
 }
@@ -381,9 +381,7 @@ export interface Command {
 
 // worker: kubernetes-master-address=${KUBERNETES_API_ADDRESS} kubeadm-token=${BOOTSTRAP_TOKEN} kubeadm-token-ca-hash=$KUBEADM_TOKEN_CA_HASH kubernetes-version=$KUBERNETES_VERSION ${dockerRegistryIP}
 
-async function generateMasterAddNodeCommand(): Promise<Command> {
-  var cmd: Command = { command: [], expiry: 0};
-
+async function generateAddNodeCommand(master: boolean): Promise<Command> {
   const kc = new KubeConfig();
   kc.loadFromDefault();
 
@@ -394,35 +392,11 @@ async function generateMasterAddNodeCommand(): Promise<Command> {
 
   let data = await readKurlConfigMap();
 
+  const flags: Array<string> = [];
   // if the token expires withing the period, regenerate it
   const regeneratePeriod = 10 * 60 * 1000; // 10 minutes
   const nowUnix = (new Date()).getTime();
 
-  let bootstrapTokenExpiration = Date.parse(data.bootstrap_token_expiration);
-  if (isNaN(bootstrapTokenExpiration)) {
-    console.log(`Failed to parse bootstrap_token_expiration ${data.bootstrap_token_expiration}`);
-    bootstrapTokenExpiration = 0;
-  }
-
-  let caSecret
-
-  return cmd;
-}
-
-async function generateWorkerAddNodeCommand(): Promise<Command> {
-  const kc = new KubeConfig();
-  kc.loadFromDefault();
-
-  const versionClient: VersionApi = kc.makeApiClient(VersionApi);
-  const versionInfo = await versionClient.getCode();
-
-  const kubernetesVersion = versionInfo.body.gitVersion;
-
-  let data = await readKurlConfigMap();
-
-  // if the token expires withing the period, regenerate it
-  const regeneratePeriod = 10 * 60 * 1000; // 10 minutes
-  const nowUnix = (new Date()).getTime();
   let bootstrapTokenExpiration = Date.parse(data.bootstrap_token_expiration);
   if (isNaN(bootstrapTokenExpiration)) {
     console.log(`Failed to parse bootstrap_token_expiration ${data.bootstrap_token_expiration}`);
@@ -430,8 +404,24 @@ async function generateWorkerAddNodeCommand(): Promise<Command> {
   }
   if (nowUnix + regeneratePeriod > bootstrapTokenExpiration) {
     console.log(`Bootstrap token expired ${new Date(bootstrapTokenExpiration)}, regenerating`);
+		flags.push("--bootstrap-token");
+	}
+
+	if (master) {
+		let certsExpiration = Date.parse(data.upload_certs_expiration);
+		if (isNaN(certsExpiration)) {
+			console.log(`Failed to parse upload_certs_expiration ${data.upload_certs_expiration}`);
+			certsExpiration = 0;
+		}
+		if (nowUnix + regeneratePeriod > certsExpiration) {
+			console.log(`Certs secret expired ${new Date(certsExpiration)}, uploading`);
+			flags.push("--upload-certs");
+		}
+	}
+
+	if (flags.length) {
     try {
-      await runKurlUtilJobAndWait(["/usr/local/bin/join"]);
+      await runKurlUtilJobAndWait(["/usr/local/bin/join"].concat(flags));
       data = await readKurlConfigMap();
     } catch (err) {
       console.log(err);
@@ -520,7 +510,7 @@ async function runKurlUtilJobAndWait(command: string[]) {
           },
           spec: {
             // nodeSelector: {"node-role.kubernetes.io/master": ""}, // TODO: this is needed for master join
-            serviceAccountName: "kotsadm-api",
+            serviceAccountName: "kurl-join",
             restartPolicy: "Never",
             activeDeadlineSeconds: 120,
             containers: [{
@@ -551,7 +541,7 @@ async function runKurlUtilJobAndWait(command: string[]) {
     throw new ReplicatedError("Job creation failed");
   }
 
-  while (true) {
+  for (let i = 0; i < 60; i++) {
     try {
       let { body: jobStatus } = await batchV1Client.readNamespacedJobStatus(job.metadata.name, job.metadata.namespace);
       if (jobStatus.status) {
@@ -567,6 +557,7 @@ async function runKurlUtilJobAndWait(command: string[]) {
     }
     await sleep(2); // sleep 2 seconds
   }
+  throw new ReplicatedError("Timed out waiting for job to complete");
 }
 
 async function sleep(seconds): Promise<void> {

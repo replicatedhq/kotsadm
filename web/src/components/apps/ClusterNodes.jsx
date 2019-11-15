@@ -58,7 +58,7 @@ export class ClusterNodes extends Component {
     this.setState({ generating: true, command: "", expiry: null });
 
     this.props.generateMasterAddNodeCommand()
-      then(resp) => {
+      .then((resp) => {
         const data = resp.data.generateMasterAddNodeCommand;
         this.setState({ generating: false, command: data.command, expiry: data.expiry });
       })
@@ -71,6 +71,8 @@ export class ClusterNodes extends Component {
   onAddNodeClick = () => {
     this.setState({
       displayAddNode: true
+    }, () => {
+      this.generateWorkerAddNodeCommand();
     });
   }
   
@@ -136,7 +138,7 @@ export class ClusterNodes extends Component {
                         type="radio"
                         name="nodeType"
                         value="master"
-                        disabled={true}
+                        disabled={false}
                         checked={this.state.selectedNodeType === "master"}
                         onChange={this.onSelectNodeType}
                       />
@@ -148,7 +150,7 @@ export class ClusterNodes extends Component {
                         </div>
                         <div className="flex1">
                           <p className="u-color--tuna u-fontSize--normal u-fontWeight--medium">Master Node</p>
-                          <p className="u-color--dustyGray u-lineHeight--normal u-fontSize--small u-fontWeight--medium u-marginTop--5">Coming soon...</p>
+                          <p className="u-color--dustyGray u-lineHeight--normal u-fontSize--small u-fontWeight--medium u-marginTop--5">Provides high availability</p>
                         </div>
                       </label>
                     </div>
@@ -238,6 +240,11 @@ export default compose(
   graphql(generateWorkerAddNodeCommand, {
     props: ({ mutate }) => ({
       generateWorkerAddNodeCommand: () => mutate()
+    })
+  }),
+  graphql(generateMasterAddNodeCommand, {
+    props: ({ mutate }) => ({
+      generateMasterAddNodeCommand: () => mutate()
     })
   })
 )(ClusterNodes);
