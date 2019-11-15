@@ -1,5 +1,4 @@
 import { inspect } from "util";
-import http from "http";
 import fs from "fs";
 import * as _ from "lodash";
 import { Stores } from "../../schema/stores";
@@ -20,7 +19,6 @@ import {
   V1Job,
   V1PodSpec,
   V1Container,
-  V1ConfigMap,
   VersionApi,
   V1JobSpec,
 } from "@kubernetes/client-node";
@@ -28,6 +26,7 @@ import { logger } from "../../server/logger";
 import { IncomingMessage } from "http";
 import { Etcd3 } from "etcd3";
 import * as yaml from "js-yaml";
+import { readKurlConfigMap } from "./readKurlConfigMap";
 
 export function KurlMutations(stores: Stores, params: Params) {
   return {
@@ -442,7 +441,7 @@ async function generateAddNodeCommand(master: boolean): Promise<Command> {
   // data.upload_certs_expiration
 
   const command = [
-    `curl -sSL ${data.kurl_url}/${data.installer_id}/join.sh | sudo bash -s`,
+    data.airgap ? "cat join.sh | sudo bash -s airgap" : `curl -sSL ${data.kurl_url}/${data.installer_id}/join.sh | sudo bash -s`,
     `kubernetes-master-address=${data.kubernetes_api_address}`,
     `kubeadm-token=${data.bootstrap_token}`,
     `kubeadm-token-ca-hash=${data.ca_hash}`,
@@ -450,38 +449,17 @@ async function generateAddNodeCommand(master: boolean): Promise<Command> {
     `kubernetes-version=${kubernetesVersion}`,
   ];
 
+  if (master) {
+    command.push(`cert-key=${data.cert_key}`);
+    command.push("control-plane");
+  }
+
   console.log("Generated node join command", command);
 
   return {
     command: command,
     expiry: bootstrapTokenExpiration / 1000,
   };
-}
-
-async function readKurlConfigMap(): Promise<{ [ key: string]: string }> {
-  const kc = new KubeConfig();
-  kc.loadFromDefault();
-
-  const coreV1Client: CoreV1Api = kc.makeApiClient(CoreV1Api);
-
-  let response: http.IncomingMessage;
-  let configMap: V1ConfigMap;
-
-  try {
-    ({ response, body: configMap } = await coreV1Client.readNamespacedConfigMap("kurl-config", "kube-system"));
-  } catch (err) {
-    throw new ReplicatedError(`Failed to read config map ${err.response && err.response.body ? err.response.body.message : ""}`);
-  }
-
-  if (response.statusCode !== 200 || !configMap) {
-    throw new ReplicatedError(`Config map not found`);
-  }
-
-  if (!configMap.data) {
-    throw new ReplicatedError("Config map data not found");
-  }
-
-  return configMap.data;
 }
 
 async function runKurlUtilJobAndWait(command: string[]) {

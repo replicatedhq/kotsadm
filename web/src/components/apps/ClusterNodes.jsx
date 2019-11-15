@@ -138,7 +138,7 @@ export class ClusterNodes extends Component {
                         type="radio"
                         name="nodeType"
                         value="master"
-                        disabled={false}
+                        disabled={!kurl?.ha}
                         checked={this.state.selectedNodeType === "master"}
                         onChange={this.onSelectNodeType}
                       />
