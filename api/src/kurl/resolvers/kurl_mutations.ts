@@ -403,22 +403,22 @@ async function generateAddNodeCommand(master: boolean): Promise<Command> {
   }
   if (nowUnix + regeneratePeriod > bootstrapTokenExpiration) {
     console.log(`Bootstrap token expired ${new Date(bootstrapTokenExpiration)}, regenerating`);
-		flags.push("--bootstrap-token");
-	}
+    flags.push("--bootstrap-token");
+  }
 
-	if (master) {
-		let certsExpiration = Date.parse(data.upload_certs_expiration);
-		if (isNaN(certsExpiration)) {
-			console.log(`Failed to parse upload_certs_expiration ${data.upload_certs_expiration}`);
-			certsExpiration = 0;
-		}
-		if (nowUnix + regeneratePeriod > certsExpiration) {
-			console.log(`Certs secret expired ${new Date(certsExpiration)}, uploading`);
-			flags.push("--upload-certs");
-		}
-	}
+  if (master) {
+    let certsExpiration = Date.parse(data.upload_certs_expiration);
+    if (isNaN(certsExpiration)) {
+      console.log(`Failed to parse upload_certs_expiration ${data.upload_certs_expiration}`);
+      certsExpiration = 0;
+    }
+    if (nowUnix + regeneratePeriod > certsExpiration) {
+      console.log(`Certs secret expired ${new Date(certsExpiration)}, uploading`);
+      flags.push("--upload-certs");
+    }
+  }
 
-	if (flags.length) {
+  if (flags.length) {
     try {
       await runKurlUtilJobAndWait(["/usr/local/bin/join"].concat(flags));
       data = await readKurlConfigMap();
