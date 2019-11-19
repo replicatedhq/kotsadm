@@ -18,11 +18,5 @@ export function AppsQueries(stores: Stores) {
 
       return result;
     },
-
-    // async searchApps(root: any, args: any, context: Context): Promise<Watch[]> {
-    //   const watches = await stores.watchStore.searchWatches(context.session.userId, args.watchName);
-    //   return watches.map(watch => watch.toSchema(root, stores, context));
-    // },
-
   }
 }

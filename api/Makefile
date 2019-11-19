@@ -37,7 +37,6 @@ can-i-deploy:
 .PHONY: test-and-publish
 test-and-publish: export POSTGRES_URI = postgresql://shipcloud:password@postgres:5432/shipcloud?connect_timeout=10&application_name=ship&sslmode=disable
 test-and-publish: export SESSION_KEY = testsession
-test-and-publish: export SKIP_DEPLOY_TO_WORKER = true
 test-and-publish: export OBJECT_STORE_IN_DATABASE = true
 test-and-publish: export PUBLISH_PACT_VERIFICATION = true
 test-and-publish: export S3_ENDPOINT = http://localhost:14569/
@@ -51,7 +50,6 @@ test-and-publish:
 .PHONY: test
 test: export POSTGRES_URI = postgresql://shipcloud:password@localhost:15432/shipcloud?connect_timeout=10&application_name=ship&sslmode=disable
 test: export SESSION_KEY = testsession
-test: export SKIP_DEPLOY_TO_WORKER = true
 test: export OBJECT_STORE_IN_DATABASE = true
 test: export S3_ENDPOINT = http://localhost:14569/
 test: export S3_ACCESS_KEY_ID = S3RVER
