@@ -57,6 +57,11 @@ export class SessionStore {
     const result = await this.pool.query(q, v);
 
     const session: Session = new Session();
+
+    if (!result.rows.length) {
+      return session;
+    }
+
     session.type = "ship";
     session.sessionId = result.rows[0].id;
     session.userId = result.rows[0].user_id;
