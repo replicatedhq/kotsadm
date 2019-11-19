@@ -23,6 +23,7 @@ export class Params {
   readonly airgapBucket: string;
   readonly sigsciRpcAddress: string;
   readonly shipApiEndpoint: string;
+  readonly skipDeployToWorker: string;
   readonly objectStoreInDatabase: string;
   readonly s3Endpoint: string;
   readonly s3AccessKeyId: string;
@@ -53,6 +54,7 @@ export class Params {
     airgapBucket,
     sigsciRpcAddress,
     shipApiEndpoint,
+    skipDeployToWorker,
     objectStoreInDatabase,
     s3Endpoint,
     s3AccessKeyId,
@@ -82,6 +84,7 @@ export class Params {
     this.airgapBucket = airgapBucket;
     this.sigsciRpcAddress = sigsciRpcAddress;
     this.shipApiEndpoint = shipApiEndpoint;
+    this.skipDeployToWorker = skipDeployToWorker;
     this.objectStoreInDatabase = objectStoreInDatabase;
     this.s3Endpoint = s3Endpoint;
     this.s3AccessKeyId = s3AccessKeyId;
@@ -119,6 +122,7 @@ export class Params {
       airgapBucket: params["AIRGAP_BUNDLE_S3_BUCKET"],
       sigsciRpcAddress: params["SIGSCI_RPC_ADDRESS"],
       shipApiEndpoint: process.env["SHIP_API_ENDPOINT"],
+      skipDeployToWorker: process.env["SKIP_DEPLOY_TO_WORKER"],
       objectStoreInDatabase: process.env["OBJECT_STORE_IN_DATABASE"],
       s3Endpoint: process.env["S3_ENDPOINT"],
       s3AccessKeyId: params["S3_ACCESS_KEY_ID"],
@@ -153,6 +157,7 @@ export class Params {
       AIRGAP_BUNDLE_S3_BUCKET: "/shipcloud/airgap_bucket_name",
       SIGSCI_RPC_ADDRESS: "/shipcloud/sigsci_rpc_address",
       SHIP_API_ENDPOINT: "",
+      SKIP_DEPLOY_TO_WORKER: "",
       OBJECT_STORE_IN_DATABASE: "",
       S3_ENDPOINT: "",
       S3_ACCESS_KEY_ID: "/shipcloud/s3/access_key_id",
