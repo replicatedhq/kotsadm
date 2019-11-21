@@ -25,6 +25,9 @@ export function getS3(params: Params): AWS.S3 {
 };
 
 export async function ensureBucket(params: Params, bucketName: string): Promise<boolean> {
+  if (!params.s3Endpoint) {
+    return true;
+  }
   const parsedEndpoint = url.parse(params.s3Endpoint);
   const minioClient = new Minio.Client({
     endPoint: parsedEndpoint.hostname,
