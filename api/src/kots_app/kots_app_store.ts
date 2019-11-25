@@ -17,7 +17,9 @@ export class KotsAppStore {
   async createGitOpsRepo(provider: string, uri: string, privateKey: string, publicKey: string): Promise<any> {
     const id = randomstring.generate({ capitalization: "lowercase" });
 
-    const q = `insert into gitops_repo (id, provider, uri, key_pub, key_priv, last_error) values ($1, $2, $3, $4, $5, $6)`;
+    const q = `
+      insert into gitops_repo (id, provider, uri, key_pub, key_priv, last_error) values ($1, $2, $3, $4, $5, $6)
+    `;
     const v = [
       id,
       provider,
