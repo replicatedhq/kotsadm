@@ -38,6 +38,31 @@ body a {
   }
 }
 
+.status-indicator {
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 500;
+  color: #AFAFAF;
+  position: relative;
+  padding-left: 12px;
+
+  &::before {
+    position: absolute;
+    content: "";
+    display: block;
+    width: 7px;
+    height: 7px;
+    border-radius: 100%;
+    margin-right: 4px;
+    top: 2px;
+    left: 0;
+  }
+
+  &.success::before {
+    background-color: #44bb66;
+  }
+}
+
 code {
   padding: 2px 4px;
   font-size: 90%;

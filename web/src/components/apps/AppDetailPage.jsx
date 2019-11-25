@@ -27,6 +27,7 @@ import SupportBundleAnalysis from "../troubleshoot/SupportBundleAnalysis";
 import GenerateSupportBundle from "../troubleshoot/GenerateSupportBundle";
 import AppSettings from "./AppSettings";
 import AppGitops from "./AppGitops";
+import AppSnapshots from "./AppSnapshots";
 
 import "../../scss/components/watches/WatchDetailPage.scss";
 
@@ -269,6 +270,12 @@ class AppDetailPage extends Component {
                     } />
                     <Route exact path="/app/:slug/gitops" render={() =>
                       <AppGitops
+                        app={app}
+                        refetch={() => this.props.getKotsAppQuery.refetch()}
+                      />
+                    } />
+                    <Route exact path="/app/:slug/snapshots" render={() =>
+                      <AppSnapshots
                         app={app}
                         refetch={() => this.props.getKotsAppQuery.refetch()}
                       />
