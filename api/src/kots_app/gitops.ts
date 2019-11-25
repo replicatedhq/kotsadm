@@ -117,7 +117,7 @@ export async function createGitCommit(gitOpsCreds: any, branch: string, tree: co
       if (!fs.existsSync(parsed.dir)) {
         fs.mkdirSync(parsed.dir, { recursive: true });
       }
-      fs.writeFileSync(path.join(output, commitFile.filename), "test content" + Math.random());
+      fs.writeFileSync(path.join(output, commitFile.filename), commitFile.contents);
       await index.addByPath(commitFile.filename);
     }
     await index.write();
