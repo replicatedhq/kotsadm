@@ -49,7 +49,6 @@ class AppGitops extends Component {
     let hostname = "";
     if (props.app?.downstreams && props.app.downstreams.length > 0) {
       gitops = props.app.downstreams[0].gitops;
-      console.log(gitops);
       const parsed = url.parse(gitops?.uri);
       ownerRepo = parsed.path.slice(1);  // remove the "/"
       hostname = parsed.host;
