@@ -3,6 +3,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 import sortBy from "lodash/sortBy";
 import jwt from "jsonwebtoken";
+import cronstrue from "cronstrue";
 import { default as download } from "downloadjs";
 dayjs.extend(utc);
 dayjs.extend(relativeTime);
@@ -69,6 +70,21 @@ export function sortAnalyzers(bundleInsight) {
       return 1;
     }
   })
+}
+
+export function getCronFrequency(schedule) {
+  switch (schedule) {
+    case "hourly":
+      return "0 0 0/1 1/1 * ? *";
+    case "daily":
+      return "0 0 12 1/1 * ? *";
+    default:
+      return "0 0 12 ? * MON *";
+  }
+}
+
+export function getReadableCronDescriptor(expression) {
+  return cronstrue.toString(expression);
 }
 
 /**
