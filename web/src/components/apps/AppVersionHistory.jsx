@@ -17,7 +17,7 @@ import MarkdownRenderer from "@src/components/shared/MarkdownRenderer";
 import DownstreamWatchVersionDiff from "@src/components/watches/DownstreamWatchVersionDiff";
 import { getKotsDownstreamHistory, getKotsDownstreamOutput, getUpdateDownloadStatus } from "../../queries/AppsQueries";
 import { checkForKotsUpdates } from "../../mutations/AppsMutations";
-import { Utilities, hasPendingPreflight, getPreflightResultState } from "../../utilities/utilities";
+import { Utilities, hasPendingPreflight, getPreflightResultState, getGitProviderDiffUrl, getCommitHashFromUrl } from "../../utilities/utilities";
 import { Repeater } from "../../utilities/repeater";
 
 import "@src/scss/components/watches/WatchVersionHistory.scss";
@@ -109,14 +109,25 @@ class AppVersionHistory extends Component {
     );
   }
 
-  renderSourceAndDiff = version => {
+  renderSourceAndDiff = (downstream, version) => {
     const diffSummary = this.getVersionDiffSummary(version);
     return (
       <div>
         {version.source}
         {diffSummary && (
           diffSummary.filesChanged > 0 ?
-            <div className="DiffSummary u-cursor--pointer" onClick={() => this.setState({ showDiffOverlay: true, firstSequence: version.parentSequence - 1, secondSequence: version.parentSequence })}>
+            <div
+              className="DiffSummary u-cursor--pointer"
+              onClick={() => {
+                if (!downstream.gitops?.enabled) {
+                  this.setState({
+                    showDiffOverlay: true,
+                    firstSequence: version.parentSequence - 1,
+                    secondSequence: version.parentSequence
+                  });
+                }
+              }}
+            >
               <span className="files">{diffSummary.filesChanged} files changed </span>
               <span className="lines-added">+{diffSummary.linesAdded} </span>
               <span className="lines-removed">-{diffSummary.linesRemoved}</span>
@@ -135,10 +146,13 @@ class AppVersionHistory extends Component {
     const downstream = app.downstreams[0];
 
     if (downstream.gitops?.enabled) {
+      if (!version.commitUrl) {
+        return null;
+      }
       return (
         <button
             className="btn primary green"
-            onClick={() => version.commitUrl && window.open(version.commitUrl, '_blank')}
+            onClick={() => window.open(version.commitUrl, '_blank')}
           >
           View
         </button>
@@ -449,14 +463,14 @@ class AppVersionHistory extends Component {
     );
   }
 
-  handleSelectReleasesToDiff = (releaseSequence, isChecked) => {
+  handleSelectReleasesToDiff = (selectedRelease, isChecked) => {
     if (isChecked) {
       this.setState({
-        checkedReleasesToDiff: [{ releaseSequence, isChecked }].concat(this.state.checkedReleasesToDiff).slice(0, 2)
+        checkedReleasesToDiff: [{ ...selectedRelease, isChecked }].concat(this.state.checkedReleasesToDiff).slice(0, 2)
       })
     } else {
       this.setState({
-        checkedReleasesToDiff: this.state.checkedReleasesToDiff.filter(release => release.releaseSequence !== releaseSequence)
+        checkedReleasesToDiff: this.state.checkedReleasesToDiff.filter(release => release.sequence !== selectedRelease.sequence)
       })
     }
   }
@@ -470,20 +484,34 @@ class AppVersionHistory extends Component {
   }
 
   getDiffSequences = () => {
+    let firstSequence = 0, secondSequence = 0;
+
     const { checkedReleasesToDiff } = this.state;
-    let firstSequence, secondSequence;
     if (checkedReleasesToDiff.length === 2) {
-      if (checkedReleasesToDiff[0].releaseSequence < checkedReleasesToDiff[1].releaseSequence) {
-        firstSequence = checkedReleasesToDiff[0].releaseSequence;
-        secondSequence = checkedReleasesToDiff[1].releaseSequence;
-      } else {
-        firstSequence = checkedReleasesToDiff[1].releaseSequence;
-        secondSequence = checkedReleasesToDiff[0].releaseSequence;
-      }
+      checkedReleasesToDiff.sort((r1, r2) => r1.sequence - r2.sequence);
+      firstSequence = checkedReleasesToDiff[0].sequence;
+      secondSequence = checkedReleasesToDiff[1].sequence;
     }
+    
     return {
       firstSequence,
       secondSequence
+    }
+  }
+
+  getDiffCommitHashes = () => {
+    let firstCommitUrl = "", secondCommitUrl = "";
+
+    const { checkedReleasesToDiff } = this.state;
+    if (checkedReleasesToDiff.length === 2) {
+      checkedReleasesToDiff.sort((r1, r2) => r1.sequence - r2.sequence);
+      firstCommitUrl = checkedReleasesToDiff[0].commitUrl;
+      secondCommitUrl = checkedReleasesToDiff[1].commitUrl;
+    }
+
+    return {
+      firstHash: getCommitHashFromUrl(firstCommitUrl),
+      secondHash: getCommitHashFromUrl(secondCommitUrl)
     }
   }
 
@@ -636,8 +664,16 @@ class AppVersionHistory extends Component {
                   <button
                     className={classNames("btn primary blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 || showDiffOverlay })}
                     onClick={() => {
-                      const { firstSequence, secondSequence } = this.getDiffSequences();
-                      this.setState({ showDiffOverlay: true, firstSequence, secondSequence });
+                      if (downstream.gitops?.enabled) {
+                        const { firstHash, secondHash } = this.getDiffCommitHashes();
+                        if (firstHash && secondHash) {
+                          const diffUrl = getGitProviderDiffUrl(downstream.gitops?.uri, downstream.gitops?.provider, firstHash, secondHash);
+                          window.open(diffUrl, '_blank');
+                        }
+                      } else {
+                        const { firstSequence, secondSequence } = this.getDiffSequences();
+                        this.setState({ showDiffOverlay: true, firstSequence, secondSequence });
+                      }
                     }}
                   >
                     Diff releases
@@ -664,12 +700,12 @@ class AppVersionHistory extends Component {
                     </thead>
                     <tbody>
                       {versionHistory.map((version) => {
-                        const isChecked = !!checkedReleasesToDiff.find(diffRelease => diffRelease.releaseSequence === version.parentSequence);
+                        const isChecked = !!checkedReleasesToDiff.find(diffRelease => diffRelease.sequence === version.parentSequence);
                         return (
                           <tr
                             key={version.sequence}
                             className={classNames({ "overlay": selectedDiffReleases, "selected": isChecked })}
-                            onClick={() => selectedDiffReleases && this.handleSelectReleasesToDiff(version.parentSequence, !isChecked)}
+                            onClick={() => selectedDiffReleases && this.handleSelectReleasesToDiff(version, !isChecked)}
                           >
                             {selectedDiffReleases && <td width="12px"><div className={classNames("checkbox", { "checked": isChecked })} /></td>}
                             <td>{changeCase.title(downstream.name)}</td>
@@ -679,7 +715,7 @@ class AppVersionHistory extends Component {
                             </td>
                             <td>{version.title}</td>
                             <td width="11%">{this.renderVersionSequence(version)}</td>
-                            <td width="17%">{this.renderSourceAndDiff(version)}</td>
+                            <td width="17%">{this.renderSourceAndDiff(downstream, version)}</td>
                             <td>
                               {version.deployedAt ?
                                 <span>
