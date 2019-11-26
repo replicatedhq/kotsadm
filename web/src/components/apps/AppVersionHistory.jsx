@@ -109,7 +109,9 @@ class AppVersionHistory extends Component {
     );
   }
 
-  renderSourceAndDiff = (downstream, version) => {
+  renderSourceAndDiff = version => {
+    const { app } = this.props;
+    const downstream = app.downstreams[0];
     const diffSummary = this.getVersionDiffSummary(version);
     return (
       <div>
@@ -151,10 +153,10 @@ class AppVersionHistory extends Component {
       }
       return (
         <button
-            className="btn primary green"
-            onClick={() => window.open(version.commitUrl, '_blank')}
-          >
-          View
+          className="btn primary green"
+          onClick={() => window.open(version.commitUrl, '_blank')}
+        >
+          View commit
         </button>
       );
     }
@@ -193,6 +195,17 @@ class AppVersionHistory extends Component {
           </button>
         }
       </div>
+    );
+  }
+
+  renderViewPreflights = version => {
+    const { match, app } = this.props;
+    const downstream = app.downstreams[0];
+    const clusterSlug = downstream.cluster?.slug;
+    return (
+      <Link to={`/app/${match.params.slug}/downstreams/${clusterSlug}/version-history/preflight/${version.sequence}`}>
+        <span className="link" style={{ fontSize: 14 }}>View results</span>
+      </Link>
     );
   }
 
@@ -236,7 +249,7 @@ class AppVersionHistory extends Component {
           </span>
           : app.hasPreflight && version.status === "pending" &&
           <Link to={`/app/${match.params.slug}/downstreams/${clusterSlug}/version-history/preflight/${version.sequence}`}>
-            <span className="link" style={{ fontSize: 12 }}>Preflight results</span>
+            <span className="link" style={{ fontSize: 12 }}>View preflights</span>
           </Link>
         }
         {version.status === "failed" &&
@@ -569,6 +582,7 @@ class AppVersionHistory extends Component {
 
     const isAirgap = app.isAirgap;
     const downstream = app.downstreams.length && app.downstreams[0];
+    const gitopsEnabled = downstream.gitops?.enabled;
     const currentDownstreamVersion = downstream?.currentVersion;
     const versionHistory = data?.getKotsDownstreamHistory?.length ? data.getKotsDownstreamHistory : [];
 
@@ -617,7 +631,7 @@ class AppVersionHistory extends Component {
           <div className="flex flex1">
             <div className="flex1 flex-column alignItems--center">
               {/* Active downstream */}
-              {currentDownstreamVersion &&
+              {!gitopsEnabled && currentDownstreamVersion &&
                 <fieldset className={`DeployedDownstreamVersion ${currentDownstreamVersion.status}`}>
                   <legend className="u-marginLeft--20 u-color--tuna u-fontWeight--bold u-paddingLeft--5 u-paddingRight--5">
                     Deployed Version{currentDownstreamVersion.status === "failed" && " (Failed)"}
@@ -628,7 +642,7 @@ class AppVersionHistory extends Component {
                         <th>Environment</th>
                         <th>Received</th>
                         <th>Upstream</th>
-                        <th width="11%">Sequence</th>
+                        <th width={gitopsEnabled ? "" : "11%"}>Sequence</th>
                         <th width="17%">Source</th>
                         <th>Deployed</th>
                         <th>Logs</th>
@@ -643,7 +657,7 @@ class AppVersionHistory extends Component {
                           <span className="u-fontSize--small u-marginLeft--5">{moment(currentDownstreamVersion.createdOn).format("hh:mm a")}</span>
                         </td>
                         <td>{currentDownstreamVersion.title}</td>
-                        <td width="11%">{this.renderVersionSequence(currentDownstreamVersion)}</td>
+                        <td width={gitopsEnabled ? "" : "11%"}>{this.renderVersionSequence(currentDownstreamVersion)}</td>
                         <td width="17%">{currentDownstreamVersion.source}</td>
                         <td>
                           {moment(currentDownstreamVersion.deployedAt).format("MM/DD/YY")}<br />
@@ -664,7 +678,7 @@ class AppVersionHistory extends Component {
                   <button
                     className={classNames("btn primary blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 || showDiffOverlay })}
                     onClick={() => {
-                      if (downstream.gitops?.enabled) {
+                      if (gitopsEnabled) {
                         const { firstHash, secondHash } = this.getDiffCommitHashes();
                         if (firstHash && secondHash) {
                           const diffUrl = getGitProviderDiffUrl(downstream.gitops?.uri, downstream.gitops?.provider, firstHash, secondHash);
@@ -691,10 +705,10 @@ class AppVersionHistory extends Component {
                         <th>Environment</th>
                         <th>Received</th>
                         <th>Upstream</th>
-                        <th width="11%">Sequence</th>
+                        <th width={gitopsEnabled ? "" : "11%"}>Sequence</th>
                         <th width="17%"><div className="flex">Source {versionHistory.length > 1 && this.renderDiffBtn()}</div></th>
-                        <th>Deployed</th>
-                        <th>Status</th>
+                        {!gitopsEnabled && <th>Deployed</th>}
+                        <th>{gitopsEnabled ? "Preflights" : "Status"}</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -714,18 +728,20 @@ class AppVersionHistory extends Component {
                               <span className="u-fontSize--small u-marginLeft--5">{moment(version.createdOn).format("hh:mm a")}</span>
                             </td>
                             <td>{version.title}</td>
-                            <td width="11%">{this.renderVersionSequence(version)}</td>
-                            <td width="17%">{this.renderSourceAndDiff(downstream, version)}</td>
-                            <td>
-                              {version.deployedAt ?
-                                <span>
-                                  {moment(version.deployedAt).format("MM/DD/YY")}<br />
-                                  <span className="u-fontSize--small u-marginLeft--5">{moment(version.deployedAt).format("hh:mm a")}</span>
-                                </span>
-                                : ""
-                              }
-                            </td>
-                            <td>{this.renderVersionStatus(version)}</td>
+                            <td width={gitopsEnabled ? "" : "11%"}>{this.renderVersionSequence(version)}</td>
+                            <td width="17%">{this.renderSourceAndDiff(version)}</td>
+                            {!gitopsEnabled && 
+                              <td>
+                                {version.deployedAt ?
+                                  <span>
+                                    {moment(version.deployedAt).format("MM/DD/YY")}<br />
+                                    <span className="u-fontSize--small u-marginLeft--5">{moment(version.deployedAt).format("hh:mm a")}</span>
+                                  </span>
+                                  : ""
+                                }
+                              </td>
+                            }
+                            <td>{gitopsEnabled ? this.renderViewPreflights(version) : this.renderVersionStatus(version)}</td>
                             <td>{this.renderVersionAction(version)}</td>
                           </tr>
                         );
