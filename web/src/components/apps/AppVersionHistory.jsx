@@ -470,7 +470,7 @@ class AppVersionHistory extends Component {
       })
     } else {
       this.setState({
-        checkedReleasesToDiff: this.state.checkedReleasesToDiff.filter(release => release.sequence !== selectedRelease.sequence)
+        checkedReleasesToDiff: this.state.checkedReleasesToDiff.filter(release => release.parentSequence !== selectedRelease.parentSequence)
       })
     }
   }
@@ -488,9 +488,9 @@ class AppVersionHistory extends Component {
 
     const { checkedReleasesToDiff } = this.state;
     if (checkedReleasesToDiff.length === 2) {
-      checkedReleasesToDiff.sort((r1, r2) => r1.sequence - r2.sequence);
-      firstSequence = checkedReleasesToDiff[0].sequence;
-      secondSequence = checkedReleasesToDiff[1].sequence;
+      checkedReleasesToDiff.sort((r1, r2) => r1.parentSequence - r2.parentSequence);
+      firstSequence = checkedReleasesToDiff[0].parentSequence;
+      secondSequence = checkedReleasesToDiff[1].parentSequence;
     }
     
     return {
@@ -504,7 +504,7 @@ class AppVersionHistory extends Component {
 
     const { checkedReleasesToDiff } = this.state;
     if (checkedReleasesToDiff.length === 2) {
-      checkedReleasesToDiff.sort((r1, r2) => r1.sequence - r2.sequence);
+      checkedReleasesToDiff.sort((r1, r2) => r1.parentSequence - r2.parentSequence);
       firstCommitUrl = checkedReleasesToDiff[0].commitUrl;
       secondCommitUrl = checkedReleasesToDiff[1].commitUrl;
     }
@@ -700,7 +700,7 @@ class AppVersionHistory extends Component {
                     </thead>
                     <tbody>
                       {versionHistory.map((version) => {
-                        const isChecked = !!checkedReleasesToDiff.find(diffRelease => diffRelease.sequence === version.parentSequence);
+                        const isChecked = !!checkedReleasesToDiff.find(diffRelease => diffRelease.parentSequence === version.parentSequence);
                         return (
                           <tr
                             key={version.sequence}
