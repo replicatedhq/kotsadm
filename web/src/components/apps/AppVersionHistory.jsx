@@ -156,7 +156,7 @@ class AppVersionHistory extends Component {
           className="btn primary green"
           onClick={() => window.open(version.commitUrl, '_blank')}
         >
-          View commit
+          View
         </button>
       );
     }
