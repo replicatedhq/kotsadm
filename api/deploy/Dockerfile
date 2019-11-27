@@ -38,6 +38,8 @@ RUN curl -L "https://github.com/replicatedhq/troubleshoot/releases/download/v0.9
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates \
+    # for backup scripts on kurl
+    postgresql-client s4cmd \
   && rm -rf /var/lib/apt/lists/*
 
 ADD ./deploy/policy.json /etc/containers/policy.json
