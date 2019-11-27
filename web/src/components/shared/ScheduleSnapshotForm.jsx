@@ -211,18 +211,18 @@ export default class ScheduleSnapshotForm extends Component {
               <input type="text" className="Input" placeholder="Bucket region" value={this.state.bucketRegion} onChange={(e) => { this.handleFormChange("bucketRegion", e) }}/>
             </div>
             <div className="flex1 u-paddingLeft--10">
-              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Prefix</p>
+              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Prefix <span className="optional-text">(optional)</span></p>
               <input type="text" className="Input" placeholder="Bucket prefix" value={this.state.bucketPrefix} onChange={(e) => { this.handleFormChange("bucketPrefix", e) }}/>
             </div>
           </div>
 
           <div className="flex u-marginBottom--20">
             <div className="flex1 u-paddingRight--10">
-              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Access key ID</p>
+              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Access key ID <span className="optional-text">(optional)</span></p>
               <input type="text" className="Input" placeholder="Bucket key Id" value={this.state.bucketKeyId} onChange={(e) => { this.handleFormChange("bucketKeyId", e) }}/>
             </div>
             <div className="flex1 u-paddingRight--10">
-              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Access key secret</p>
+              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Access key secret <span className="optional-text">(optional)</span></p>
               <input type="text" className="Input" placeholder="Bucket key secret" value={this.state.bucketKeySecret} onChange={(e) => { this.handleFormChange("bucketKeySecret", e) }}/>
             </div>
           </div>

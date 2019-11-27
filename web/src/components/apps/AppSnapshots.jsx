@@ -36,7 +36,7 @@ export default class AppSnapshots extends Component {
           <div className="flex flex-auto alignItems--flexStart justifyContent--spaceBetween">
             <p className="u-fontWeight--bold u-color--tuna u-fontSize--larger u-lineHeight--normal u-marginBottom--10">Snapshots</p>
             <div className="flex">
-              <button type="button" onClick={this.toggleScheduleSnapshotModal} className="btn secondary gray u-marginRight--10">Scehdule snapshots</button>
+              <button type="button" onClick={this.toggleScheduleSnapshotModal} className="btn secondary gray u-marginRight--10">Snapshot settings</button>
               <button type="button" className="btn primary blue">Start a snapshot</button>
             </div>
           </div>
@@ -60,7 +60,7 @@ export default class AppSnapshots extends Component {
               />
               <div className="u-marginTop--10 flex">
                 <button onClick={this.toggleScheduleSnapshotModal} className="btn secondary blue u-marginRight--10">Cancel</button>
-                <button onClick={this.scheduleSnapshot} className="btn primary blue">Schedule snapshot</button>
+                <button onClick={this.scheduleSnapshot} className="btn primary blue">Save</button>
               </div>
             </div>
           </Modal>
