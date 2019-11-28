@@ -17,7 +17,8 @@ import {
   extractAppTitleFromTarball,
   extractAppIconFromTarball,
   extractKotsAppLicenseFromTarball,
-  extractAnalyzerSpecFromTarball
+  extractAnalyzerSpecFromTarball,
+  extractBackupSpecFromTarball
 } from "../../util/tar";
 import { Cluster } from "../../cluster";
 import { KotsApp, kotsAppFromLicenseData } from "../../kots_app";
@@ -222,6 +223,7 @@ export class KotsAPI {
     const appTitle = await extractAppTitleFromTarball(buffer);
     const appIcon = await extractAppIconFromTarball(buffer);
     const kotsAppLicense = await extractKotsAppLicenseFromTarball(buffer);
+    const backupSpec = await extractBackupSpecFromTarball(buffer);
 
     await request.app.locals.stores.kotsAppStore.createMidstreamVersion(
       kotsApp.id,
@@ -237,7 +239,8 @@ export class KotsAPI {
       kotsAppSpec,
       kotsAppLicense,
       appTitle,
-      appIcon
+      appIcon,
+      backupSpec
     );
 
     // we have a local copy of the file now, let's look for downstreams
@@ -491,6 +494,7 @@ export async function uploadUpdate(stores, slug, buffer, source) {
   const appIcon = await extractAppIconFromTarball(buffer);
   const installationSpec = await extractInstallationSpecFromTarball(buffer);
   const kotsAppLicense = await extractKotsAppLicenseFromTarball(buffer);
+  const backupSpec = await extractBackupSpecFromTarball(buffer);
 
   await stores.kotsAppStore.createMidstreamVersion(
     kotsApp.id,
@@ -506,7 +510,8 @@ export async function uploadUpdate(stores, slug, buffer, source) {
     kotsAppSpec,
     kotsAppLicense,
     appTitle,
-    appIcon
+    appIcon,
+    backupSpec
   );
 
   const clusterIds = await stores.kotsAppStore.listClusterIDsForApp(kotsApp.id);

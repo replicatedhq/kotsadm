@@ -477,11 +477,12 @@ export class KotsAppStore {
     kotsAppSpec: any,
     kotsAppLicense: any,
     appTitle: string | null,
-    appIcon: string | null
+    appIcon: string | null,
+    backupSpec: any,
   ): Promise<void> {
     const q = `insert into app_version (app_id, sequence, created_at, version_label, release_notes, update_cursor, encryption_key,
-        supportbundle_spec, analyzer_spec, preflight_spec, app_spec, kots_app_spec, kots_license)
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        supportbundle_spec, analyzer_spec, preflight_spec, app_spec, kots_app_spec, kots_license, backup_spec)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       ON CONFLICT(app_id, sequence) DO UPDATE SET
       created_at = EXCLUDED.created_at,
       version_label = EXCLUDED.version_label,
@@ -493,7 +494,8 @@ export class KotsAppStore {
       preflight_spec = EXCLUDED.preflight_spec,
       app_spec = EXCLUDED.app_spec,
       kots_app_spec = EXCLUDED.kots_app_spec,
-      kots_license = EXCLUDED.kots_license`;
+      kots_license = EXCLUDED.kots_license
+      backup_spec = EXCLUDED.backup_spec`;
     const v = [
       id,
       sequence,
@@ -508,6 +510,7 @@ export class KotsAppStore {
       appSpec,
       kotsAppSpec,
       kotsAppLicense,
+      backupSpec,
     ];
 
     await this.pool.query(q, v);
