@@ -1,5 +1,6 @@
 import * as React from "react";
 import Select from "react-select";
+import find from "lodash/find";
 import { withRouter } from "react-router-dom";
 import { graphql, compose, withApollo } from "react-apollo";
 import { listApps } from "@src/queries/AppsQueries";
@@ -53,7 +54,6 @@ const SERVICES = [
 class GitOpsDeploymentManager extends React.Component {
   state = {
     step: "setup",
-    visitedSteps: [],
     ownerRepo: "",
     branch: "",
     path: "",
@@ -63,10 +63,10 @@ class GitOpsDeploymentManager extends React.Component {
     otherService: "",
     providerError: null,
     actionPath: "commit",
-    containType: ""
+    containType: "single"
   }
 
-  completeSetup = async () => {
+  finishSetup = async () => {
     const { listAppsQuery } = this.props;
     const {
       selectedService,
@@ -132,14 +132,6 @@ class GitOpsDeploymentManager extends React.Component {
         return false;
       }
       if (selectedService.value !== "other") {
-        if (!ownerRepo.length) {
-          this.setState({
-            providerError: {
-              field: "ownerRepo"
-            }
-          });
-          return false;
-        }
         if (selectedService.value === "github_enterprise" && !hostname.length) {
           this.setState({
             providerError: {
@@ -149,6 +141,15 @@ class GitOpsDeploymentManager extends React.Component {
           return false;
         }
       }
+    } else if (step === "action") {
+      if (!ownerRepo.length) {
+        this.setState({
+          providerError: {
+            field: "ownerRepo"
+          }
+        });
+        return false;
+      }
     }
 
     return true;
@@ -156,13 +157,8 @@ class GitOpsDeploymentManager extends React.Component {
 
   stepFrom = (from, to) => {
     if (this.validStep(from)) {
-      const visited = this.state.visitedSteps;
-      if (!visited.includes(from)) {
-        visited.push(from);
-      }
       this.setState({
-        step: to,
-        visitedSteps: visited
+        step: to
       });
     }
   }
@@ -198,7 +194,7 @@ class GitOpsDeploymentManager extends React.Component {
     this.setState({ selectedService });
   }
 
-  getActiveStep = (step) => {
+  renderActiveStep = (step) => {
     const {
       ownerRepo,
       branch,
@@ -218,22 +214,21 @@ class GitOpsDeploymentManager extends React.Component {
       case "setup":
         return (
         <div key={`${step.step}-active`} className="GitOpsDeploy--step">
-          <div className="icon gitopsLogo u-marginBottom--20" />
+          <div style={{ height: 400 }} /> {/* Replace this with the illustration */}
           <p className="step-title">Deploy using a GitOps workflow</p>
-          <p className="step-sub">You are managing application updates using this Admin Console. If you’d prefer, updates can be pushed to a git repository, allowing for a more customizable process to be run on every update.</p>
-          <p className="step-sub">Switching to a GitOps workflow can be completed without any downtime of the application.</p>
+          <p className="step-sub">Connect a git version control system to this Admin Console. After setting this up, it will be<br/>possible to have all application updates (upstream updates, license updates, config changes)<br/>directly commited to any git repository and automatic deployments will be disabled.</p>
           <div>
-            <button className="btn primary blue" type="button" onClick={() => this.stepFrom("setup", "provider")}>Set up GitOps</button>
+            <button className="btn primary blue u-marginTop--10" type="button" onClick={() => this.stepFrom("setup", "provider")}>Get started</button>
           </div>
         </div>
       );
       case "provider":
         return (
-          <div key={`${step.step}-active`} className="GitOpsDeploy--step">
+          <div key={`${step.step}-active`} className="GitOpsDeploy--step u-textAlign--left">
             <p className="step-title">{step.title}</p>
             <p className="step-sub">Before the Admin Console can push changes to your Git repository, some information about your Git configuration is required.</p>
             <div className="flex-column u-textAlign--left u-marginBottom--30">
-              <div className={`flex flex1 ${selectedService?.value !== "other" && "u-marginBottom--20"}`}>
+              <div className="flex flex1">
                 <div className="flex flex1 flex-column u-marginRight--10">
                   <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Which GitOps provider do you use?</p>
                   <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">If your provider is not listed, select “Other”.</p>
@@ -259,39 +254,15 @@ class GitOpsDeploymentManager extends React.Component {
                     <input type="text" className={`Input ${providerError?.field === "other" && "has-error"}`} placeholder="What service would you like to use" value={otherService} onChange={(e) => this.setState({ otherService: e.target.value })} />
                     {providerError?.field === "other" && <p className="u-fontSize--small u-marginTop--5 u-color--chestnut u-fontWeight--medium u-lineHeight--normal">A GitOps service name must be provided</p>}
                   </div>
-                :
+                : selectedService?.value === "github_enterprise" || selectedService?.value === "gitlab_enterprise" ?
                   <div className="flex flex1 flex-column u-marginLeft--10">
-                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Owner &amp; Repository</p>
-                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Which repository will the commit be made?</p>
-                    <input type="text" className={`Input ${providerError?.field === "ownerRepo" && "has-error"}`} placeholder="owner/repository" value={ownerRepo} onChange={(e) => this.setState({ ownerRepo: e.target.value })} />
-                    {providerError?.field === "ownerRepo" && <p className="u-fontSize--small u-marginTop--5 u-color--chestnut u-fontWeight--medium u-lineHeight--normal">A owner and repository must be provided</p>}
-                  </div>
-                }
-              </div>
-              {selectedService?.value === "github_enterprise" || selectedService?.value === "gitlab_enterprise" ?
-                <div className="flex flex1 u-marginBottom--20">
-                  <div className="flex flex1 flex-column u-marginRight--10">
-                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--5">Hostname</p>
+                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Hostname</p>
+                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Hostname of your Enterprise server.</p>
                     <input type="text" className={`Input ${providerError?.field === "hostname" && "has-error"}`} placeholder="hostname" value={hostname} onChange={(e) => this.setState({ hostname: e.target.value })} />
                     {providerError?.field === "hostname" && <p className="u-fontSize--small u-marginTop--5 u-color--chestnut u-fontWeight--medium u-lineHeight--normal">A hostname must be provided</p>}
                   </div>
-                  <div className="flex flex1 flex-column u-marginLeft--10" />
-                </div>
-              : null}
-              {selectedService?.value !== "other" &&
-                <div className="flex flex1">
-                  <div className="flex flex1 flex-column u-marginRight--10">
-                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Branch</p>
-                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">If no branch is specified, master will be used.</p>
-                    <input type="text" className={`Input`} placeholder="master" value={branch} onChange={(e) => this.setState({ branch: e.target.value })} />
-                  </div>
-                  <div className="flex flex1 flex-column u-marginLeft--10">
-                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Path</p>
-                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Where in your repo should deployment file live?</p>
-                    <input type="text" className={"Input"} placeholder="/my-path" value={path} onChange={(e) => this.setState({ path: e.target.value })} />
-                  </div>
-                </div>
-              }
+                : <div className="flex flex1" />}
+              </div>
             </div>
             <div>
               <button className="btn primary blue" type="button" onClick={() => this.stepFrom("provider", "action")}>Continue to deployment action</button>
@@ -300,9 +271,35 @@ class GitOpsDeploymentManager extends React.Component {
         );
       case "action":
         return (
-          <div key={`${step.step}-active`} className="GitOpsDeploy--step">
+          <div key={`${step.step}-active`} className="GitOpsDeploy--step u-textAlign--left">
             <div className="StepContent--widthRestrict">
-              <p className="step-title">{step.title}</p>
+              <p className="step-title">Enable GitOps for {this.props.appName}</p>
+
+              <div className="flex flex1 u-marginBottom--30 u-marginTop--20">
+                {selectedService?.value !== "other" &&
+                  <div className="flex flex1 flex-column u-marginRight--20">
+                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Owner &amp; Repository</p>
+                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Where will the commit be made?</p>
+                    <input type="text" className={`Input ${providerError?.field === "ownerRepo" && "has-error"}`} placeholder="owner/repository" value={ownerRepo} onChange={(e) => this.setState({ ownerRepo: e.target.value })} />
+                    {providerError?.field === "ownerRepo" && <p className="u-fontSize--small u-marginTop--5 u-color--chestnut u-fontWeight--medium u-lineHeight--normal">A owner and repository must be provided</p>}
+                  </div>
+                }
+                {selectedService?.value !== "other" &&
+                  <div className="flex flex1 flex-column u-marginRight--20">
+                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Branch</p>
+                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Master will be used by default.</p>
+                    <input type="text" className={`Input`} placeholder="master" value={branch} onChange={(e) => this.setState({ branch: e.target.value })} />
+                  </div>
+                }
+                {selectedService?.value !== "other" &&
+                  <div className="flex flex1 flex-column">
+                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Path</p>
+                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Where will the deployment file live?</p>
+                    <input type="text" className={"Input"} placeholder="/my-path" value={path} onChange={(e) => this.setState({ path: e.target.value })} />
+                  </div>
+                }
+              </div>
+
               <p className="step-sub">When an update is available{this.props.appName ? ` to ${this.props.appName} ` : ""}, how should the updates YAML be delivered to&nbsp;{selectedService.label === "Other" ? otherService : serviceSite}?</p>
               <div className="flex flex1 u-marginTop--normal gitops-checkboxes justifyContent--center u-marginBottom--30">
                 <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left u-marginRight--10">
@@ -348,6 +345,7 @@ class GitOpsDeploymentManager extends React.Component {
                     </label>
                   </div>
                 </div>
+                <div className="BoxedCheckbox-wrapper flex1" />
               </div>
 
               <div className="u-marginBottom--10 u-textAlign--left">
@@ -362,7 +360,7 @@ class GitOpsDeploymentManager extends React.Component {
                       type="radio"
                       className="u-cursor--pointer hidden-input"
                       id="singleOption"
-                      checked={this.state.containType === "commit"}
+                      checked={this.state.containType === "single"}
                       defaultValue="single"
                       onChange={(e) => { this.onFileContainChange(e) }}
                     />
@@ -394,15 +392,16 @@ class GitOpsDeploymentManager extends React.Component {
                       </div>
                       <div className="flex1">
                         <p className="u-color--tuna u-fontSize--normal u-fontWeight--medium">Full Kustomizable Output</p>
-                        <p className="u-color--dustyGray u-fontSize--small u-fontWeight--medium u-marginTop--5">Coming soon</p>
+                        <p className="u-color--dustyGray u-fontSize--small u-fontWeight--medium u-marginTop--5">Coming soon!</p>
                       </div>
                     </label>
                   </div>
                 </div>
+                <div className="BoxedCheckbox-wrapper flex1"></div>
               </div>
 
               <div>
-                <button className="btn primary blue" type="button" onClick={this.completeSetup}>Complete GitOps setup</button>
+                <button className="btn primary blue" type="button" onClick={this.finishSetup}>Finish GitOps setup</button>
               </div>
             </div>
           </div>
@@ -413,24 +412,10 @@ class GitOpsDeploymentManager extends React.Component {
   }
 
   render() {
-    const { visitedSteps } = this.state;
+    const activeStep = find(STEPS, { step: this.state.step });
     return (
       <div className="GitOpsDeploymentManager--wrapper flex-column flex1">
-        {STEPS.map(s => {
-          const activeStep = s.step === this.state.step;
-          const hasBeenVisited = visitedSteps.includes(s.step);
-          if (activeStep) {
-            return this.getActiveStep(s);
-          } else {
-            return (
-              <div key={`${s.step}-inactive`} className={`GitOpsDeploy--step inactive ${hasBeenVisited && "u-cursor--pointer"}`} onClick={hasBeenVisited ? () => { this.stepFrom("", s.step) }: undefined }>
-                <p className={`u-fontSize--large u-color--${hasBeenVisited ? "tundora" : "dustyGray"} u-fontWeight--medium u-lineHeight--normal`}>
-                  {hasBeenVisited && <span className="u-marginRight--5 icon checkmark-icon u-verticalAlign--neg2" />}{s.title}
-                </p>
-              </div>
-            )
-          }
-        })}
+        {this.renderActiveStep(activeStep)}
       </div>
     );
   }
