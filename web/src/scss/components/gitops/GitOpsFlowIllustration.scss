@@ -1,0 +1,82 @@
+.rounded-toggle {
+  .toggle-button {
+    padding: 6px 40px;
+    border: 1px solid #C4C8CA;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 12px;
+    color: #9B9B9B;
+    background-color: #ffffff;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color, color .2s;
+
+    &:hover {
+      color: #4a4a4a;
+    }
+
+    &:first-child {
+      border-right: none;
+      border-radius: 50px 0 0 50px;
+    }
+    &:last-child {
+      border-radius: 0 50px 50px 0;
+    }
+
+    &.isActive {
+      background-color: #F5F8FC;
+      color: #4a4a4a;
+    }
+  }
+}
+
+.kotsadm-illustration-wrapper {
+  margin-bottom: 30px;
+}
+#kotsadm-to-gitops-to-app {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .5s;
+}
+#kotsadm-to-gitops-to-app.visible {
+  opacity: 1;
+  visibility: visible;
+}
+#kotsadm-to-app {
+  opacity: 1;
+  transition: opacity .3s;
+}
+#kotsadm-to-app.fade-out {
+  opacity: 0;
+}
+
+
+#movement-orb-gray {
+  animation: grayOrbStraight 1.2s infinite;
+}
+#movement-orb-blue {
+  animation: darkBlueOrbAngleUp 1.2s infinite;
+}
+#movement-orb-green {
+  animation: greenOrbAngleDown 1.2s infinite;
+}
+#movement-orb-blue-straight {
+  animation: blueOrbStraight 1.2s infinite;
+}
+
+@keyframes blueOrbStraight {
+  0%   { transform: translate(26px, 15px); }
+  100% { transform: translate(42px, 15px); }
+}
+@keyframes grayOrbStraight {
+  0%   { transform: translate(112px, 62px); }
+  100% { transform: translate(124px, 62px); }
+}
+@keyframes darkBlueOrbAngleUp {
+  0%   { transform: translate(116.5px, 98px) rotate(-38deg) ; }
+  100% { transform: translate(126.5px, 91px) rotate(-38deg); }
+}
+@keyframes greenOrbAngleDown {
+  0%   { transform: translate(126.5px, 32px) rotate(38deg) ; }
+  100% { transform: translate(136.5px, 39px) rotate(38deg); }
+}
