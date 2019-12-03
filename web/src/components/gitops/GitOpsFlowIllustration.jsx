@@ -22,7 +22,7 @@ export default class GitOpsFlowIllustration extends React.Component {
     const useTag3 = `<use xlink:href="#path-3"></use>`;
     const useTag4 = `<use xlink:href="#path-5"></use>`;
     return (
-      <div class="kotsadm-illustration-wrapper">
+      <div className="kotsadm-illustration-wrapper">
         <svg width="566px" height="204px" viewBox="0 0 566 204" version="1.1">
           <defs>
             <rect id="path-1" x="11" y="54" width="201" height="102" rx="5"></rect>
@@ -138,7 +138,7 @@ export default class GitOpsFlowIllustration extends React.Component {
                   <line x1="8.5" y1="1.5" x2="0.5" y2="1.5" id="Line-8" stroke-width="1.5" stroke-linecap="round"></line>
                   <circle id="Oval-5" fill="#4999AD" cx="20" cy="8" r="5"></circle>
                 </g>
-                <g id="kotsadm-to-gitops-to-app" className={active === "with" && "visible"} transform="translate(246.000000, 46.000000)">
+                <g id="kotsadm-to-gitops-to-app" className={`${active === "with" && "visible"}`} transform="translate(246.000000, 46.000000)">
                   <text id="Click-to-deploy" opacity="0.203311012" font-family="HelveticaNeue-Medium, Helvetica Neue" font-size="10" font-weight="400" fill="#323232">
                     <tspan x="115" y="10">Click to deploy</tspan>
                   </text>
@@ -206,7 +206,7 @@ export default class GitOpsFlowIllustration extends React.Component {
                   <path d="M148,13 C154.075132,13 159,17.9248678 159,24 C159,30.0751322 154.075132,35 148,35 C141.924868,35 137,30.0751322 137,24 C137,17.9248678 141.924868,13 148,13 Z M155.104789,17.9867856 L141.537388,30.6983543 C143.211524,32.3139317 145.489709,33.3076923 148,33.3076923 C153.140497,33.3076923 157.307692,29.1404965 157.307692,24 C157.307692,21.7076228 156.478976,19.6088027 155.104789,17.9867856 Z M148,14.6923077 C142.859503,14.6923077 138.692308,18.8595035 138.692308,24 C138.692308,26.0291434 139.341628,27.9066298 140.443824,29.436013 L153.915778,16.8137915 C152.307556,15.488357 150.246742,14.6923077 148,14.6923077 Z" id="Combined-Shape" fill="#BC4752" fill-rule="nonzero"></path>
                   <line x1="166" y1="24" x2="195.995373" y2="24" id="Line-7-Copy-7" stroke="#F7B500" stroke-width="3" opacity="0.294154576" stroke-linecap="round"></line>
                 </g>
-                <g id="kotsadm-to-app" className={active === "with" && "fade-out"} transform="translate(346.000000, 46.000000)">
+                <g id="kotsadm-to-app" className={`${active === "with" && "fade-out"}`} transform="translate(346.000000, 46.000000)">
                   <text id="Click-to-deploy-Copy" font-family="HelveticaNeue-Medium, Helvetica Neue" font-size="10" font-weight="400" fill="#323232">
                     <tspan x="15" y="10">Click to deploy</tspan>
                   </text>
@@ -224,8 +224,8 @@ export default class GitOpsFlowIllustration extends React.Component {
         </svg>
         <div className="u-marginTop--30 u-marginBottom--30">
           <div className="rounded-toggle">
-            <span className={`toggle-button ${active === "without" && "isActive"}`} onClick={() => this.setState({ active: "without"})}>Without GitOps</span>
-            <span className={`toggle-button ${active === "with" && "isActive"}`} onClick={() => this.setState({ active: "with", hasSwitched: true })}>With GitOps</span>
+            <span className={`toggle-button ${active === "without" ? "isActive" : ""}`} onClick={() => this.setState({ active: "without"})}>Without GitOps</span>
+            <span className={`toggle-button ${active === "with" ? "isActive" : ""}`} onClick={() => this.setState({ active: "with", hasSwitched: true })}>With GitOps</span>
           </div>
         </div>
       </div>
