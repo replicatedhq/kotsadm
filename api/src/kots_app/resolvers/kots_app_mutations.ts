@@ -243,6 +243,20 @@ export function KotsMutations(stores: Stores) {
       }
     },
 
+    async uploadAppNamespace(root: any, args: any, context: Context) {
+      const { slug, namespace } = args;
+      try {
+        const appId = await stores.kotsAppStore.getIdFromSlug(slug);
+        const app = await context.getApp(appId);
+        
+        await stores.kotsAppStore.updateNamespace(app.id, namespace);
+
+        return true;
+      } catch (err) {
+        throw new ReplicatedError(err.message);
+      }
+    },
+
     async updateRegistryDetails(root: any, args: any, context: Context) {
       context.requireSingleTenantSession();
 

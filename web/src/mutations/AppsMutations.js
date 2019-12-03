@@ -44,6 +44,13 @@ export const uploadKotsLicenseRaw = `
 `
 export const uploadKotsLicense = gql(uploadKotsLicenseRaw);
 
+export const uploadAppNamespaceRaw = `
+  mutation uploadAppNamespace($slug: String!, $namespace: String!) {
+    uploadAppNamespace(slug: $slug, namespace: $namespace)
+  }
+`
+export const uploadAppNamespace = gql(uploadAppNamespaceRaw);
+
 export const deployKotsVersionRaw = `
   mutation deployKotsVersion($upstreamSlug: String!, $sequence: Int!, $clusterSlug: String!) {
     deployKotsVersion(upstreamSlug: $upstreamSlug, sequence: $sequence, clusterSlug: $clusterSlug)

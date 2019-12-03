@@ -67,6 +67,16 @@ export class KotsAppStore {
     await this.pool.query(q, v);
   }
 
+  async updateNamespace(id: string, namespace: string): Promise<void> {
+    const q = `update app set namespace = $1 where id = $2`;
+    const v = [
+      namespace,
+      id
+    ];
+
+    await this.pool.query(q, v);
+  }
+
   async getGitOpsCreds(appId: string, clusterId: string): Promise<any> {
     const q = `select g.id, g.uri, g.key_pub, g.key_priv, g.provider from gitops_repo g
 inner join cluster c on c.gitops_repo_id = g.id

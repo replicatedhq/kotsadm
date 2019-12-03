@@ -5,7 +5,7 @@ import { Helmet } from "react-helmet";
 import Dropzone from "react-dropzone";
 import isEmpty from "lodash/isEmpty";
 import Modal from "react-modal";
-import { uploadKotsLicense } from "../mutations/AppsMutations";
+import { uploadKotsLicense, uploadAppNamespace } from "../mutations/AppsMutations";
 import { getFileContent } from "../utilities/utilities";
 import CodeSnippet from "./shared/CodeSnippet";
 
@@ -18,7 +18,11 @@ class UploadLicenseFile extends React.Component {
     licenseValue: "",
     fileUploading: false,
     errorMessage: "",
-    viewErrorMessage: false
+    viewErrorMessage: false,
+    respData: {},
+    displayAddNamespaceModal: false,
+    uploadingNamespace: false,
+    namespace: "",
   }
 
   clearFile = () => {
@@ -26,7 +30,7 @@ class UploadLicenseFile extends React.Component {
   }
 
   uploadLicenseFile = async () => {
-    const { onUploadSuccess, history } = this.props;
+    const { onUploadSuccess } = this.props;
     const { licenseValue } = this.state;
 
     this.setState({ fileUploading: true, errorMessage: "" });
@@ -36,35 +40,54 @@ class UploadLicenseFile extends React.Component {
 
       // When successful, refetch all the user's apps with onUploadSuccess
       onUploadSuccess().then(() => {
-        if (data?.isAirgap) {
-          if (data?.needsRegistry) {
-            history.replace(`/${data.slug}/airgap`);
-          } else {
-            history.replace(`/${data.slug}/airgap-bundle`);
-          }
-          return;
-        }
-
-        if (data?.isConfigurable) {
-          history.replace(`/${data.slug}/config`);
-          return;
-        }
-
-        if (data?.hasPreflight) {
-          history.replace("/preflight");
-          return;
-        }
-
-        // No airgap, config or preflight? Go to the kotsApp detail view that was just uploaded
-        if (data) {
-          history.replace(`/app/${data.slug}`);
-        }
+        this.setState({ 
+          respData: data,
+          fileUploading: false,
+          displayAddNamespaceModal: true
+        });
       });
     } catch (err) {
       console.log(err);
       err.graphQLErrors.map(({ msg }) => {
         this.setState({ fileUploading: false, errorMessage: msg });
       });
+    }
+  }
+
+  submitNamespace = async () => {
+    const { history } = this.props;
+    const { respData, namespace } = this.state;
+
+    this.setState({ uploadingNamespace: true });
+    try {
+      await this.props.uploadAppNamespace(respData.slug, namespace);
+      this.setState({ uploadingNamespace: false });
+      if (respData?.isAirgap) {
+        if (respData?.needsRegistry) {
+          history.replace(`/${respData.slug}/airgap`);
+        } else {
+          history.replace(`/${respData.slug}/airgap-bundle`);
+        }
+        return;
+      }
+
+      if (respData?.isConfigurable) {
+        history.replace(`/${respData.slug}/config`);
+        return;
+      }
+
+      if (respData?.hasPreflight) {
+        history.replace("/preflight");
+        return;
+      }
+
+      // No airgap, config or preflight? Go to the kotsApp detail view that was just uploaded
+      if (respData) {
+        history.replace(`/app/${respData.slug}`);
+      }
+    } catch (err) {
+      this.setState({ uploadingNamespace: false });
+      console.log(err)
     }
   }
 
@@ -89,7 +112,7 @@ class UploadLicenseFile extends React.Component {
       logo,
       fetchingMetadata,
     } = this.props;
-    const { licenseFile, fileUploading, errorMessage, viewErrorMessage } = this.state;
+    const { licenseFile, fileUploading, errorMessage, viewErrorMessage, displayAddNamespaceModal } = this.state;
     const hasFile = licenseFile && !isEmpty(licenseFile);
 
     return (
@@ -181,6 +204,25 @@ class UploadLicenseFile extends React.Component {
             <button type="button" className="btn primary u-marginTop--15" onClick={this.toggleViewErrorMessage}>Ok, got it!</button>
           </div>
         </Modal>
+        {displayAddNamespaceModal &&
+          <Modal
+            isOpen={displayAddNamespaceModal}
+            onRequestClose={undefined}
+            contentLabel="Add namespace modal"
+            ariaHideApp={false}
+            className="Modal"
+          >
+            <div className="Modal-body">
+              <div className="u-marginTop--10 u-marginBottom--10">
+                <p className="u-fontSize--largest u-fontWeight--bold u-color--tuna u-marginBottom--10">Add application namespace</p>
+                <p className="u-fontSize--normal u-fontWeight--medium u-color--dustyGray u-marginBottom--10">What namespace will your application be deployed in?</p>
+                <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Namespace</p>
+                <input type="text" className="Input" placeholder="Application namespace" value={this.state.namespace} onChange={(e) => this.setState({ namespace: e.target.value })} />
+              </div>
+              <button type="button" className="btn primary u-marginTop--10 green" onClick={this.submitNamespace} disabled={this.state.uploadingNamespace}>{this.state.uploadingNamespace ? "Setting namespace" : "Set namespace"}</button>
+            </div>
+          </Modal>
+        }
       </div>
     );
   }
@@ -194,4 +236,9 @@ export default compose(
       uploadKotsLicense: (value) => mutate({ variables: { value } })
     })
   }),
+  graphql(uploadAppNamespace, {
+    props: ({ mutate }) => ({
+      uploadAppNamespace: (slug, namespace) => mutate({ variables: { slug, namespace } })
+    })
+  })
 )(UploadLicenseFile);
