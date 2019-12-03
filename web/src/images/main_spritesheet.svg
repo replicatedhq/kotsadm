@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="242px" height="1083px" viewBox="0 0 242 1083" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 60 (88103) - https://sketch.com -->
+    <!-- Generator: Sketch 59.1 (86144) - https://sketch.com -->
     <title>main_spritesheet</title>
     <desc>Created with Sketch.</desc>
     <defs>
@@ -849,6 +849,13 @@
                 <path d="M6,11 C5.5993919,7 8.25969673,5 13.9809145,5 C16.7777659,5 20.4507944,5 25,5" id="Path-10" stroke-linecap="round"></path>
                 <circle id="Oval-Copy" fill="#A2BDF4" cx="25" cy="5" r="4"></circle>
                 <path d="M6,11.9177294 L2.28305684,18 L9.71694316,18 L6,11.9177294 Z" id="Triangle" fill="#A2BDF4" transform="translate(6.000000, 14.500000) scale(1, -1) translate(-6.000000, -14.500000) "></path>
+            </g>
+        </g>
+        <g id="connection-established" transform="translate(129.000000, 4.000000)">
+            <line x1="70.3103448" y1="9.6222199" x2="0" y2="9.5" id="Line-5" stroke="#EDBA67" stroke-width="4" stroke-linecap="round"></line>
+            <g id="Group-12" transform="translate(26.000000, 0.000000)">
+                <circle id="Oval" fill="#44BB66" cx="9.5" cy="9.5" r="9.5"></circle>
+                <path d="M4.75,9.68481343 L8.28661886,12.9391313 C8.43140153,13.0723571 8.65677188,13.0629884 8.78999769,12.9182057 C8.79644857,12.9111953 8.80261569,12.9039288 8.80848412,12.8964239 L14.25,5.9375" id="Path-4" stroke="#FFFFFF" stroke-width="1.78125" stroke-linecap="round"></path>
             </g>
         </g>
         <g id="Group-6" transform="translate(131.000000, 588.000000)" fill-rule="nonzero">

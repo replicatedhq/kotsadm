@@ -1,7 +1,9 @@
 import * as React from "react";
 import Select from "react-select";
 import find from "lodash/find";
-import { withRouter } from "react-router-dom";
+import classNames from "classnames";
+import Loader from "../shared/Loader";
+import { withRouter, Link } from "react-router-dom";
 import { graphql, compose, withApollo } from "react-apollo";
 import { listApps } from "@src/queries/AppsQueries";
 import GitOpsFlowIllustration from "./GitOpsFlowIllustration";
@@ -80,7 +82,8 @@ class GitOpsDeploymentManager extends React.Component {
       containType
     } = this.state;
 
-    const firstApp = listAppsQuery.listApps && listAppsQuery.listApps.kotsApps.length > 0 ? listAppsQuery.listApps.kotsApps[0] : null;
+    const kotsApps = listAppsQuery.listApps?.kotsApps;
+    const firstApp = kotsApps?.length ? kotsApps[0] : null;
     if (!firstApp) {
       console.log("no app");
       return;
@@ -195,6 +198,40 @@ class GitOpsDeploymentManager extends React.Component {
     this.setState({ selectedService });
   }
 
+  renderGitOpsProviderSelector = (services, selectedService) => {
+    return (
+      <div className="flex flex1 flex-column u-marginRight--10">
+        <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Which GitOps provider do you use?</p>
+        <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">If your provider is not listed, select “Other”.</p>
+        <div className="u-position--relative">
+          <Select
+            className="replicated-select-container"
+            classNamePrefix="replicated-select"
+            placeholder="Select a GitOps service"
+            options={services}
+            isSearchable={false}
+            getOptionLabel={(service) => this.getLabel(service, service.label)}
+            getOptionValue={(service) => service.label}
+            value={selectedService}
+            onChange={this.handleServiceChange}
+            isOptionSelected={(option) => { option.value === selectedService }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  renderHostName = (hostname, providerError) => {
+    return (
+      <div className="flex flex1 flex-column u-marginLeft--10">
+        <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Hostname</p>
+        <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Hostname of your Enterprise server.</p>
+        <input type="text" className={`Input ${providerError?.field === "hostname" && "has-error"}`} placeholder="hostname" value={hostname} onChange={(e) => this.setState({ hostname: e.target.value })} />
+        {providerError?.field === "hostname" && <p className="u-fontSize--small u-marginTop--5 u-color--chestnut u-fontWeight--medium u-lineHeight--normal">A hostname must be provided</p>}
+      </div>
+    );
+  }
+
   renderActiveStep = (step) => {
     const {
       ownerRepo,
@@ -230,24 +267,7 @@ class GitOpsDeploymentManager extends React.Component {
             <p className="step-sub">Before the Admin Console can push changes to your Git repository, some information about your Git configuration is required.</p>
             <div className="flex-column u-textAlign--left u-marginBottom--30">
               <div className="flex flex1">
-                <div className="flex flex1 flex-column u-marginRight--10">
-                  <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Which GitOps provider do you use?</p>
-                  <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">If your provider is not listed, select “Other”.</p>
-                  <div className="u-position--relative">
-                    <Select
-                      className="replicated-select-container"
-                      classNamePrefix="replicated-select"
-                      placeholder="Select a GitOps service"
-                      options={services}
-                      isSearchable={false}
-                      getOptionLabel={(service) => this.getLabel(service, service.label)}
-                      getOptionValue={(service) => service.label}
-                      value={selectedService}
-                      onChange={this.handleServiceChange}
-                      isOptionSelected={(option) => { option.value === selectedService }}
-                    />
-                  </div>
-                </div>
+                {this.renderGitOpsProviderSelector(services, selectedService)}
                 {selectedService?.value === "other" ?
                   <div className="flex flex1 flex-column u-marginLeft--10">
                     <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">What GitOps service do you use?</p>
@@ -255,14 +275,10 @@ class GitOpsDeploymentManager extends React.Component {
                     <input type="text" className={`Input ${providerError?.field === "other" && "has-error"}`} placeholder="What service would you like to use" value={otherService} onChange={(e) => this.setState({ otherService: e.target.value })} />
                     {providerError?.field === "other" && <p className="u-fontSize--small u-marginTop--5 u-color--chestnut u-fontWeight--medium u-lineHeight--normal">A GitOps service name must be provided</p>}
                   </div>
-                : selectedService?.value === "github_enterprise" || selectedService?.value === "gitlab_enterprise" ?
-                  <div className="flex flex1 flex-column u-marginLeft--10">
-                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Hostname</p>
-                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Hostname of your Enterprise server.</p>
-                    <input type="text" className={`Input ${providerError?.field === "hostname" && "has-error"}`} placeholder="hostname" value={hostname} onChange={(e) => this.setState({ hostname: e.target.value })} />
-                    {providerError?.field === "hostname" && <p className="u-fontSize--small u-marginTop--5 u-color--chestnut u-fontWeight--medium u-lineHeight--normal">A hostname must be provided</p>}
-                  </div>
-                : <div className="flex flex1" />}
+                : selectedService?.value === "github_enterprise" || selectedService?.value === "gitlab_enterprise"
+                  ? this.renderHostName(hostname, providerError)
+                  : <div className="flex flex1" />
+                }
               </div>
             </div>
             <div>
@@ -412,11 +428,117 @@ class GitOpsDeploymentManager extends React.Component {
     }
   }
 
+  getGitOpsStatus = gitops => {
+    if (gitops?.enabled && gitops?.isConnected) {
+      return "Enabled, Working";
+    }
+    if (gitops?.enabled) {
+      return "Enabled, Failing";
+    }
+    return "Not Enabled";
+  }
+
+  renderGitOpsStatusAction = (app, gitops) => {
+    if (gitops?.enabled && gitops?.isConnected) {
+      return null;
+    }
+    if (gitops?.enabled) {
+      return <Link to={`/app/${app.slug}/troubleshoot`} className="gitops-status-link">Troubleshoot</Link>
+    }
+    return <Link to={`/app/${app.slug}`} className="gitops-status-link">Enable</Link>;
+  }
+
+  renderApps = () => {
+    const { listAppsQuery } = this.props;
+    const kotsApps = listAppsQuery.listApps?.kotsApps;
+    return (
+      <div>
+        {kotsApps.map(app => {
+          const downstream = app.downstreams?.length && app.downstreams[0];
+          const gitops = downstream?.gitops;
+          const gitopsEnabled = gitops?.enabled;
+          const gitopsConnected = gitops?.isConnected;
+          return (
+            <div key={app.id} className="flex justifyContent--spaceBetween alignItems--center u-marginBottom--30">
+              <div className="flex alignItems--center">
+                <div style={{ backgroundImage: `url(${app.iconUri})` }} className="appIcon u-position--relative" />
+                <p className="u-fontSize--large u-fontWeight--bold u-color--tundora u-marginLeft--10">{app.name}</p>
+              </div>
+              <div className="flex-column alignItems--flexEnd">
+                <div className="flex alignItems--center u-marginBottom--5">
+                  <div className={classNames("icon", {
+                    "grayCircleMinus--icon": !gitopsEnabled && !gitopsConnected,
+                    "error-small": gitopsEnabled && !gitopsConnected,
+                    "checkmark-icon": gitopsEnabled && gitopsConnected
+                    })}
+                  />
+                  <p className={classNames("u-fontSize--normal u-marginLeft--5", {
+                    "u-color--dustyGray": !gitopsEnabled && !gitopsConnected,
+                    "u-color--chestnut": gitopsEnabled && !gitopsConnected,
+                    "u-color--chateauGreen": gitopsEnabled && gitopsConnected,
+                  })}>
+                    {this.getGitOpsStatus(gitops)}
+                  </p>
+                </div>
+                {this.renderGitOpsStatusAction(app, gitops)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  renderConfiguredGitOps = () => {
+    const { services, selectedService, hostname, providerError } = this.state;
+    return (
+      <div className="u-textAlign--center">
+        <div className="ConfiguredGitOps--wrapper">
+            <p className="u-fontSize--largest u-fontWeight--bold u-color--tundora u-lineHeight--normal u-marginBottom--30">Admin Console GitOps</p>
+            <div className="flex u-marginBottom--20">
+              {this.renderGitOpsProviderSelector(services, selectedService)}
+              {this.renderHostName(hostname, providerError)}
+            </div>
+            <button className="btn secondary lightBlue u-marginBottom--30" onClick={this.updateSettings}>Update</button>
+            <div className="separator" />
+            {this.renderApps()}
+        </div>
+      </div>
+    );
+  }
+
+  gitOpsIsConfigured = () => {
+    const { listAppsQuery } = this.props;
+    const kotsApps = listAppsQuery.listApps?.kotsApps;
+    if (kotsApps) {
+      const appIsConfigured = find(kotsApps, app => {
+        const downstream = app.downstreams?.length && app.downstreams[0];
+        return downstream?.gitops?.enabled;
+      });
+      return !!appIsConfigured;
+    }
+    return false;
+  }
+
   render() {
+    const { listAppsQuery } = this.props;
+    if (listAppsQuery.loading) {
+      return (
+        <div className="flex-column flex1 alignItems--center justifyContent--center">
+          <Loader size="60" />
+        </div>
+      );
+    }
+
+    const gitOpsIsConfigured = this.gitOpsIsConfigured();
     const activeStep = find(STEPS, { step: this.state.step });
     return (
       <div className="GitOpsDeploymentManager--wrapper flex-column flex1">
-        {this.renderActiveStep(activeStep)}
+        {gitOpsIsConfigured ?
+          this.renderConfiguredGitOps()
+          :
+          this.renderActiveStep(activeStep)
+        }
       </div>
     );
   }
@@ -427,6 +549,9 @@ export default compose(
   withRouter,
   graphql(listApps, {
     name: "listAppsQuery",
+    options: () => ({
+      fetchPolicy: "no-cache"
+    })
   }),
   graphql(setAppGitOps, {
     props: ({ mutate }) => ({

@@ -55,6 +55,7 @@ export const listAppsRaw = `
             path
             branch
             format
+            isConnected
           }
           pendingVersions {
             title

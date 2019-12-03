@@ -154,7 +154,10 @@ class AppGitops extends Component {
               ? <div style={{ backgroundImage: `url(${app.iconUri})` }} className="appIcon u-position--relative" />
               : <span className="icon onlyAirgapBundleIcon" />
             }
-            <span className="icon onlyNoConnectionIcon u-marginLeft--10" />
+            {gitopsIsConnected 
+              ? <span className="icon connectionEstablished u-marginLeft--10" />
+              : <span className="icon onlyNoConnectionIcon u-marginLeft--10" />
+            }
             <span className="icon github-icon u-marginLeft--10" />
           </div>
 

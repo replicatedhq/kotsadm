@@ -4,6 +4,12 @@
   margin: 0 auto;
 }
 
+.ConfiguredGitOps--wrapper {
+  max-width: 580px;
+  margin: 0 auto;
+  text-align: left;
+}
+
 .GitOpsDeploy--step {
   background-color: #ffffff;
   margin-bottom: 40px;
@@ -28,5 +34,32 @@
     color: #9B9B9B;
     margin-bottom: 20px;
     line-height: 22px;
+  }
+}
+
+.separator {
+  width: 100%;
+  height: 1px;
+  background: #C4C8CA;
+  margin-bottom: 25px;
+}
+
+.appIcon {
+  width: 36px;
+  height: 36px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  border-radius: 100%;
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.16);
+}
+
+.gitops-status-link {
+  color: #326DE6;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+
+  &:hover {
+    text-decoration: underline;
   }
 }
