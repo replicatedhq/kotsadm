@@ -601,39 +601,43 @@ order by sequence desc`;
   }
 
   async getGitopsInfo(appId: string, clusterId: string) {
-    const kc = new k8s.KubeConfig();
-    kc.loadFromDefault();
-    const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+    try {
+      const kc = new k8s.KubeConfig();
+      kc.loadFromDefault();
+      const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
-    const secretName = "kotsadm-gitops";
-    const secret = await k8sApi.readNamespacedSecret(secretName, "default");
-    const secretData = secret.body.data!;
+      const secretName = "kotsadm-gitops";
+      const secret = await k8sApi.readNamespacedSecret(secretName, "default");
+      const secretData = secret.body.data!;
 
-    const configMapName = "kotsadm-gitops";
-    const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
-    const configMapData = JSON.parse(base64Decode(configmap.body.data![`${appId}-${clusterId}`]));
-    
-    let provider = "", publicKey = "", privateKey = "";
-    for (const key of Object.keys(secretData)) {
-      const value = base64Decode(secretData[key]);
-      if (value === configMapData.repoUri) {
-        const index = key.charAt(9);
-        provider = base64Decode(secretData[`provider.${index}.type`]);
-        publicKey = base64Decode(secretData[`provider.${index}.publicKey`]);
-        privateKey = base64Decode(secretData[`provider.${index}.privateKey`]);
-        break;
+      const configMapName = "kotsadm-gitops";
+      const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
+      const configMapData = JSON.parse(base64Decode(configmap.body.data![`${appId}-${clusterId}`]));
+      
+      let provider = "", publicKey = "", privateKey = "";
+      for (const key of Object.keys(secretData)) {
+        const value = base64Decode(secretData[key]);
+        if (value === configMapData.repoUri) {
+          const index = key.charAt(9);
+          provider = base64Decode(secretData[`provider.${index}.type`]);
+          publicKey = base64Decode(secretData[`provider.${index}.publicKey`]);
+          privateKey = base64Decode(secretData[`provider.${index}.privateKey`]);
+          break;
+        }
       }
-    }
 
-    return {
-      provider: provider,
-      repoUri: configMapData.repoUri,
-      path: configMapData.path,
-      branch: configMapData.branch,
-      format: configMapData.format,
-      publicKey: publicKey,
-      privateKey: privateKey,
-      lastError: configMapData.lastError
+      return {
+        provider: provider,
+        repoUri: configMapData.repoUri,
+        path: configMapData.path,
+        branch: configMapData.branch,
+        format: configMapData.format,
+        publicKey: publicKey,
+        privateKey: privateKey,
+        lastError: configMapData.lastError
+      }
+    } catch(err) {
+      throw new ReplicatedError(`Failed to get gitops info ${err.response || err}`);
     }
   }
 
