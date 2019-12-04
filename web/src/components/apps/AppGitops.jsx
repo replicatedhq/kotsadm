@@ -3,7 +3,7 @@ import { graphql, compose, withApollo } from "react-apollo";
 import Helmet from "react-helmet";
 import url from "url";
 import CodeSnippet from "@src/components/shared/CodeSnippet";
-import { testGitOpsConnection } from "../../mutations/AppsMutations";
+import { testGitOpsConnection, disableAppGitops } from "../../mutations/AppsMutations";
 
 import "../../scss/components/gitops/GitOpsSettings.scss";
 
@@ -51,7 +51,8 @@ class AppGitops extends Component {
 
     this.state = {
       ownerRepo,
-      testingConnection: false
+      testingConnection: false,
+      disablingGitOps: false
     }
   }
 
@@ -76,7 +77,7 @@ class AppGitops extends Component {
     this.setState({ testingConnection: true });
     const appId = this.props.app?.id;
     let clusterId;
-    if (this.props.app?.downstreams && this.props.app.downstreams.length > 0) {
+    if (this.props.app?.downstreams?.length) {
       clusterId = this.props.app.downstreams[0].cluster.id;
     }
 
@@ -97,6 +98,25 @@ class AppGitops extends Component {
 
   updateGitOpsSettings = () => {
     this.props.history.push(`/gitops`);
+  }
+
+  disableGitOps = async () => {
+    this.setState({ disablingGitOps: true });
+    const appId = this.props.app?.id;
+    let clusterId;
+    if (this.props.app?.downstreams?.length) {
+      clusterId = this.props.app.downstreams[0].cluster.id;
+    }
+
+    try {
+      await this.props.disableAppGitops(appId, clusterId);
+      this.props.history.push(`/app/${this.props.app?.slug}`);
+      this.props.refetch();
+    } catch (err) {
+      console.log(err);
+    } finally {
+      this.setState({ disablingGitOps: false });
+    }
   }
 
   render() {
@@ -120,6 +140,7 @@ class AppGitops extends Component {
     const {
       ownerRepo,
       testingConnection,
+      disablingGitOps,
     } = this.state;
 
     const selectedService = SERVICES.find((service) => {
@@ -168,7 +189,7 @@ class AppGitops extends Component {
                 When an update is available for Sentry Enteprise, the Admin Console will commit the fully<br/>rendered and deployable YAML to /sentry-enterprise/rendered.yaml in the master branch of<br/>the replicatedhq/gitops-deploy repo on github.com.
               </p>
               <div className="flex justifyContent--center">
-                <button className="btn secondary red u-marginRight--10" onClick={this.disableGitOps}>Disable GitOps</button>
+                <button className={`btn secondary u-marginRight--10 ${disablingGitOps ? "is-disabled" : "red"}`} onClick={this.disableGitOps}>{disablingGitOps ? "Disabling GitOps" : "Disable GitOps"}</button>
                 <button className="btn secondary lightBlue" onClick={this.updateGitOpsSettings}>Update GitOps Settings</button>
               </div>
             </div>
@@ -212,6 +233,11 @@ export default compose(
   graphql(testGitOpsConnection, {
     props: ({ mutate }) => ({
       testGitOpsConnection: (appId, clusterId) => mutate({ variables: { appId, clusterId } })
+    })
+  }),
+  graphql(disableAppGitops, {
+    props: ({ mutate }) => ({
+      disableAppGitops: (appId, clusterId) => mutate({ variables: { appId, clusterId } })
     })
   }),
 )(AppGitops);

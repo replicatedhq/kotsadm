@@ -24,6 +24,7 @@ type Mutation {
   updateAppGitOps(appId: String!, clusterId: String!, gitOpsInput: KotsGitOpsInput!): String
   syncAppLicense(appSlug: String!, airgapLicense: String): KLicense
   testGitOpsConnection(appId: String!, clusterId: String!): Boolean
+  disableAppGitops(appId: String!, clusterId: String!): Boolean
 
   drainNode(name: String): Boolean
   deleteNode(name: String): Boolean

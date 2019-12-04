@@ -123,11 +123,17 @@ export const syncAppLicense = gql`
     }
   }
 `;
+
 export const testGitOpsConnectionRaw = `
   mutation testGitOpsConnection($appId: String!, $clusterId: String!) {
     testGitOpsConnection(appId: $appId, clusterId: $clusterId)
   }
 `;
-
-
 export const testGitOpsConnection = gql(testGitOpsConnectionRaw);
+
+export const disableAppGitopsRaw = `
+  mutation disableAppGitops($appId: String!, $clusterId: String!) {
+    disableAppGitops(appId: $appId, clusterId: $clusterId)
+  }
+`;
+export const disableAppGitops = gql(disableAppGitopsRaw);

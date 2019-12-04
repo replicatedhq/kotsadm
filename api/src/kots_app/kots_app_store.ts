@@ -148,6 +148,33 @@ export class KotsAppStore {
     }
   }
 
+  async disableDownstreamGitOps(appId: string, clusterId: string): Promise<any> {
+    try {
+      const kc = new k8s.KubeConfig();
+      kc.loadFromDefault();
+      const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+
+      const configMapName = "kotsadm-gitops";
+      const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
+      const configMapData = configmap.body.data!
+
+      delete configMapData[`${appId}-${clusterId}`];
+
+      const configMapObj: k8s.V1Secret = {
+        apiVersion: "v1",
+        kind: "ConfigMap",
+        metadata: {
+          name: configMapName,
+        },
+        data: configMapData
+      }
+
+      await k8sApi.replaceNamespacedConfigMap(configMapName, "default", configMapObj);
+    } catch(err) {
+      throw new ReplicatedError(`Failed to disable gitops for app with id ${appId}, ${err.response || err}`)
+    }
+  }
+
   async getGitOpsCreds(appId: string, clusterId: string): Promise<any> {
     const { repoUri, provider, privateKey, publicKey } = await this.getGitopsInfo(appId, clusterId);
 

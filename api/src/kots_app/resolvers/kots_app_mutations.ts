@@ -84,6 +84,16 @@ export function KotsMutations(stores: Stores) {
       return sshPublishKey;
     },
 
+    async disableAppGitops(root: any, args: any, context: Context): Promise<boolean> {
+      const { appId, clusterId } = args;
+      const app = await context.getApp(appId);
+      const downstreamGitops = await stores.kotsAppStore.getDownstreamGitOps(app.id, clusterId);
+      if (downstreamGitops.enabled) {
+        await stores.kotsAppStore.disableDownstreamGitOps(appId, clusterId);
+      }
+      return true;
+    },
+
     async checkForKotsUpdates(root: any, args: any, context: Context): Promise<number> {
       const { appId } = args;
 
