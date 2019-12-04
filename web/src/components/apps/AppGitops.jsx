@@ -82,11 +82,11 @@ class AppGitops extends Component {
 
     try {
       await this.props.testGitOpsConnection(appId, clusterId);
-      this.setState({ testingConnection: false });
       this.props.refetch();
     } catch (err) {
-      this.setState({ testingConnection: false });
       console.log(err);
+    } finally {
+      this.setState({ testingConnection: false });
     }
   }
   

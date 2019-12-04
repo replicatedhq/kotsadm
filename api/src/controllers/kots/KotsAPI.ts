@@ -32,7 +32,7 @@ import { Session } from "../../session";
 import { getDiffSummary } from "../../util/utilities";
 import yaml from "js-yaml";
 import * as k8s from "@kubernetes/client-node";
-import { decodeBase64 } from "../../util/utilities";
+import { base64Decode } from "../../util/utilities";
 import { Repeater } from "../../util/repeater";
 import { KotsAppStore } from "../../kots_app/kots_app_store";
 import { createGitCommitForVersion } from "../../kots_app/gitops";
@@ -52,6 +52,7 @@ interface CreateAppMetadata {
 interface UploadLicenseBody {
   name: string;
   license: string;
+  appSlug: string;
 }
 
 interface UpdateAppBody {
@@ -164,6 +165,7 @@ export class KotsAPI {
 
     const kotsApp = await kotsAppFromLicenseData(body.license, body.name, downstream.title, request.app.locals.stores);
     if (!kotsApp) {
+      await request.app.locals.stores.kotsAppStore.updateFailedInstallState(body.appSlug);
       response.status(500);
       return {
         error: "failed to create app",
@@ -295,7 +297,7 @@ export class KotsAPI {
         needsRegistry = false;
 
         // parse the dockerconfig secret
-        const parsed = JSON.parse(decodeBase64(res.body.data[".dockerconfigjson"]));
+        const parsed = JSON.parse(base64Decode(res.body.data[".dockerconfigjson"]));
         const auths = parsed.auths;
         for (const hostname in auths) {
           const config = auths[hostname];
