@@ -612,7 +612,14 @@ order by sequence desc`;
 
       const configMapName = "kotsadm-gitops";
       const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
-      const configMapData = JSON.parse(base64Decode(configmap.body.data![`${appId}-${clusterId}`]));
+
+      const appClusterKey = `${appId}-${clusterId}`;
+      if (!(appClusterKey in configmap.body.data!)) {
+        throw new ReplicatedError(`No gitops data found for app with id ${appId} and cluster with id ${clusterId}`);
+      }
+
+      const base64Data = configmap.body.data![appClusterKey];
+      const configMapData = JSON.parse(base64Decode(base64Data));
       
       let provider = "", publicKey = "", privateKey = "";
       for (const key of Object.keys(secretData)) {
