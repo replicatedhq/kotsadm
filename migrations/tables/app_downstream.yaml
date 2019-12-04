@@ -32,3 +32,6 @@ spec:
         type: text
       - name: gitops_branch
         type: text
+      - name: app_namespace
+        type: text
+        default: "."

@@ -30,7 +30,7 @@ class UploadLicenseFile extends React.Component {
   }
 
   uploadLicenseFile = async () => {
-    const { onUploadSuccess } = this.props;
+    const { onUploadSuccess, history, appListLength } = this.props;
     const { licenseValue } = this.state;
 
     this.setState({ fileUploading: true, errorMessage: "" });
@@ -40,54 +40,40 @@ class UploadLicenseFile extends React.Component {
 
       // When successful, refetch all the user's apps with onUploadSuccess
       onUploadSuccess().then(() => {
-        this.setState({ 
-          respData: data,
-          fileUploading: false,
-          displayAddNamespaceModal: true
-        });
+        this.setState({ fileUploading: false });
+        if (appListLength > 0) {
+          history.replace(`/${data.slug}/namespace`);
+        } else {
+          if (data?.isAirgap) {
+            if (data?.needsRegistry) {
+              history.replace(`/${data.slug}/airgap`);
+            } else {
+              history.replace(`/${data.slug}/airgap-bundle`);
+            }
+            return;
+          }
+    
+          if (data?.isConfigurable) {
+            history.replace(`/${data.slug}/config`);
+            return;
+          }
+    
+          if (data?.hasPreflight) {
+            history.replace("/preflight");
+            return;
+          }
+    
+          // No airgap, config or preflight? Go to the kotsApp detail view that was just uploaded
+          if (data) {
+            history.replace(`/app/${data.slug}`);
+          }
+        }
       });
     } catch (err) {
       console.log(err);
       err.graphQLErrors.map(({ msg }) => {
         this.setState({ fileUploading: false, errorMessage: msg });
       });
-    }
-  }
-
-  submitNamespace = async () => {
-    const { history } = this.props;
-    const { respData, namespace } = this.state;
-
-    this.setState({ uploadingNamespace: true });
-    try {
-      await this.props.uploadAppNamespace(respData.slug, namespace);
-      this.setState({ uploadingNamespace: false });
-      if (respData?.isAirgap) {
-        if (respData?.needsRegistry) {
-          history.replace(`/${respData.slug}/airgap`);
-        } else {
-          history.replace(`/${respData.slug}/airgap-bundle`);
-        }
-        return;
-      }
-
-      if (respData?.isConfigurable) {
-        history.replace(`/${respData.slug}/config`);
-        return;
-      }
-
-      if (respData?.hasPreflight) {
-        history.replace("/preflight");
-        return;
-      }
-
-      // No airgap, config or preflight? Go to the kotsApp detail view that was just uploaded
-      if (respData) {
-        history.replace(`/app/${respData.slug}`);
-      }
-    } catch (err) {
-      this.setState({ uploadingNamespace: false });
-      console.log(err)
     }
   }
 

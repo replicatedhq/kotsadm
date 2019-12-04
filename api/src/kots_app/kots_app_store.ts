@@ -67,8 +67,23 @@ export class KotsAppStore {
     await this.pool.query(q, v);
   }
 
+  async getAppNamespace(appId: string, clusterId: string): Promise<string> {
+    const q = `select app_namespace from app_downstream where app_id = $1 and cluster_id = $2`;
+    const v = [
+      appId,
+      clusterId
+    ];
+
+    const result = await this.pool.query(q, v);
+    if (result.rowCount === 0) {
+      throw new ReplicatedError(`No downstream was fonud for app with the ID ${appId} and cluster with the ID ${clusterId}`);
+    }
+
+    return result.rows[0].app_namespace;
+  }
+
   async updateNamespace(id: string, namespace: string): Promise<void> {
-    const q = `update app set namespace = $1 where id = $2`;
+    const q = `update app_downstream set app_namespace = $1 where app_id = $2`;
     const v = [
       namespace,
       id

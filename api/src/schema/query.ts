@@ -30,7 +30,7 @@ export const Query = `
     getHelmChart(id: String!): HelmChart
 
     getAppLicense(appId: String!): KLicense
-
+    getKotsLicenseData(slug: String!): KotsAppUpload
     getFiles(slug: String!, sequence: Int!, fileNames: [String!]): String
 
     getKotsApplicationTree(slug: String!, sequence: Int!): String

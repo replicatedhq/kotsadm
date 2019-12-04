@@ -5,6 +5,7 @@ import { ReplicatedError } from "../../server/errors";
 import { KotsApp, KotsVersion, KotsAppMetadata, KotsAppRegistryDetails, KotsConfigGroup, KotsDownstreamOutput } from "../";
 import { Cluster } from "../../cluster";
 import { kotsAppGetBranding } from "../kots_ffi";
+import * as k8s from "@kubernetes/client-node";
 import yaml from "js-yaml";
 import { logger } from "../../server/logger";
 import { Params } from "../../server/params";
@@ -105,6 +106,40 @@ export function KotsQueries(stores: Stores, params: Params) {
       }
 
       return versions;
+    },
+
+    async getKotsLicenseData(root: any, args: any, context: Context) {
+      const { slug } = args;
+      try {
+        const appId = await stores.kotsAppStore.getIdFromSlug(slug);
+        const app = await context.getApp(appId);
+        const parsedLicense = yaml.safeLoad(app.license!);
+
+        let needsRegistry = true;
+        try {
+          const kc = new k8s.KubeConfig();
+          kc.loadFromDefault();
+          const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+          const res = await k8sApi.readNamespacedSecret("registry-creds", "default");
+          if (res && res.body && res.body.data && res.body.data[".dockerconfigjson"]) {
+            needsRegistry = false;
+          }
+
+        } catch {
+          /* no need to handle, rbac problem or not a path we can read registry */
+        }
+
+        return {
+          hasPreflight: app.hasPreflight,
+          isAirgap: parsedLicense.spec.isAirgapSupported,
+          needsRegistry,
+          slug: app.slug,
+          isConfigurable: app.isAppConfigurable()
+        }
+
+      } catch (err) {
+        throw new ReplicatedError(err.message);
+      }
     },
 
     async getAppRegistryDetails(root: any, args: any, context: Context): Promise<KotsAppRegistryDetails | {}> {

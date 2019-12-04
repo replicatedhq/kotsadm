@@ -303,6 +303,19 @@ export const getImageRewriteStatusRaw = `
 `;
 export const getImageRewriteStatus = gql(getImageRewriteStatusRaw);
 
+export const getKotsLicenseDataRaw = `
+  query getKotsLicenseData($slug: String!) {
+    getKotsLicenseData(slug: $slug) {
+      hasPreflight
+      slug
+      isAirgap
+      needsRegistry
+      isConfigurable
+    }
+  }
+`;
+export const getKotsLicenseData = gql(getKotsLicenseDataRaw);
+
 export const getUpdateDownloadStatusRaw = `
   query getUpdateDownloadStatus {
     getUpdateDownloadStatus {

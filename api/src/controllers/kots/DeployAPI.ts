@@ -85,7 +85,7 @@ export class DeployAPI {
       }
 
       if (deployedAppSequence > -1) {
-        const desiredNamespace = ".";
+        const desiredNamespace = await request.app.locals.stores.kotsAppStore.getAppNamespace(app.id, cluster.id);
 
         const rendered = await app.render(`${app.currentSequence}`, `overlays/downstreams/${cluster.title}`);
         const b = new Buffer(rendered);
