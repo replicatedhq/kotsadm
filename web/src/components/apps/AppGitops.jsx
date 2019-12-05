@@ -3,6 +3,7 @@ import { graphql, compose, withApollo } from "react-apollo";
 import Helmet from "react-helmet";
 import url from "url";
 import CodeSnippet from "@src/components/shared/CodeSnippet";
+import Loader from "../shared/Loader";
 import { testGitOpsConnection, disableAppGitops } from "../../mutations/AppsMutations";
 
 import "../../scss/components/gitops/GitOpsSettings.scss";
@@ -49,10 +50,21 @@ class AppGitops extends Component {
       ownerRepo = parsed.path.slice(1);  // remove the "/"
     }
 
+    const { location } = this.props.history;
+    const testConnectionOnLoad = location?.state?.testConnectionOnLoad;
+
     this.state = {
       ownerRepo,
       testingConnection: false,
-      disablingGitOps: false
+      disablingGitOps: false,
+      connectionTested: false,
+      testConnectionOnLoad
+    };
+  }
+
+  componentDidMount() {
+    if (this.state.testConnectionOnLoad) {
+      this.handleTestConnection();
     }
   }
 
@@ -83,11 +95,11 @@ class AppGitops extends Component {
 
     try {
       await this.props.testGitOpsConnection(appId, clusterId);
-      this.props.refetch();
+      await this.props.refetch();
     } catch (err) {
       console.log(err);
     } finally {
-      this.setState({ testingConnection: false });
+      this.setState({ testingConnection: false, connectionTested: true });
     }
   }
   
@@ -141,6 +153,8 @@ class AppGitops extends Component {
       ownerRepo,
       testingConnection,
       disablingGitOps,
+      connectionTested,
+      testConnectionOnLoad,
     } = this.state;
 
     const selectedService = SERVICES.find((service) => {
@@ -162,6 +176,14 @@ class AppGitops extends Component {
     }
 
     const gitopsIsConnected = gitops.enabled && gitops.isConnected;
+
+    if (testConnectionOnLoad && !connectionTested) {
+      return (
+        <div className="flex-column flex1 alignItems--center justifyContent--center">
+          <Loader size="60" />
+        </div>
+      );
+    }
 
     return (
       <div className="GitOpsSettings--wrapper container flex-column u-overflow--auto u-paddingBottom--20 alignItems--center">

@@ -15,7 +15,42 @@ import { ApplicationSpec } from "./kots_app_spec";
 export class KotsAppStore {
   constructor(private readonly pool: pg.Pool, private readonly params: Params) { }
 
-  async createGitOpsRepo(provider: string, uri: string, privateKey: string, publicKey: string): Promise<any> {
+  async getGitOpsRepo(): Promise<any> {
+    try {
+      const kc = new k8s.KubeConfig();
+      kc.loadFromDefault();
+      const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+
+      const secretName = "kotsadm-gitops";
+      const secret = await k8sApi.readNamespacedSecret(secretName, "default");
+      const data = secret.body.data!;
+
+      const keys = Object.keys(data);
+      const indices = _.map(keys, key => parseInt(key.charAt(9)));
+      const maxIndex = Math.max(...indices);
+
+      const provider = base64Decode(data[`provider.${maxIndex}.type`]);
+      const repoUri = base64Decode(data[`provider.${maxIndex}.repoUri`]);
+      const deployKey = base64Decode(data[`provider.${maxIndex}.publicKey`]);
+
+      const hostnameKey = `provider.${maxIndex}.hostname`;
+      const hostname = hostnameKey in data ? { hostname: base64Decode(data[hostnameKey]) } : {};
+
+      return {
+        enabled: true,
+        provider,
+        uri: repoUri,
+        deployKey,
+        ...hostname
+      };
+    } catch(err) {
+      return {
+        enabled: false
+      };
+    }
+  }
+
+  async createGitOpsRepo(provider: string, uri: string, hostname: string, privateKey: string, publicKey: string): Promise<any> {
     try {
       const kc = new k8s.KubeConfig();
       kc.loadFromDefault();
@@ -54,6 +89,10 @@ export class KotsAppStore {
       data[`provider.${index + 1}.repoUri`] = base64Encode(uri);
       data[`provider.${index + 1}.publicKey`] = base64Encode(publicKey);
       data[`provider.${index + 1}.privateKey`] = base64Encode(privateKey);
+
+      if (hostname) {
+        data[`provider.${index + 1}.hostname`] = base64Encode(hostname);
+      }
 
       const secretObj: k8s.V1Secret = {
         apiVersion: "v1",
@@ -202,7 +241,7 @@ export class KotsAppStore {
     };
   }
 
-  async setDownstreamGitOpsConfiguration(appId: string, clusterId: string, repoUri: string, branch: string, path: string, format: string): Promise<any> {
+  async setDownstreamGitOps(appId: string, clusterId: string, repoUri: string, branch: string, path: string, format: string): Promise<any> {
     try {
       const kc = new k8s.KubeConfig();
       kc.loadFromDefault();
@@ -242,7 +281,6 @@ export class KotsAppStore {
       } else {
         await k8sApi.replaceNamespacedConfigMap(configMapName, "default", configMapObj);
       }
-
     } catch(err) {
       throw new ReplicatedError(`Failed to create gitops configmap ${err.response || err}`);
     }
