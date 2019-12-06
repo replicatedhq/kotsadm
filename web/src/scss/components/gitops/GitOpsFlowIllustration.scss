@@ -31,26 +31,9 @@
 }
 
 .kotsadm-illustration-wrapper {
+  margin-top: 40px;
   margin-bottom: 30px;
 }
-#kotsadm-to-gitops-to-app {
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .5s;
-}
-#kotsadm-to-gitops-to-app.visible {
-  opacity: 1;
-  visibility: visible;
-}
-#kotsadm-to-app {
-  opacity: 1;
-  transition: opacity .3s;
-}
-#kotsadm-to-app.fade-out {
-  opacity: 0;
-}
-
-
 #movement-orb-gray {
   animation: grayOrbStraight 1.2s infinite;
 }

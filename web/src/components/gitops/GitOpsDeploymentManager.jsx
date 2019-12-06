@@ -326,9 +326,9 @@ class GitOpsDeploymentManager extends React.Component {
       case "setup":
         return (
         <div key={`${step.step}-active`} className="GitOpsDeploy--step">
-          <GitOpsFlowIllustration />
           <p className="step-title">Deploy using a GitOps workflow</p>
           <p className="step-sub">Connect a git version control system to this Admin Console. After setting this up, it will be<br/>possible to have all application updates (upstream updates, license updates, config changes)<br/>directly commited to any git repository and automatic deployments will be disabled.</p>
+          <GitOpsFlowIllustration />
           <div>
             <button className="btn primary blue u-marginTop--10" type="button" onClick={() => this.stepFrom("setup", "provider")}>Get started</button>
           </div>
