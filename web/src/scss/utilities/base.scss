@@ -29,7 +29,7 @@ body a {
 }
 
 .replicated-link {
-  color: #337AB7;
+  color: #326DE6;
   cursor: pointer;
   font-weight: 500;
 
@@ -109,6 +109,20 @@ code {
   }
   &:hover .arrow {
     left: 5px;
+  }
+}
+
+.PreflightMessageRow {
+  h2 {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  p {
+    font-size: 14px; 
+    font-weight: 500;
+  }
+  ul {
+    display: block;
   }
 }
 
