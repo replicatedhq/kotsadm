@@ -25,22 +25,16 @@ export class KotsAppStore {
       const secret = await k8sApi.readNamespacedSecret(secretName, "default");
       const data = secret.body.data!;
 
-      const keys = Object.keys(data);
-      const indices = _.map(keys, key => parseInt(key.charAt(9)));
-      const maxIndex = Math.max(...indices);
-
-      const provider = base64Decode(data[`provider.${maxIndex}.type`]);
-      const repoUri = base64Decode(data[`provider.${maxIndex}.repoUri`]);
-      const deployKey = base64Decode(data[`provider.${maxIndex}.publicKey`]);
-
-      const hostnameKey = `provider.${maxIndex}.hostname`;
+      // use index 0 for now, since we don't support multiple providers yet
+      const provider = base64Decode(data["provider.0.type"]);
+      const uri = base64Decode(data["provider.0.repoUri"]);
+      const hostnameKey = "provider.0.hostname";
       const hostname = hostnameKey in data ? { hostname: base64Decode(data[hostnameKey]) } : {};
 
       return {
         enabled: true,
+        uri,
         provider,
-        uri: repoUri,
-        deployKey,
         ...hostname
       };
     } catch(err) {
@@ -50,19 +44,21 @@ export class KotsAppStore {
     }
   }
 
-  async createGitOpsRepo(provider: string, uri: string, hostname: string, privateKey: string, publicKey: string): Promise<any> {
+  async createGitOpsRepo(provider: string, uri: string, hostname: string, privateKey: string, publicKey: string): Promise<void> {
     try {
       const kc = new k8s.KubeConfig();
       kc.loadFromDefault();
       const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
       const secretName = "kotsadm-gitops";
+      let secretExists = false;
       let data: { [key: string]: string } = {};
 
       try {
         // read secret data (if exists)
         const secret = await k8sApi.readNamespacedSecret(secretName, "default");
         data = secret.body.data || {};
+        secretExists = true;
       } catch(err) {
         // secret does not exist yet
       }
@@ -81,17 +77,24 @@ export class KotsAppStore {
       if (index === -1) {
         const indices = _.map(keys, key => parseInt(key.charAt(9)));
         if (indices.length) {
-          index = Math.max(...indices);
+          index = Math.max(...indices) + 1;
+        } else {
+          index = 0;
         }
       }
 
-      data[`provider.${index + 1}.type`] = base64Encode(provider);
-      data[`provider.${index + 1}.repoUri`] = base64Encode(uri);
-      data[`provider.${index + 1}.publicKey`] = base64Encode(publicKey);
-      data[`provider.${index + 1}.privateKey`] = base64Encode(privateKey);
+      data[`provider.${index}.type`] = base64Encode(provider);
+      data[`provider.${index}.repoUri`] = base64Encode(uri);
+      data[`provider.${index}.publicKey`] = base64Encode(publicKey);
+      data[`provider.${index}.privateKey`] = base64Encode(privateKey);
+
+      const hostnameKey = `provider.${index}.hostname`;
+      if (hostnameKey in data) {
+        delete data[hostnameKey];
+      }
 
       if (hostname) {
-        data[`provider.${index + 1}.hostname`] = base64Encode(hostname);
+        data[hostnameKey] = base64Encode(hostname);
       }
 
       const secretObj: k8s.V1Secret = {
@@ -103,21 +106,17 @@ export class KotsAppStore {
         data: data
       }
 
-      if (index === -1) {
+      if (!secretExists) {
         await k8sApi.createNamespacedSecret("default", secretObj);
       } else {
         await k8sApi.replaceNamespacedSecret(secretName, "default", secretObj);
       }
-
-      return {
-        uri
-      };
     } catch(err) {
       throw new ReplicatedError(`Failed to create gitops secret ${err.response || err}`)
     }
   }
 
-  async updateGitOpsRepo(oldUri: string, provider: string, newUri: string, privateKey: string, publicKey: string): Promise<void> {
+  async updateGitOpsRepo(uriToUpdate: string, newUri: string, hostname: string): Promise<void> {
     try {
       const kc = new k8s.KubeConfig();
       kc.loadFromDefault();
@@ -133,12 +132,19 @@ export class KotsAppStore {
 
       for (const key of Object.keys(data)) {
         const value = base64Decode(data[key]);
-        if (value === oldUri) {
+        const isSingleApp = uriToUpdate !== "";
+        if (!isSingleApp || value === uriToUpdate) {
           const index = key.charAt(9);
-          data[`provider.${index}.type`] = base64Encode(provider);
-          data[`provider.${index}.repoUri`] = base64Encode(newUri);
-          data[`provider.${index}.publicKey`] = base64Encode(publicKey);
-          data[`provider.${index}.privateKey`] = base64Encode(privateKey);
+          if (isSingleApp) {
+            data[`provider.${index}.repoUri`] = base64Encode(newUri);
+          }
+          const hostnameKey = `provider.${index}.hostname`;
+          if (hostnameKey in data) {
+            delete data[hostnameKey];
+          }
+          if (hostname) {
+            data[hostnameKey] = base64Encode(hostname);
+          }
         }
       }
 
@@ -165,7 +171,7 @@ export class KotsAppStore {
 
       const configMapName = "kotsadm-gitops";
       const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
-      const configMapData = configmap.body.data!
+      const configMapData = configmap.body.data!;
 
       const downstreamData = JSON.parse(base64Decode(configMapData[`${appId}-${clusterId}`]));
       downstreamData.lastError = err;
@@ -187,7 +193,31 @@ export class KotsAppStore {
     }
   }
 
-  async disableDownstreamGitOps(appId: string, clusterId: string): Promise<any> {
+  async resetGitOpsData(): Promise<void> {
+    try {
+      const kc = new k8s.KubeConfig();
+      kc.loadFromDefault();
+      const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+
+      try {
+        const secretName = "kotsadm-gitops";
+        await k8sApi.deleteNamespacedSecret(secretName, "default");
+      } catch(err) {
+        // secret does not exist
+      }
+
+      try {
+        const configMapName = "kotsadm-gitops";
+        await k8sApi.deleteNamespacedConfigMap(configMapName, "default");
+      } catch(err) {
+        // config map does not exist
+      }
+    } catch(err) {
+      throw new ReplicatedError(`Failed to reset gitops data, ${err.response || err}`);
+    }
+  }
+
+  async disableDownstreamGitOps(appId: string, clusterId: string): Promise<void> {
     try {
       const kc = new k8s.KubeConfig();
       kc.loadFromDefault();
@@ -195,7 +225,7 @@ export class KotsAppStore {
 
       const configMapName = "kotsadm-gitops";
       const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
-      const configMapData = configmap.body.data!
+      const configMapData = configmap.body.data!;
 
       delete configMapData[`${appId}-${clusterId}`];
 

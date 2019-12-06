@@ -1,6 +1,4 @@
 import _ from "lodash";
-import { generateKeyPairSync } from "crypto";
-import sshpk from "sshpk";
 import { Context } from "../../context";
 import path from "path";
 import tmp from "tmp";
@@ -15,7 +13,7 @@ import { kotsAppFromLicenseData, kotsFinalizeApp, kotsAppCheckForUpdates, kotsRe
 import { Update } from "../kots_ffi";
 import { KotsAppRegistryDetails } from "../kots_app"
 import * as k8s from "@kubernetes/client-node";
-import { kotsEncryptString, kotsDecryptString } from "../kots_ffi"
+import { kotsDecryptString } from "../kots_ffi"
 import { Params } from "../../server/params";
 import { Repeater } from "../../util/repeater";
 import { sendInitialGitCommitsForAppDownstream } from "../gitops";

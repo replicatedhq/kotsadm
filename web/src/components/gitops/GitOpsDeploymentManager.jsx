@@ -5,9 +5,10 @@ import classNames from "classnames";
 import Loader from "../shared/Loader";
 import { withRouter, Link } from "react-router-dom";
 import { graphql, compose, withApollo } from "react-apollo";
-import { listApps, getAppsGitOps } from "@src/queries/AppsQueries";
+import { listApps, getGitOpsRepo } from "@src/queries/AppsQueries";
 import GitOpsFlowIllustration from "./GitOpsFlowIllustration";
-import { setAppsGitOps, updateAppGitOps } from "@src/mutations/AppsMutations";
+import GitOpsRepoDetails from "./GitOpsRepoDetails";
+import { createGitOpsRepo, updateGitOpsRepo, updateAppGitOps, resetGitOpsData } from "@src/mutations/AppsMutations";
 import "../../scss/components/gitops/GitOpsDeploymentManager.scss";
 
 const STEPS = [
@@ -24,6 +25,7 @@ const STEPS = [
     title: "GitOps action ",
   },
 ];
+
 const SERVICES = [
   {
     value: "github",
@@ -53,36 +55,35 @@ const SERVICES = [
     value: "other",
     label: "Other",
   }
-]
+];
+
 class GitOpsDeploymentManager extends React.Component {
   state = {
     step: "setup",
-    ownerRepo: "",
-    branch: "",
-    path: "",
     hostname: "",
     services: SERVICES,
     selectedService: SERVICES[0],
     otherService: "",
     providerError: null,
-    actionPath: "commit",
-    containType: "single"
   }
 
   componentDidUpdate(lastProps) {
-    const { getAppsGitOpsQuery } = this.props;
-    if (getAppsGitOpsQuery?.getAppsGitOps && getAppsGitOpsQuery.getAppsGitOps !== lastProps.getAppsGitOpsQuery?.getAppsGitOps) {
-      const { enabled, provider, hostname, uri } = getAppsGitOpsQuery.getAppsGitOps;
+    const { getGitOpsRepoQuery } = this.props;
+    if (getGitOpsRepoQuery?.getGitOpsRepo && getGitOpsRepoQuery.getGitOpsRepo !== lastProps.getGitOpsRepoQuery?.getGitOpsRepo) {
+      const { enabled, provider, hostname } = getGitOpsRepoQuery.getGitOpsRepo;
       if (enabled) {
-        const ownerRepo = this.getOwnerRepoFromUri(uri);
         const selectedService = find(SERVICES, service => service.value === provider);
         this.setState({
-          selectedService: selectedService || SERVICES[0],
-          ownerRepo,
+          selectedService: selectedService,
           hostname: hostname || ""
         });
       }
     }
+  }
+
+  isSingleApp = () => {
+    const kotsApps = this.props.listAppsQuery.listApps?.kotsApps;
+    return kotsApps?.length === 1;
   }
 
   getOwnerRepoFromUri = uri => {
@@ -96,67 +97,98 @@ class GitOpsDeploymentManager extends React.Component {
     return ownerRepo;
   }
 
-  getGitOpsInput = (selectedService, provider, uri, ownerRepo, branch, path, format, action, hostname, otherService) => {
+  providerChanged = () => {
+    const { selectedService } = this.state;
+    const getGitOpsRepo = this.props.getGitOpsRepoQuery?.getGitOpsRepo;
+    return selectedService?.value !== getGitOpsRepo?.provider;
+  }
+
+  hostnameChanged = () => {
+    const { hostname, selectedService } = this.state;
+    const provider = selectedService?.value;
+    const getGitOpsRepo = this.props.getGitOpsRepoQuery?.getGitOpsRepo;
+    const savedHostname = getGitOpsRepo.hostname || "";
+    return !this.providerChanged() && this.requiresHostname(provider) && hostname !== savedHostname;
+  }
+
+  getGitOpsInput = (provider, uri, branch, path, format, action, hostname, otherService) => {
     let gitOpsInput = new Object();
     gitOpsInput.provider = provider;
     gitOpsInput.uri = uri;
-    gitOpsInput.owner = ownerRepo;
     gitOpsInput.branch = branch || "master";
     gitOpsInput.path = path;
     gitOpsInput.format = format;
     gitOpsInput.action = action;
-    if (this.requiresHostname(selectedService)) {
+    if (this.requiresHostname(provider)) {
       gitOpsInput.hostname = hostname;
     }
-    if (selectedService.value === "other") {
+    if (provider === "other") {
       gitOpsInput.otherServiceName = otherService;
     }
 
     return gitOpsInput;
   }
 
-  finishSetup = async () => {
-    const { listAppsQuery } = this.props;
+  finishSetup = async (repoDetails = {}) => {
     const {
-      selectedService,
-      ownerRepo,
-      branch,
-      path,
+      ownerRepo = "",
+      branch = "",
+      path = "",
+      actionPath = "commit",
+      containType = "single"
+    } = repoDetails;
+
+    const {
       hostname,
-      actionPath,
       otherService,
-      containType
+      selectedService
     } = this.state;
 
-    const isGitlab = selectedService?.value === "gitlab" || selectedService?.value === "gitlab_enterprise";
-    const isBitbucket = selectedService?.value === "bitbucket" || selectedService?.value === "bitbucket_server";
-    const serviceUri = isGitlab ? "gitlab.com" : isBitbucket ? "bitbucket.org" : "github.com";
-    const repoUri = `https://${serviceUri}/${ownerRepo}`;
     const provider = selectedService.value;
-    const gitOpsInput = this.getGitOpsInput(selectedService, provider, repoUri, ownerRepo, branch, path, containType, actionPath, hostname, otherService);
+    const isGitlab = provider === "gitlab" || provider === "gitlab_enterprise";
+    const isBitbucket = provider === "bitbucket" || provider === "bitbucket_server";
+    const serviceUri = isGitlab ? "gitlab.com" : isBitbucket ? "bitbucket.org" : "github.com";
+    const repoUri = this.isSingleApp() ? `https://${serviceUri}/${ownerRepo}` : "";
+    const gitOpsInput = this.getGitOpsInput(provider, repoUri, branch, path, containType, actionPath, hostname, otherService);
 
     try {
-      await this.props.setAppsGitOps(gitOpsInput);
-
-      const kotsApps = listAppsQuery.listApps?.kotsApps;
-      if (kotsApps.length === 1) { // if not multi apps
-        const firstApp = kotsApps?.length ? kotsApps[0] : null;
-        if (!firstApp) {
-          console.log("no app");
-          return;
+      const getGitOpsRepo = this.props.getGitOpsRepoQuery?.getGitOpsRepo;
+      if (getGitOpsRepo?.enabled) {
+        if (this.providerChanged()) {
+          await this.props.resetGitOpsData();
+          await this.props.createGitOpsRepo(gitOpsInput);
+        } else {
+          const uriToUpdate = this.isSingleApp() ? getGitOpsRepo?.uri : "";
+          await this.props.updateGitOpsRepo(gitOpsInput, uriToUpdate);
         }
+      } else {
+        await this.props.createGitOpsRepo(gitOpsInput);
+      }
 
-        const downstream = firstApp.downstreams[0];
+      if (this.isSingleApp()) {
+        const { listAppsQuery } = this.props;
+        const kotsApps = listAppsQuery.listApps?.kotsApps;
+        const app = kotsApps[0];
+        const downstream = app.downstreams[0];
         const clusterId = downstream?.cluster?.id;
 
-        await this.props.updateAppGitOps(firstApp.id, clusterId, gitOpsInput);
-        this.props.history.push(`/app/${firstApp.slug}/gitops`);
+        await this.props.updateAppGitOps(app.id, clusterId, gitOpsInput);
+        this.props.history.push(`/app/${app.slug}/gitops`);
       } else {
         this.props.listAppsQuery.refetch();
-        this.props.getAppsGitOpsQuery.refetch();
+        this.props.getGitOpsRepoQuery.refetch();
+        this.setState({ step: "" });
       }
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  updateSettings = () => {
+    if (this.isSingleApp()) {
+      this.stepFrom("provider", "action");
+    } else {
+      this.finishSetup();
     }
   }
 
@@ -171,26 +203,23 @@ class GitOpsDeploymentManager extends React.Component {
       return;
     }
 
-    const getAppsGitOps = this.props.getAppsGitOpsQuery?.getAppsGitOps;
-    if (!getAppsGitOps) {
+    const getGitOpsRepo = this.props.getGitOpsRepoQuery?.getGitOpsRepo;
+    if (!getGitOpsRepo) {
       return;
     }
 
-    const { provider, hostname, uri } = getAppsGitOps;
-
-    const selectedService = find(SERVICES, service => service.value === provider) || this.state.selectedService;
-    const ownerRepo = this.getOwnerRepoFromUri(uri);
+    const { provider, hostname, uri } = getGitOpsRepo;
     const branch = "master";
-    const path = "/";
+    const path = "";
     const format = "single";
     const action = "commit";
     const otherService = ""; // TODO: update this?
-    const gitOpsInput = this.getGitOpsInput(selectedService, provider, uri, ownerRepo, branch, path, format, action, hostname, otherService);
+    const gitOpsInput = this.getGitOpsInput(provider, uri, branch, path, format, action, hostname, otherService);
 
     try {
       const clusterId = downstream?.cluster?.id;
       await this.props.updateAppGitOps(app.id, clusterId, gitOpsInput);
-      this.props.history.push(`/app/${app.slug}/gitops`, { testConnectionOnLoad: true });
+      this.props.history.push(`/app/${app.slug}/gitops`);
     } catch (error) {
       console.log(error);
     }
@@ -200,13 +229,13 @@ class GitOpsDeploymentManager extends React.Component {
     const {
       selectedService,
       otherService,
-      ownerRepo,
       hostname,
     } = this.state;
 
     this.setState({ providerError: null });
     if (step === "provider") {
-      if (selectedService.value === "other" && !otherService.length) {
+      const provider = selectedService.value;
+      if (provider === "other" && !otherService.length) {
         this.setState({
           providerError: {
             field: "other"
@@ -214,8 +243,8 @@ class GitOpsDeploymentManager extends React.Component {
         });
         return false;
       }
-      if (selectedService.value !== "other") {
-        if (selectedService.value === "github_enterprise" && !hostname.length) {
+      if (provider !== "other") {
+        if (provider === "github_enterprise" && !hostname.length) {
           this.setState({
             providerError: {
               field: "hostname"
@@ -223,15 +252,6 @@ class GitOpsDeploymentManager extends React.Component {
           });
           return false;
         }
-      }
-    } else if (step === "action") {
-      if (!ownerRepo.length) {
-        this.setState({
-          providerError: {
-            field: "ownerRepo"
-          }
-        });
-        return false;
       }
     }
 
@@ -263,16 +283,6 @@ class GitOpsDeploymentManager extends React.Component {
     );
   }
 
-  onActionTypeChange = (e) => {
-    if (e.target.classList.contains("js-preventDefault")) { return }
-    this.setState({ actionPath: e.target.value });
-  }
-
-  onFileContainChange = (e) => {
-    if (e.target.classList.contains("js-preventDefault")) { return }
-    this.setState({ containType: e.target.value });
-  }
-
   handleServiceChange = (selectedService) => {
     this.setState({ selectedService });
   }
@@ -300,12 +310,12 @@ class GitOpsDeploymentManager extends React.Component {
     );
   }
 
-  requiresHostname = selectedService => {
-    return selectedService?.value === "gitlab_enterprise" || selectedService?.value === "github_enterprise" || selectedService?.value === "bitbucket_server";
+  requiresHostname = provider => {
+    return provider === "gitlab_enterprise" || provider === "github_enterprise" || provider === "bitbucket_server";
   }
 
-  renderHostName = (selectedService, hostname, providerError) => {
-    if (!this.requiresHostname(selectedService)) {
+  renderHostName = (provider, hostname, providerError) => {
+    if (!this.requiresHostname(provider)) {
       return <div className="flex flex1" />;
     }
     return (
@@ -320,19 +330,12 @@ class GitOpsDeploymentManager extends React.Component {
 
   renderActiveStep = (step) => {
     const {
-      ownerRepo,
-      branch,
-      path,
       hostname,
       services,
       selectedService,
       otherService,
-      providerError
+      providerError,
     } = this.state;
-
-    const isGitlab = selectedService?.value === "gitlab" || selectedService?.value === "gitlab_enterprise";
-    const isBitbucket = selectedService?.value === "bitbucket" || selectedService?.value === "bitbucket_server";
-    const serviceSite = isGitlab ? "gitlab.com" : isBitbucket ? "bitbucket.org" : "github.com";
 
     switch (step.step) {
       case "setup":
@@ -361,150 +364,28 @@ class GitOpsDeploymentManager extends React.Component {
                     <input type="text" className={`Input ${providerError?.field === "other" && "has-error"}`} placeholder="What service would you like to use" value={otherService} onChange={(e) => this.setState({ otherService: e.target.value })} />
                     {providerError?.field === "other" && <p className="u-fontSize--small u-marginTop--5 u-color--chestnut u-fontWeight--medium u-lineHeight--normal">A GitOps service name must be provided</p>}
                   </div>
-                : this.renderHostName(selectedService, hostname, providerError)}
+                : this.renderHostName(selectedService?.value, hostname, providerError)}
               </div>
             </div>
             <div>
-              <button className="btn primary blue" type="button" onClick={() => this.stepFrom("provider", "action")}>Continue to deployment action</button>
+              <button
+                className="btn primary blue"
+                type="button"
+                onClick={this.updateSettings}
+              >
+                {this.isSingleApp() ? "Continue to deployment action" : "Finish GitOps setup"}
+              </button>
             </div>
           </div>
         );
       case "action":
         return (
-          <div key={`${step.step}-active`} className="GitOpsDeploy--step u-textAlign--left">
-            <div className="StepContent--widthRestrict">
-              <p className="step-title">Enable GitOps for {this.props.appName}</p>
-
-              <div className="flex flex1 u-marginBottom--30 u-marginTop--20">
-                {selectedService?.value !== "other" &&
-                  <div className="flex flex1 flex-column u-marginRight--20">
-                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Owner &amp; Repository</p>
-                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Where will the commit be made?</p>
-                    <input type="text" className={`Input ${providerError?.field === "ownerRepo" && "has-error"}`} placeholder="owner/repository" value={ownerRepo} onChange={(e) => this.setState({ ownerRepo: e.target.value })} />
-                    {providerError?.field === "ownerRepo" && <p className="u-fontSize--small u-marginTop--5 u-color--chestnut u-fontWeight--medium u-lineHeight--normal">A owner and repository must be provided</p>}
-                  </div>
-                }
-                {selectedService?.value !== "other" &&
-                  <div className="flex flex1 flex-column u-marginRight--20">
-                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Branch</p>
-                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Master will be used by default.</p>
-                    <input type="text" className={`Input`} placeholder="master" value={branch} onChange={(e) => this.setState({ branch: e.target.value })} />
-                  </div>
-                }
-                {selectedService?.value !== "other" &&
-                  <div className="flex flex1 flex-column">
-                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">Path</p>
-                    <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Where will the deployment file live?</p>
-                    <input type="text" className={"Input"} placeholder="/my-path" value={path} onChange={(e) => this.setState({ path: e.target.value })} />
-                  </div>
-                }
-              </div>
-
-              <p className="step-sub">When an update is available{this.props.appName ? ` to ${this.props.appName} ` : ""}, how should the updates YAML be delivered to&nbsp;{selectedService.label === "Other" ? otherService : serviceSite}?</p>
-              <div className="flex flex1 u-marginTop--normal gitops-checkboxes justifyContent--center u-marginBottom--30">
-                <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left u-marginRight--10">
-                  <div className={`BoxedCheckbox flex-auto flex ${this.state.actionPath === "commit" ? "is-active" : ""}`}>
-                    <input
-                      type="radio"
-                      className="u-cursor--pointer hidden-input"
-                      id="commitOption"
-                      checked={this.state.actionPath === "commit"}
-                      defaultValue="commit"
-                      onChange={(e) => { this.onActionTypeChange(e) }}
-                    />
-                    <label htmlFor="commitOption" className="flex1 flex u-width--full u-position--relative u-cursor--pointer u-userSelect--none">
-                      <div className="flex-auto">
-                        <span className="icon clickable commitOptionIcon u-marginRight--10" />
-                      </div>
-                      <div className="flex1">
-                        <p className="u-color--tuna u-fontSize--normal u-fontWeight--medium">Create a commit</p>
-                        <p className="u-color--dustyGray u-fontSize--small u-fontWeight--medium u-marginTop--5">Automatic commits to repo</p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left u-marginLeft--10">
-                  <div className={`BoxedCheckbox flex1 flex ${this.state.actionPath === "pullRequest" ? "is-active" : ""} is-disabled`}>
-                    <input
-                      type="radio"
-                      className="u-cursor--pointer hidden-input"
-                      id="pullRequestOption"
-                      checked={this.state.actionPath === "pullRequest"}
-                      defaultValue="pullRequest"
-                      onChange={(e) => { this.onActionTypeChange(e) }}
-                      disabled={true}
-                    />
-                    <label htmlFor="pullRequestOption" className="flex1 flex u-width--full u-position--relative u-cursor--pointer u-userSelect--none">
-                      <div className="flex-auto">
-                      <span className="icon pullRequestOptionIcon u-marginRight--10" />
-                      </div>
-                      <div className="flex1">
-                        <p className="u-color--tuna u-fontSize--normal u-fontWeight--medium">Open a {isBitbucket ? "Merge" : "Pull"} Request</p>
-                        <p className="u-color--dustyGray u-fontSize--small u-fontWeight--medium u-marginTop--5">Coming soon!</p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                <div className="BoxedCheckbox-wrapper flex1" />
-              </div>
-
-              <div className="u-marginBottom--10 u-textAlign--left">
-                <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--normal">What content will it contain?</p>
-                <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginBottom--10">Your commit can include a single rendered yaml file or it’s full output.</p>
-              </div>
-
-              <div className="flex flex1 u-marginTop--normal gitops-checkboxes justifyContent--center u-marginBottom--30">
-                <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left u-marginRight--10">
-                  <div className={`BoxedCheckbox flex1 flex ${this.state.containType === "single" ? "is-active" : ""}`}>
-                    <input
-                      type="radio"
-                      className="u-cursor--pointer hidden-input"
-                      id="singleOption"
-                      checked={this.state.containType === "single"}
-                      defaultValue="single"
-                      onChange={(e) => { this.onFileContainChange(e) }}
-                    />
-                    <label htmlFor="singleOption" className="flex1 flex u-width--full u-position--relative u-cursor--pointer u-userSelect--none">
-                      <div className="flex-auto">
-                        <span className="icon clickable singleOptionIcon u-marginRight--10" />
-                      </div>
-                      <div className="flex1">
-                        <p className="u-color--tuna u-fontSize--normal u-fontWeight--medium">Rendered YAML</p>
-                        <p className="u-color--dustyGray u-fontSize--small u-fontWeight--medium u-marginTop--5">Apply using <span className="inline-code no-bg">kubectl apply -f</span></p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left u-marginLeft--10">
-                  <div className={`BoxedCheckbox flex1 flex ${this.state.containType === "fullFiles" ? "is-active" : ""} is-disabled`}>
-                    <input
-                      type="radio"
-                      className="u-cursor--pointer hidden-input"
-                      id="fullFilesOption"
-                      checked={this.state.containType === "fullFiles"}
-                      defaultValue="fullFiles"
-                      onChange={(e) => { this.onFileContainChange(e) }}
-                      disabled={true}
-                    />
-                    <label htmlFor="fullFilesOption" className="flex1 flex u-width--full u-position--relative u-cursor--pointer u-userSelect--none">
-                      <div className="flex-auto">
-                      <span className="icon clickable fullFilesOptionIcon u-marginRight--10" />
-                      </div>
-                      <div className="flex1">
-                        <p className="u-color--tuna u-fontSize--normal u-fontWeight--medium">Full Kustomizable Output</p>
-                        <p className="u-color--dustyGray u-fontSize--small u-fontWeight--medium u-marginTop--5">Coming soon!</p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                <div className="BoxedCheckbox-wrapper flex1"></div>
-              </div>
-
-              <div>
-                <button className="btn primary blue" type="button" onClick={this.finishSetup}>Finish GitOps setup</button>
-              </div>
-            </div>
-          </div>
+          <GitOpsRepoDetails
+            appName={this.props.appName}
+            selectedService={selectedService}
+            otherService={otherService}
+            onFinishSetup={this.finishSetup}
+          />
         );
       default:
         return <div key={`default-active`} className="GitOpsDeploy--step">default</div>;
@@ -575,15 +456,16 @@ class GitOpsDeploymentManager extends React.Component {
 
   renderConfiguredGitOps = () => {
     const { services, selectedService, hostname, providerError } = this.state;
+    const dataChanged = this.providerChanged() || this.hostnameChanged();
     return (
       <div className="u-textAlign--center">
         <div className="ConfiguredGitOps--wrapper">
             <p className="u-fontSize--largest u-fontWeight--bold u-color--tundora u-lineHeight--normal u-marginBottom--30">Admin Console GitOps</p>
-            <div className="flex u-marginBottom--20">
+            <div className={`flex ${dataChanged ? "u-marginBottom--20" : "u-marginBottom--30"}`}>
               {this.renderGitOpsProviderSelector(services, selectedService)}
-              {this.renderHostName(selectedService, hostname, providerError)}
+              {this.renderHostName(selectedService?.value, hostname, providerError)}
             </div>
-            <button className="btn secondary lightBlue u-marginBottom--30" onClick={this.updateSettings}>Update</button>
+            {dataChanged && <button className="btn secondary lightBlue u-marginBottom--30" onClick={this.updateSettings}>Update</button>}
             <div className="separator" />
             {this.renderApps()}
         </div>
@@ -592,8 +474,8 @@ class GitOpsDeploymentManager extends React.Component {
   }
 
   render() {
-    const { listAppsQuery, getAppsGitOpsQuery } = this.props;
-    if (listAppsQuery.loading || getAppsGitOpsQuery.loading) {
+    const { listAppsQuery, getGitOpsRepoQuery } = this.props;
+    if (listAppsQuery.loading || getGitOpsRepoQuery.loading) {
       return (
         <div className="flex-column flex1 alignItems--center justifyContent--center">
           <Loader size="60" />
@@ -601,11 +483,11 @@ class GitOpsDeploymentManager extends React.Component {
       );
     }
 
-    const gitopsRepo = getAppsGitOpsQuery.getAppsGitOps;
+    const gitopsRepo = getGitOpsRepoQuery.getGitOpsRepo;
     const activeStep = find(STEPS, { step: this.state.step });
     return (
       <div className="GitOpsDeploymentManager--wrapper flex-column flex1">
-        {gitopsRepo.enabled ?
+        {gitopsRepo.enabled && this.state.step !== "action" ?
           this.renderConfiguredGitOps()
           :
           this.renderActiveStep(activeStep)
@@ -624,15 +506,25 @@ export default compose(
       fetchPolicy: "no-cache"
     })
   }),
-  graphql(getAppsGitOps, {
-    name: "getAppsGitOpsQuery",
+  graphql(getGitOpsRepo, {
+    name: "getGitOpsRepoQuery",
     options: () => ({
       fetchPolicy: "no-cache"
     })
   }),
-  graphql(setAppsGitOps, {
+  graphql(createGitOpsRepo, {
     props: ({ mutate }) => ({
-      setAppsGitOps: (gitOpsInput) => mutate({ variables: { gitOpsInput } })
+      createGitOpsRepo: (gitOpsInput) => mutate({ variables: { gitOpsInput } })
+    })
+  }),
+  graphql(updateGitOpsRepo, {
+    props: ({ mutate }) => ({
+      updateGitOpsRepo: (gitOpsInput, uriToUpdate) => mutate({ variables: { gitOpsInput, uriToUpdate } })
+    })
+  }),
+  graphql(resetGitOpsData, {
+    props: ({ mutate }) => ({
+      resetGitOpsData: () => mutate()
     })
   }),
   graphql(updateAppGitOps, {

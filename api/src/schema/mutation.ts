@@ -20,11 +20,13 @@ type Mutation {
   updateAppConfig(slug: String!, sequence: Int!, configGroups: [KotsConfigGroupInput]!, createNewVersion: Boolean): Boolean
   updateKotsApp(appId: String!, appName: String, iconUri: String): Boolean
 
-  setAppsGitOps(gitOpsInput: KotsGitOpsInput!): Boolean
+  createGitOpsRepo(gitOpsInput: KotsGitOpsInput!): Boolean
+  updateGitOpsRepo(gitOpsInput: KotsGitOpsInput!, uriToUpdate: String): Boolean
   updateAppGitOps(appId: String!, clusterId: String!, gitOpsInput: KotsGitOpsInput!): Boolean
   syncAppLicense(appSlug: String!, airgapLicense: String): KLicense
   testGitOpsConnection(appId: String!, clusterId: String!): Boolean
   disableAppGitops(appId: String!, clusterId: String!): Boolean
+  resetGitOpsData: Boolean
 
   drainNode(name: String): Boolean
   deleteNode(name: String): Boolean

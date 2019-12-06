@@ -16,7 +16,7 @@ export function AppsQueries(stores: Stores) {
       return result;
     },
 
-    async getAppsGitOps(root: any, args: any, context: Context) {
+    async getGitOpsRepo(root: any, args: any, context: Context) {
       return await stores.kotsAppStore.getGitOpsRepo();
     },
   }

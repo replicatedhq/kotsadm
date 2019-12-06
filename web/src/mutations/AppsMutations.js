@@ -85,21 +85,33 @@ export const updateKotsApp = gql`
   }
 `;
 
-export const setAppsGitOpsRaw = `
-  mutation setAppsGitOps($gitOpsInput: KotsGitOpsInput!) {
-    setAppsGitOps(gitOpsInput: $gitOpsInput)
+export const createGitOpsRepoRaw = `
+  mutation createGitOpsRepo($gitOpsInput: KotsGitOpsInput!) {
+    createGitOpsRepo(gitOpsInput: $gitOpsInput)
   }
 `;
+export const createGitOpsRepo = gql(createGitOpsRepoRaw);
 
-export const setAppsGitOps = gql(setAppsGitOpsRaw);
+export const updateGitOpsRepoRaw = `
+  mutation updateGitOpsRepo($gitOpsInput: KotsGitOpsInput!, $uriToUpdate: String) {
+    updateGitOpsRepo(gitOpsInput: $gitOpsInput, uriToUpdate: $uriToUpdate)
+  }
+`;
+export const updateGitOpsRepo = gql(updateGitOpsRepoRaw);
 
 export const updateAppGitOpsRaw = `
   mutation updateAppGitOps($appId: String!, $clusterId: String!, $gitOpsInput: KotsGitOpsInput!) {
     updateAppGitOps(appId: $appId, clusterId: $clusterId, gitOpsInput: $gitOpsInput)
   }
 `;
-
 export const updateAppGitOps = gql(updateAppGitOpsRaw);
+
+export const resetGitOpsDataRaw = `
+  mutation resetGitOpsData {
+    resetGitOpsData
+  }
+`;
+export const resetGitOpsData = gql(resetGitOpsDataRaw);
 
 export const setPrometheusAddress = gql`
   mutation setPrometheusAddress($value: String!) {

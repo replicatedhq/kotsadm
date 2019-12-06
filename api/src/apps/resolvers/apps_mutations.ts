@@ -8,7 +8,7 @@ import { Params } from "../../server/params";
 
 export function AppsMutations(stores: Stores) {
   return {
-    async setAppsGitOps(root: any, args: any, context: Context): Promise<boolean> {
+    async createGitOpsRepo(root: any, args: any, context: Context): Promise<boolean> {
       const { gitOpsInput } = args;
 
       // TODO: add session check
@@ -31,6 +31,22 @@ export function AppsMutations(stores: Stores) {
 
       const encryptedPrivateKey = await kotsEncryptString(params.apiEncryptionKey, privateKey);
       await stores.kotsAppStore.createGitOpsRepo(gitOpsInput.provider, gitOpsInput.uri, gitOpsInput.hostname, encryptedPrivateKey, sshPublishKey);
+
+      return true;
+    },
+
+    async updateGitOpsRepo(root: any, args: any, context: Context): Promise<boolean> {
+      const { gitOpsInput, uriToUpdate } = args;
+
+      // TODO: add session check
+      await stores.kotsAppStore.updateGitOpsRepo(uriToUpdate, gitOpsInput.uri, gitOpsInput.hostname);
+
+      return true;
+    },
+
+    async resetGitOpsData(root: any, args: any, context: Context): Promise<boolean> {
+      // TODO: add session check
+      await stores.kotsAppStore.resetGitOpsData();
 
       return true;
     },

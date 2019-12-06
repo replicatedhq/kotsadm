@@ -450,14 +450,13 @@ export const getKotsLicenseType = gql`
   }
 `;
 
-export const getAppsGitOps = gql`
-  query getAppsGitOps {
-    getAppsGitOps {
+export const getGitOpsRepo = gql`
+  query getGitOpsRepo {
+    getGitOpsRepo {
       enabled
-      provider
       uri
+      provider
       hostname
-      deployKey
     }
   }
 `;
