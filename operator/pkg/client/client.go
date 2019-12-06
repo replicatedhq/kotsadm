@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os/exec"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -60,6 +61,7 @@ type Client struct {
 	TargetNamespace string
 
 	appStateMonitor *appstate.Monitor
+	deployMutex     sync.Mutex
 }
 
 func (c *Client) Run() error {
@@ -362,6 +364,8 @@ func (c *Client) sendAppStatus(appStatus types.AppStatus) error {
 }
 
 func (c *Client) ensureResourcesPresent(applicationManifests ApplicationManifests) error {
+	c.deployMutex.Lock()
+	defer c.deployMutex.Unlock()
 	decoded, err := base64.StdEncoding.DecodeString(applicationManifests.Manifests)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode manifests")
