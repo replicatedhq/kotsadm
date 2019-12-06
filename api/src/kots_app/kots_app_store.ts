@@ -21,8 +21,9 @@ export class KotsAppStore {
       kc.loadFromDefault();
       const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
+      const namespace = process.env["POD_NAMESPACE"]!;
       const secretName = "kotsadm-gitops";
-      const secret = await k8sApi.readNamespacedSecret(secretName, "default");
+      const secret = await k8sApi.readNamespacedSecret(secretName, namespace);
       const data = secret.body.data!;
 
       // use index 0 for now, since we don't support multiple providers yet
@@ -50,13 +51,14 @@ export class KotsAppStore {
       kc.loadFromDefault();
       const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
+      const namespace = process.env["POD_NAMESPACE"]!;
       const secretName = "kotsadm-gitops";
       let secretExists = false;
       let data: { [key: string]: string } = {};
 
       try {
         // read secret data (if exists)
-        const secret = await k8sApi.readNamespacedSecret(secretName, "default");
+        const secret = await k8sApi.readNamespacedSecret(secretName, namespace);
         data = secret.body.data || {};
         secretExists = true;
       } catch(err) {
@@ -107,9 +109,9 @@ export class KotsAppStore {
       }
 
       if (!secretExists) {
-        await k8sApi.createNamespacedSecret("default", secretObj);
+        await k8sApi.createNamespacedSecret(namespace, secretObj);
       } else {
-        await k8sApi.replaceNamespacedSecret(secretName, "default", secretObj);
+        await k8sApi.replaceNamespacedSecret(secretName, namespace, secretObj);
       }
     } catch(err) {
       throw new ReplicatedError(`Failed to create gitops secret ${err.response || err}`)
@@ -122,8 +124,9 @@ export class KotsAppStore {
       kc.loadFromDefault();
       const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
+      const namespace = process.env["POD_NAMESPACE"]!;
       const secretName = "kotsadm-gitops";
-      const secret = await k8sApi.readNamespacedSecret(secretName, "default");
+      const secret = await k8sApi.readNamespacedSecret(secretName, namespace);
       const data = secret.body.data;
 
       if (!data) {
@@ -157,7 +160,7 @@ export class KotsAppStore {
         data: data
       }
 
-      await k8sApi.replaceNamespacedSecret(secretName, "default", secretObj);
+      await k8sApi.replaceNamespacedSecret(secretName, namespace, secretObj);
     } catch(err) {
       throw new ReplicatedError(`Error updating gitops secret: ${err.response || err}`);
     }
@@ -169,8 +172,9 @@ export class KotsAppStore {
       kc.loadFromDefault();
       const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
+      const namespace = process.env["POD_NAMESPACE"]!;
       const configMapName = "kotsadm-gitops";
-      const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
+      const configmap = await k8sApi.readNamespacedConfigMap(configMapName, namespace);
       const configMapData = configmap.body.data!;
 
       const downstreamData = JSON.parse(base64Decode(configMapData[`${appId}-${clusterId}`]));
@@ -187,7 +191,7 @@ export class KotsAppStore {
         data: configMapData
       }
 
-      await k8sApi.replaceNamespacedConfigMap(configMapName, "default", configMapObj);
+      await k8sApi.replaceNamespacedConfigMap(configMapName, namespace, configMapObj);
     } catch(err) {
       throw new ReplicatedError(`Failed to set gitops error ${err.response || err}`)
     }
@@ -199,16 +203,18 @@ export class KotsAppStore {
       kc.loadFromDefault();
       const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
+      const namespace = process.env["POD_NAMESPACE"]!;
+
       try {
         const secretName = "kotsadm-gitops";
-        await k8sApi.deleteNamespacedSecret(secretName, "default");
+        await k8sApi.deleteNamespacedSecret(secretName, namespace);
       } catch(err) {
         // secret does not exist
       }
 
       try {
         const configMapName = "kotsadm-gitops";
-        await k8sApi.deleteNamespacedConfigMap(configMapName, "default");
+        await k8sApi.deleteNamespacedConfigMap(configMapName, namespace);
       } catch(err) {
         // config map does not exist
       }
@@ -223,8 +229,9 @@ export class KotsAppStore {
       kc.loadFromDefault();
       const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
+      const namespace = process.env["POD_NAMESPACE"]!;
       const configMapName = "kotsadm-gitops";
-      const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
+      const configmap = await k8sApi.readNamespacedConfigMap(configMapName, namespace);
       const configMapData = configmap.body.data!;
 
       delete configMapData[`${appId}-${clusterId}`];
@@ -238,7 +245,7 @@ export class KotsAppStore {
         data: configMapData
       }
 
-      await k8sApi.replaceNamespacedConfigMap(configMapName, "default", configMapObj);
+      await k8sApi.replaceNamespacedConfigMap(configMapName, namespace, configMapObj);
     } catch(err) {
       throw new ReplicatedError(`Failed to disable gitops for app with id ${appId}, ${err.response || err}`)
     }
@@ -277,13 +284,14 @@ export class KotsAppStore {
       kc.loadFromDefault();
       const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
+      const namespace = process.env["POD_NAMESPACE"]!;
       const configMapName = "kotsadm-gitops";
       let data: { [key: string]: string } = {};
       let configMapExists = false;
 
       try {
         // read config map data (if exists)
-        const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
+        const configmap = await k8sApi.readNamespacedConfigMap(configMapName, namespace);
         data = configmap.body.data || {};
         configMapExists = true;
       } catch(err) {
@@ -308,9 +316,9 @@ export class KotsAppStore {
       }
 
       if (!configMapExists) {
-        await k8sApi.createNamespacedConfigMap("default", configMapObj);
+        await k8sApi.createNamespacedConfigMap(namespace, configMapObj);
       } else {
-        await k8sApi.replaceNamespacedConfigMap(configMapName, "default", configMapObj);
+        await k8sApi.replaceNamespacedConfigMap(configMapName, namespace, configMapObj);
       }
     } catch(err) {
       throw new ReplicatedError(`Failed to create gitops configmap ${err.response || err}`);
@@ -702,12 +710,14 @@ order by sequence desc`;
       kc.loadFromDefault();
       const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
+      const namespace = process.env["POD_NAMESPACE"]!;
+
       const secretName = "kotsadm-gitops";
-      const secret = await k8sApi.readNamespacedSecret(secretName, "default");
+      const secret = await k8sApi.readNamespacedSecret(secretName, namespace);
       const secretData = secret.body.data!;
 
       const configMapName = "kotsadm-gitops";
-      const configmap = await k8sApi.readNamespacedConfigMap(configMapName, "default");
+      const configmap = await k8sApi.readNamespacedConfigMap(configMapName, namespace);
 
       const appClusterKey = `${appId}-${clusterId}`;
       if (!(appClusterKey in configmap.body.data!)) {

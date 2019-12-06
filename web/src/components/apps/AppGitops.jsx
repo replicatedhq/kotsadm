@@ -252,7 +252,7 @@ class AppGitops extends Component {
               <div className="u-textAlign--center u-marginLeft--auto u-marginRight--auto">
                 <p className="u-fontSize--largest u-fontWeight--bold u-color--tundora u-lineHeight--normal u-marginBottom--10">GitOps for {appTitle}</p>
                 <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--30">
-                  When an update is available for Sentry Enteprise, the Admin Console will commit the fully<br/>rendered and deployable YAML to /sentry-enterprise/rendered.yaml in the master branch of<br/>the replicatedhq/gitops-deploy repo on github.com.
+                  When an update is available for {appTitle}, the Admin Console will commit the fully<br/>rendered and deployable YAML to {gitops?.path ? `${gitops?.path}/rendered.yaml` : `the root of ${ownerRepo}/${gitops?.branch}`} in the {gitops?.branch} branch of<br/>the {ownerRepo} repo on {gitops?.provider}.
                 </p>
                 <div className="flex justifyContent--center">
                   <button className={`btn secondary u-marginRight--10 ${disablingGitOps ? "is-disabled" : "red"}`} onClick={this.disableGitOps}>{disablingGitOps ? "Disabling GitOps" : "Disable GitOps"}</button>

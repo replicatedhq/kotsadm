@@ -1,35 +1,3 @@
-.rounded-toggle {
-  .toggle-button {
-    padding: 6px 40px;
-    border: 1px solid #C4C8CA;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 12px;
-    color: #9B9B9B;
-    background-color: #ffffff;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color, color .2s;
-
-    &:hover {
-      color: #4a4a4a;
-    }
-
-    &:first-child {
-      border-right: none;
-      border-radius: 50px 0 0 50px;
-    }
-    &:last-child {
-      border-radius: 0 50px 50px 0;
-    }
-
-    &.isActive {
-      background-color: #F5F8FC;
-      color: #4a4a4a;
-    }
-  }
-}
-
 .kotsadm-illustration-wrapper {
   margin-top: 40px;
   margin-bottom: 30px;
