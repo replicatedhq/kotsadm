@@ -120,7 +120,7 @@ class GitOpsDeploymentManager extends React.Component {
     return gitOpsInput;
   }
 
-  finishSetup = async (repoDetails = {}) => {
+  finishSetup = async (repoDetails = {}, callback = null) => {
     const {
       ownerRepo = "",
       branch = "",
@@ -170,6 +170,10 @@ class GitOpsDeploymentManager extends React.Component {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      if (callback) {
+        callback();
+      }
     }
   }
 

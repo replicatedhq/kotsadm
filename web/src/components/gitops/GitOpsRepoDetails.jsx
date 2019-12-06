@@ -50,6 +50,7 @@ class GitOpsRepoDetails extends React.Component {
       otherService,
       action,
       format,
+      finishingSetup: false
     };
   }
 
@@ -76,12 +77,24 @@ class GitOpsRepoDetails extends React.Component {
     return true;
   }
 
-  onFinishSetup = () => {
-    if (!this.isValid()) {
+  onFinishSetup = async () => {
+    if (!this.isValid() || !this.props.onFinishSetup) {
       return;
     }
-    const repoDetails = { ...this.state };
-    this.props.onFinishSetup(repoDetails);
+    
+    this.setState({ finishingSetup: true });
+
+    const repoDetails = {
+      ownerRepo: this.state.ownerRepo,
+      branch: this.state.branch,
+      path: this.state.path,
+      otherService: this.state.otherService,
+      action: this.state.action,
+      format: this.state.format,
+    };
+    await this.props.onFinishSetup(repoDetails);
+
+    this.setState({ finishingSetup: false });
   }
 
   render() {
@@ -95,6 +108,7 @@ class GitOpsRepoDetails extends React.Component {
       otherService,
       action,
       format,
+      finishingSetup,
     } = this.state;
 
     const provider = selectedService?.value;
@@ -234,7 +248,7 @@ class GitOpsRepoDetails extends React.Component {
 
             <div className="flex">
               {this.props.showCancelBtn && <button className="btn secondary dustyGray u-marginRight--10" type="button" onClick={this.props.onCancel}>Cancel</button>}
-              <button className="btn primary blue" type="button" onClick={this.onFinishSetup}>Finish GitOps setup</button>
+              <button className={`btn primary blue ${finishingSetup && "is-disabled"}`} type="button" onClick={this.onFinishSetup}>{finishingSetup ? "Finishing setup" : "Finish GitOps setup"}</button>
             </div>
           </div>
       </div>
