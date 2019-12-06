@@ -105,7 +105,7 @@ class AppGitops extends Component {
     this.setState({ showGitOpsSettings: true });
   }
 
-  finishGitOpsSetup = async (repoDetails, callback) => {
+  finishGitOpsSetup = async repoDetails => {
     const {
       ownerRepo,
       branch = "master",
@@ -152,10 +152,6 @@ class AppGitops extends Component {
       this.setState({ showGitOpsSettings: false, ownerRepo });
     } catch(err) {
       console.log(err);
-    }
-
-    if (callback) {
-      callback();
     }
   }
 

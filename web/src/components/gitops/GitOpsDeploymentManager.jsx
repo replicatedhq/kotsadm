@@ -67,6 +67,7 @@ class GitOpsDeploymentManager extends React.Component {
     selectedService: SERVICES[0],
     otherService: "",
     providerError: null,
+    finishingSetup: false,
   }
 
   componentDidUpdate(lastProps) {
@@ -120,7 +121,9 @@ class GitOpsDeploymentManager extends React.Component {
     return gitOpsInput;
   }
 
-  finishSetup = async (repoDetails = {}, callback = null) => {
+  finishSetup = async (repoDetails = {}) => {
+    this.setState({ finishingSetup: true });
+
     const {
       ownerRepo = "",
       branch = "",
@@ -164,16 +167,13 @@ class GitOpsDeploymentManager extends React.Component {
         await this.props.updateAppGitOps(app.id, clusterId, gitOpsInput);
         this.props.history.push(`/app/${app.slug}/gitops`);
       } else {
+        this.setState({ step: "", finishingSetup: false });
         this.props.listAppsQuery.refetch();
         this.props.getGitOpsRepoQuery.refetch();
-        this.setState({ step: "" });
       }
     } catch (error) {
       console.log(error);
-    } finally {
-      if (callback) {
-        callback();
-      }
+      this.setState({ finishingSetup: false });
     }
   }
 
@@ -324,6 +324,7 @@ class GitOpsDeploymentManager extends React.Component {
       selectedService,
       otherService,
       providerError,
+      finishingSetup,
     } = this.state;
 
     switch (step.step) {
@@ -358,11 +359,16 @@ class GitOpsDeploymentManager extends React.Component {
             </div>
             <div>
               <button
-                className="btn primary blue"
+                className={`btn primary blue ${finishingSetup && "is-disabled"}`}
                 type="button"
                 onClick={this.updateSettings}
               >
-                {this.isSingleApp() ? "Continue to deployment action" : "Finish GitOps setup"}
+                {finishingSetup
+                  ? "Finishing setup"
+                  : this.isSingleApp()
+                    ? "Continue to deployment action"
+                    : "Finish GitOps setup"
+                }
               </button>
             </div>
           </div>
@@ -444,7 +450,7 @@ class GitOpsDeploymentManager extends React.Component {
   }
 
   renderConfiguredGitOps = () => {
-    const { services, selectedService, hostname, providerError } = this.state;
+    const { services, selectedService, hostname, providerError, finishingSetup } = this.state;
     const dataChanged = this.providerChanged() || this.hostnameChanged();
     return (
       <div className="u-textAlign--center">
@@ -454,7 +460,11 @@ class GitOpsDeploymentManager extends React.Component {
               {this.renderGitOpsProviderSelector(services, selectedService)}
               {this.renderHostName(selectedService?.value, hostname, providerError)}
             </div>
-            {dataChanged && <button className="btn secondary lightBlue u-marginBottom--30" onClick={this.updateSettings}>Update</button>}
+            {dataChanged &&
+              <button className={`btn secondary u-marginBottom--30 ${finishingSetup ? "is-disabled" : "lightBlue"}`} onClick={this.updateSettings}>
+                {finishingSetup ? "Updating" : "Update"}
+              </button>
+            }
             <div className="separator" />
             {this.renderApps()}
         </div>
@@ -478,7 +488,7 @@ class GitOpsDeploymentManager extends React.Component {
       <div className="GitOpsDeploymentManager--wrapper flex-column flex1">
         {gitopsRepo.enabled && this.state.step !== "action" ?
           this.renderConfiguredGitOps()
-          :
+          : activeStep &&
           this.renderActiveStep(activeStep)
         }
       </div>

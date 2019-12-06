@@ -54,6 +54,14 @@ class GitOpsRepoDetails extends React.Component {
     };
   }
 
+  componentDidMount() {
+    this._mounted = true;
+  }
+
+  componentWillUnmount() {
+    this._mounted = false;
+  }
+
   onActionTypeChange = (e) => {
     if (e.target.classList.contains("js-preventDefault")) { return }
     this.setState({ action: e.target.value });
@@ -94,7 +102,9 @@ class GitOpsRepoDetails extends React.Component {
     };
     await this.props.onFinishSetup(repoDetails);
 
-    this.setState({ finishingSetup: false });
+    if (this._mounted) {
+      this.setState({ finishingSetup: false });
+    }
   }
 
   render() {
