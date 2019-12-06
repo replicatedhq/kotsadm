@@ -51,6 +51,7 @@ export const listAppsRaw = `
             enabled
             provider
             uri
+            hostname
             path
             branch
             format
@@ -156,6 +157,7 @@ export const getKotsAppRaw = `
           enabled
           provider
           uri
+          hostname
           path
           branch
           format

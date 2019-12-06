@@ -716,7 +716,7 @@ order by sequence desc`;
       const base64Data = configmap.body.data![appClusterKey];
       const configMapData = JSON.parse(base64Decode(base64Data));
       
-      let provider = "", publicKey = "", privateKey = "";
+      let provider = "", publicKey = "", privateKey = "", hostname;
       for (const key of Object.keys(secretData)) {
         const value = base64Decode(secretData[key]);
         if (value === configMapData.repoUri) {
@@ -724,6 +724,11 @@ order by sequence desc`;
           provider = base64Decode(secretData[`provider.${index}.type`]);
           publicKey = base64Decode(secretData[`provider.${index}.publicKey`]);
           privateKey = base64Decode(secretData[`provider.${index}.privateKey`]);
+
+          const hostnameKey = `provider.${index}.hostname`;
+          if (hostnameKey in secretData) {
+            hostname = base64Decode(secretData[hostnameKey]);
+          }
           break;
         }
       }
@@ -731,6 +736,7 @@ order by sequence desc`;
       return {
         provider: provider,
         repoUri: configMapData.repoUri,
+        hostname: hostname,
         path: configMapData.path,
         branch: configMapData.branch,
         format: configMapData.format,
@@ -750,6 +756,7 @@ order by sequence desc`;
         enabled: true,
         provider: gitopsInfo.provider,
         uri: gitopsInfo.repoUri,
+        hostname: gitopsInfo.hostname,
         path: gitopsInfo.path,
         branch: gitopsInfo.branch,
         format: gitopsInfo.format,

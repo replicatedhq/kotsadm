@@ -1,5 +1,7 @@
 import * as React from "react";
 import PropTypes from "prop-types";
+import { getServiceSite } from "../../utilities/utilities";
+
 import "../../scss/components/gitops/GitOpsDeploymentManager.scss";
 
 class GitOpsRepoDetails extends React.Component {
@@ -10,8 +12,9 @@ class GitOpsRepoDetails extends React.Component {
     branch: PropTypes.string,
     path: PropTypes.string,
     otherService: PropTypes.string,
-    actionPath: PropTypes.string,
-    containType: PropTypes.string,
+    action: PropTypes.string,
+    format: PropTypes.string,
+    stepTitle: PropTypes.string,
   }
 
   static defaultProps = {
@@ -19,8 +22,8 @@ class GitOpsRepoDetails extends React.Component {
     branch: "",
     path: "",
     otherService: "",
-    actionPath: "commit",
-    containType: "single"
+    action: "commit",
+    format: "single"
   }
 
   constructor(props) {
@@ -33,8 +36,8 @@ class GitOpsRepoDetails extends React.Component {
       branch = "",
       path = "",
       otherService = "",
-      actionPath = "commit",
-      containType = "single",
+      action = "commit",
+      format = "single",
     } = this.props;
 
     this.state = {
@@ -45,19 +48,19 @@ class GitOpsRepoDetails extends React.Component {
       branch,
       path,
       otherService,
-      actionPath,
-      containType,
+      action,
+      format,
     };
   }
 
   onActionTypeChange = (e) => {
     if (e.target.classList.contains("js-preventDefault")) { return }
-    this.setState({ actionPath: e.target.value });
+    this.setState({ action: e.target.value });
   }
 
   onFileContainChange = (e) => {
     if (e.target.classList.contains("js-preventDefault")) { return }
-    this.setState({ containType: e.target.value });
+    this.setState({ format: e.target.value });
   }
 
   isValid = () => {
@@ -90,19 +93,19 @@ class GitOpsRepoDetails extends React.Component {
       branch,
       path,
       otherService,
-      actionPath,
-      containType,
+      action,
+      format,
     } = this.state;
 
     const provider = selectedService?.value;
-    const isGitlab = provider === "gitlab" || provider === "gitlab_enterprise";
+    const serviceSite = getServiceSite(provider);
+
     const isBitbucket = provider === "bitbucket" || provider === "bitbucket_server";
-    const serviceSite = isGitlab ? "gitlab.com" : isBitbucket ? "bitbucket.org" : "github.com";
 
     return (
       <div key={`action-active`} className="GitOpsDeploy--step u-textAlign--left">
-          <div className="StepContent--widthRestrict">
-            <p className="step-title">Enable GitOps for {appName}</p>
+          <div className="ActionStepContent--widthRestrict">
+            <p className="step-title">{this.props.stepTitle || `Enable GitOps for ${appName}`}</p>
 
             <div className="flex flex1 u-marginBottom--30 u-marginTop--20">
               {provider !== "other" &&
@@ -132,12 +135,12 @@ class GitOpsRepoDetails extends React.Component {
             <p className="step-sub">When an update is available{appName ? ` to ${appName} ` : ""}, how should the updates YAML be delivered to&nbsp;{selectedService.label === "Other" ? otherService : serviceSite}?</p>
             <div className="flex flex1 u-marginTop--normal gitops-checkboxes justifyContent--center u-marginBottom--30">
               <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left u-marginRight--10">
-                <div className={`BoxedCheckbox flex-auto flex ${actionPath === "commit" ? "is-active" : ""}`}>
+                <div className={`BoxedCheckbox flex-auto flex ${action === "commit" ? "is-active" : ""}`}>
                   <input
                     type="radio"
                     className="u-cursor--pointer hidden-input"
                     id="commitOption"
-                    checked={actionPath === "commit"}
+                    checked={action === "commit"}
                     defaultValue="commit"
                     onChange={this.onActionTypeChange}
                   />
@@ -153,12 +156,12 @@ class GitOpsRepoDetails extends React.Component {
                 </div>
               </div>
               <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left u-marginLeft--10">
-                <div className={`BoxedCheckbox flex1 flex ${actionPath === "pullRequest" ? "is-active" : ""} is-disabled`}>
+                <div className={`BoxedCheckbox flex1 flex ${action === "pullRequest" ? "is-active" : ""} is-disabled`}>
                   <input
                     type="radio"
                     className="u-cursor--pointer hidden-input"
                     id="pullRequestOption"
-                    checked={actionPath === "pullRequest"}
+                    checked={action === "pullRequest"}
                     defaultValue="pullRequest"
                     onChange={this.onActionTypeChange}
                     disabled={true}
@@ -184,12 +187,12 @@ class GitOpsRepoDetails extends React.Component {
 
             <div className="flex flex1 u-marginTop--normal gitops-checkboxes justifyContent--center u-marginBottom--30">
               <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left u-marginRight--10">
-                <div className={`BoxedCheckbox flex1 flex ${containType === "single" ? "is-active" : ""}`}>
+                <div className={`BoxedCheckbox flex1 flex ${format === "single" ? "is-active" : ""}`}>
                   <input
                     type="radio"
                     className="u-cursor--pointer hidden-input"
                     id="singleOption"
-                    checked={containType === "single"}
+                    checked={format === "single"}
                     defaultValue="single"
                     onChange={this.onFileContainChange}
                   />
@@ -205,12 +208,12 @@ class GitOpsRepoDetails extends React.Component {
                 </div>
               </div>
               <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left u-marginLeft--10">
-                <div className={`BoxedCheckbox flex1 flex ${containType === "fullFiles" ? "is-active" : ""} is-disabled`}>
+                <div className={`BoxedCheckbox flex1 flex ${format === "fullFiles" ? "is-active" : ""} is-disabled`}>
                   <input
                     type="radio"
                     className="u-cursor--pointer hidden-input"
                     id="fullFilesOption"
-                    checked={containType === "fullFiles"}
+                    checked={format === "fullFiles"}
                     defaultValue="fullFiles"
                     onChange={this.onFileContainChange}
                     disabled={true}

@@ -9,6 +9,8 @@ import { listApps, getGitOpsRepo } from "@src/queries/AppsQueries";
 import GitOpsFlowIllustration from "./GitOpsFlowIllustration";
 import GitOpsRepoDetails from "./GitOpsRepoDetails";
 import { createGitOpsRepo, updateGitOpsRepo, updateAppGitOps, resetGitOpsData } from "@src/mutations/AppsMutations";
+import { getServiceSite, requiresHostname } from "../../utilities/utilities";
+
 import "../../scss/components/gitops/GitOpsDeploymentManager.scss";
 
 const STEPS = [
@@ -86,17 +88,6 @@ class GitOpsDeploymentManager extends React.Component {
     return kotsApps?.length === 1;
   }
 
-  getOwnerRepoFromUri = uri => {
-    let ownerRepo = "";
-    if (uri) {
-      const uriParts = uri.replace("https://", "").split("/");
-      if (uriParts.length > 2) {
-        ownerRepo = `${uriParts[1]}/${uriParts[2]}`;
-      }
-    }
-    return ownerRepo;
-  }
-
   providerChanged = () => {
     const { selectedService } = this.state;
     const getGitOpsRepo = this.props.getGitOpsRepoQuery?.getGitOpsRepo;
@@ -108,7 +99,7 @@ class GitOpsDeploymentManager extends React.Component {
     const provider = selectedService?.value;
     const getGitOpsRepo = this.props.getGitOpsRepoQuery?.getGitOpsRepo;
     const savedHostname = getGitOpsRepo.hostname || "";
-    return !this.providerChanged() && this.requiresHostname(provider) && hostname !== savedHostname;
+    return !this.providerChanged() && requiresHostname(provider) && hostname !== savedHostname;
   }
 
   getGitOpsInput = (provider, uri, branch, path, format, action, hostname, otherService) => {
@@ -119,7 +110,7 @@ class GitOpsDeploymentManager extends React.Component {
     gitOpsInput.path = path;
     gitOpsInput.format = format;
     gitOpsInput.action = action;
-    if (this.requiresHostname(provider)) {
+    if (requiresHostname(provider)) {
       gitOpsInput.hostname = hostname;
     }
     if (provider === "other") {
@@ -134,8 +125,8 @@ class GitOpsDeploymentManager extends React.Component {
       ownerRepo = "",
       branch = "",
       path = "",
-      actionPath = "commit",
-      containType = "single"
+      action = "commit",
+      format = "single"
     } = repoDetails;
 
     const {
@@ -145,11 +136,9 @@ class GitOpsDeploymentManager extends React.Component {
     } = this.state;
 
     const provider = selectedService.value;
-    const isGitlab = provider === "gitlab" || provider === "gitlab_enterprise";
-    const isBitbucket = provider === "bitbucket" || provider === "bitbucket_server";
-    const serviceUri = isGitlab ? "gitlab.com" : isBitbucket ? "bitbucket.org" : "github.com";
-    const repoUri = this.isSingleApp() ? `https://${serviceUri}/${ownerRepo}` : "";
-    const gitOpsInput = this.getGitOpsInput(provider, repoUri, branch, path, containType, actionPath, hostname, otherService);
+    const serviceSite = getServiceSite(provider);
+    const repoUri = this.isSingleApp() ? `https://${serviceSite}/${ownerRepo}` : "";
+    const gitOpsInput = this.getGitOpsInput(provider, repoUri, branch, path, format, action, hostname, otherService);
 
     try {
       const getGitOpsRepo = this.props.getGitOpsRepoQuery?.getGitOpsRepo;
@@ -310,12 +299,8 @@ class GitOpsDeploymentManager extends React.Component {
     );
   }
 
-  requiresHostname = provider => {
-    return provider === "gitlab_enterprise" || provider === "github_enterprise" || provider === "bitbucket_server";
-  }
-
   renderHostName = (provider, hostname, providerError) => {
-    if (!this.requiresHostname(provider)) {
+    if (!requiresHostname(provider)) {
       return <div className="flex flex1" />;
     }
     return (
