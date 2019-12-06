@@ -55,6 +55,7 @@ export const listAppsRaw = `
             path
             branch
             format
+            action
             isConnected
           }
           pendingVersions {
@@ -161,6 +162,7 @@ export const getKotsAppRaw = `
           path
           branch
           format
+          action
           deployKey
           isConnected
         }

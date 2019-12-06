@@ -226,6 +226,7 @@ class AppGitops extends Component {
               branch={gitops?.branch}
               path={gitops?.path}
               format={gitops?.format}
+              action={gitops?.action}
               selectedService={selectedService}
               onFinishSetup={this.finishGitOpsSetup}
               showCancelBtn={!!ownerRepo}

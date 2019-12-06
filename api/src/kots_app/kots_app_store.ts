@@ -271,7 +271,7 @@ export class KotsAppStore {
     };
   }
 
-  async setDownstreamGitOps(appId: string, clusterId: string, repoUri: string, branch: string, path: string, format: string): Promise<any> {
+  async setDownstreamGitOps(appId: string, clusterId: string, repoUri: string, branch: string, path: string, format: string, action: string): Promise<any> {
     try {
       const kc = new k8s.KubeConfig();
       kc.loadFromDefault();
@@ -294,7 +294,8 @@ export class KotsAppStore {
         repoUri: repoUri,
         branch: branch,
         path: path,
-        format: format
+        format: format,
+        action: action
       }));
 
       const configMapObj: k8s.V1Secret = {
@@ -740,6 +741,7 @@ order by sequence desc`;
         path: configMapData.path,
         branch: configMapData.branch,
         format: configMapData.format,
+        action: configMapData.action,
         publicKey: publicKey,
         privateKey: privateKey,
         lastError: configMapData.lastError
@@ -760,6 +762,7 @@ order by sequence desc`;
         path: gitopsInfo.path,
         branch: gitopsInfo.branch,
         format: gitopsInfo.format,
+        action: gitopsInfo.action,
         deployKey: gitopsInfo.publicKey,
         isConnected: gitopsInfo.lastError === "",
       }

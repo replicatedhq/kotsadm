@@ -22,11 +22,8 @@ export function KotsMutations(stores: Stores) {
   return {
     async updateAppGitOps(root: any, args: any, context: Context): Promise<boolean> {
       const { appId, clusterId, gitOpsInput } = args;
-
       const app = await context.getApp(appId);
-
-      await stores.kotsAppStore.setDownstreamGitOps(app.id, clusterId, gitOpsInput.uri, gitOpsInput.branch, gitOpsInput.path, gitOpsInput.format);
-
+      await stores.kotsAppStore.setDownstreamGitOps(app.id, clusterId, gitOpsInput.uri, gitOpsInput.branch, gitOpsInput.path, gitOpsInput.format, gitOpsInput.action);
       return true;
     },
 
