@@ -232,7 +232,8 @@ class GitOpsRepoDetails extends React.Component {
               <div className="BoxedCheckbox-wrapper flex1"></div>
             </div>
 
-            <div>
+            <div className="flex">
+              {this.props.showCancelBtn && <button className="btn secondary dustyGray u-marginRight--10" type="button" onClick={this.props.onCancel}>Cancel</button>}
               <button className="btn primary blue" type="button" onClick={this.onFinishSetup}>Finish GitOps setup</button>
             </div>
           </div>

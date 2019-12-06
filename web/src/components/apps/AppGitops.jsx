@@ -174,6 +174,10 @@ class AppGitops extends Component {
     }
   }
 
+  hideGitOpsSettings = () => {
+    this.setState({ showGitOpsSettings: false });
+  }
+
   render() {
     const { app } = this.props;
     const appTitle = app.name;
@@ -224,6 +228,8 @@ class AppGitops extends Component {
               format={gitops?.format}
               selectedService={selectedService}
               onFinishSetup={this.finishGitOpsSetup}
+              showCancelBtn={!!ownerRepo}
+              onCancel={this.hideGitOpsSettings}
               otherService=""
             />
           </div>
@@ -275,9 +281,12 @@ class AppGitops extends Component {
                   </CodeSnippet>
                 </div>
 
-                <div className="flex">
-                  <button className={`btn secondary u-marginRight--10 ${testingConnection ? "is-disabled" : "lightBlue"}`} onClick={this.handleTestConnection}>{testingConnection ? "Testing connection" : "Try again"}</button>
-                  <button className="btn primary blue" onClick={this.goToTroubleshootPage}>Troubleshoot</button>
+                <div className="flex justifyContent--spaceBetween alignItems--center">
+                  <div className="flex">
+                    <button className={`btn secondary u-marginRight--10 ${testingConnection ? "is-disabled" : "lightBlue"}`} onClick={this.handleTestConnection}>{testingConnection ? "Testing connection" : "Try again"}</button>
+                    <button className="btn primary blue" onClick={this.goToTroubleshootPage}>Troubleshoot</button>
+                  </div>
+                  <button className="btn secondary dustyGray" onClick={this.updateGitOpsSettings}>Update GitOps Settings</button>
                 </div>
               </div>
             }
