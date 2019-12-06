@@ -11,8 +11,6 @@ export function AppsMutations(stores: Stores) {
     async createGitOpsRepo(root: any, args: any, context: Context): Promise<boolean> {
       const { gitOpsInput } = args;
 
-      // TODO: add session check
-
       const { publicKey, privateKey } = generateKeyPairSync("rsa", {
         modulusLength: 4096,
         publicKeyEncoding: {
@@ -37,17 +35,12 @@ export function AppsMutations(stores: Stores) {
 
     async updateGitOpsRepo(root: any, args: any, context: Context): Promise<boolean> {
       const { gitOpsInput, uriToUpdate } = args;
-
-      // TODO: add session check
       await stores.kotsAppStore.updateGitOpsRepo(uriToUpdate, gitOpsInput.uri, gitOpsInput.hostname);
-
       return true;
     },
 
     async resetGitOpsData(root: any, args: any, context: Context): Promise<boolean> {
-      // TODO: add session check
       await stores.kotsAppStore.resetGitOpsData();
-
       return true;
     },
   }
