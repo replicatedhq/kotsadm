@@ -60,7 +60,7 @@ export class NavBar extends PureComponent {
       } else if (pathname.startsWith("/app")) {
         selectedTab = "dashboard"
       }
-      this.setState({ selectedTab: tab });
+      this.setState({ selectedTab });
     }
   }
 
