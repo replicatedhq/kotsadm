@@ -47,20 +47,10 @@ export class NavBar extends PureComponent {
         });
     }
 
-    const pathname = this.props.location.pathname;
+    const { pathname } = this.props.location;
     if (pathname !== lastProps.location.pathname) {
+      this.setSelectedTab();
       this.getKotsLicenseType();
-
-      // update active tab
-      let selectedTab = "";
-      if (pathname === "/gitops") {
-        selectedTab = "gitops";
-      } else if (pathname === "/cluster/manage") {
-        selectedTab = "cluster_management";
-      } else if (pathname.startsWith("/app")) {
-        selectedTab = "dashboard"
-      }
-      this.setState({ selectedTab });
     }
   }
 
@@ -72,6 +62,20 @@ export class NavBar extends PureComponent {
           this.setState({ user: res.data.userInfo });
         }).catch();
     }
+    this.setSelectedTab();
+  }
+
+  setSelectedTab = () => {
+    const { pathname } = this.props.location;
+    let selectedTab = "";
+    if (pathname === "/gitops") {
+      selectedTab = "gitops";
+    } else if (pathname === "/cluster/manage") {
+      selectedTab = "cluster_management";
+    } else if (pathname.startsWith("/app")) {
+      selectedTab = "dashboard"
+    }
+    this.setState({ selectedTab });
   }
 
   getKotsLicenseType = () => {
