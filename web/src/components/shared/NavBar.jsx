@@ -60,7 +60,7 @@ export class NavBar extends PureComponent {
       } else if (pathname.startsWith("/app")) {
         selectedTab = "dashboard"
       }
-      this.setSelectedTab(selectedTab);
+      this.setState({ selectedTab: tab });
     }
   }
 
@@ -72,10 +72,6 @@ export class NavBar extends PureComponent {
           this.setState({ user: res.data.userInfo });
         }).catch();
     }
-  }
-
-  setSelectedTab = tab => {
-    this.setState({ selectedTab: tab });
   }
 
   getKotsLicenseType = () => {
