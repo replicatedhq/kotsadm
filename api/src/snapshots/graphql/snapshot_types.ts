@@ -42,6 +42,16 @@ const SnapshotStoreAzure = `
     resourceGroup: String
     storageAccount: String
     subscriptionID: String
+    tenantID: String
+    clientID: String
+    clientSecret: String
+    cloudName: String
+  }
+`;
+
+const SnapshotStoreGoogle = `
+  type SnapshotStoreGoogle {
+    serviceAccount: String;
   }
 `;
 

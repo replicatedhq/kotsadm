@@ -14,8 +14,8 @@ export enum SnapshotProvider {
 
 export interface SnapshotStoreS3AWS {
   region: string;
-  accessKeyID: string;
-  accessKeySecret: string;
+  accessKeyID?: string;
+  accessKeySecret?: string;
 }
 
 export interface SnapshotStoreS3Compatible extends SnapshotStoreS3AWS {
