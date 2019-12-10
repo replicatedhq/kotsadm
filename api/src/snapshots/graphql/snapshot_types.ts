@@ -38,6 +38,7 @@ const SnapshotStoreS3Compatible = `
 
 const SnapshotStoreAzure = `
   type SnapshotStoreAzure {
+    tenantID: String
     resourceGroup: String
     storageAccount: String
     subscriptionID: String
