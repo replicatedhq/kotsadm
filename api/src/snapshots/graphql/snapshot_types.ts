@@ -72,6 +72,7 @@ const Snapshot = `
 
 const SnapshotDetail = `
   type SnapshotDetail {
+    name: String
     namespaces: [String]
     hooks: [Hook]
     volumes: [Volume]
@@ -102,6 +103,7 @@ const SnapshotHook = `
     name: String
     phase: String
     command: String
+    selector: String
     container: String
     execs: [SnapshotHookExec]
   }

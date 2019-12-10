@@ -27,6 +27,7 @@ export interface Snapshot {
 }
 
 export interface SnapshotDetail {
+  name: string;
   namespaces: Array<string>;
   hooks: Array<SnapshotHook>;
   volumes: Array<SnapshotVolume>;
@@ -56,6 +57,7 @@ export interface SnapshotHook {
   name: string;
   phase: SnapshotHookPhase;
   command: string;
+  selector: string;
   container: string;
   execs: Array<SnapshotHookExec>;
 }
