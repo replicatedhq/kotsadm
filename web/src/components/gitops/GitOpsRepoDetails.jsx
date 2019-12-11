@@ -271,9 +271,10 @@ class GitOpsRepoDetails extends React.Component {
             <div className="flex">
               {this.props.showCancelBtn && <button className="btn secondary dustyGray u-marginRight--10" type="button" onClick={this.props.onCancel}>Cancel</button>}
               <button
-                className={`btn primary blue ${(finishingSetup || !this.allowUpdate()) && "is-disabled"}`}
+                className="btn primary blue"
                 type="button"
-                onClick={(finishingSetup || !this.allowUpdate()) ? null : this.onFinishSetup}
+                disabled={finishingSetup || !this.allowUpdate()}
+                onClick={this.onFinishSetup}
               >
                 {finishingSetup ? "Finishing setup" : "Finish GitOps setup"}
               </button>
