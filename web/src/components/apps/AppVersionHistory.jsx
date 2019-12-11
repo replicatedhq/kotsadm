@@ -808,7 +808,7 @@ class AppVersionHistory extends Component {
               <button
                 onClick={this.onForceDeployClick}
                 type="button"
-                className="btn green primary"
+                className="btn blue primary"
               >
                 Deploy this version
               </button>
@@ -839,7 +839,7 @@ class AppVersionHistory extends Component {
               <button
                 onClick={this.onForceDeployClick}
                 type="button"
-                className="btn green primary">
+                className="btn blue primary">
                 Deploy this version
               </button>
               <button type="button" onClick={this.hideSkipModal} className="btn secondary u-marginLeft--20">Cancel</button>
