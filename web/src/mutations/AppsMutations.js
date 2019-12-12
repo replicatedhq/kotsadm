@@ -79,27 +79,45 @@ export const updateAppConfig = gql`
   }
 `;
 
+export const updateDownstreamsStatus = gql`
+  mutation updateDownstreamsStatus($slug: String!, $sequence: Int!, $status: String!) {
+    updateDownstreamsStatus(slug: $slug, sequence: $sequence, status: $status)
+  }
+`;
+
 export const updateKotsApp = gql`
   mutation updateKotsApp($appId: String!, $appName: String, $iconUri: String) {
     updateKotsApp(appId: $appId, appName: $appName, iconUri: $iconUri)
   }
 `;
 
-export const setAppGitOpsRaw = `
-  mutation setAppGitOps($appId: String!, $clusterId: String!, $gitOpsInput: KotsGitOpsInput!) {
-    setAppGitOps(appId: $appId, clusterId: $clusterId, gitOpsInput: $gitOpsInput)
+export const createGitOpsRepoRaw = `
+  mutation createGitOpsRepo($gitOpsInput: KotsGitOpsInput!) {
+    createGitOpsRepo(gitOpsInput: $gitOpsInput)
   }
 `;
+export const createGitOpsRepo = gql(createGitOpsRepoRaw);
 
-export const setAppGitOps = gql(setAppGitOpsRaw);
+export const updateGitOpsRepoRaw = `
+  mutation updateGitOpsRepo($gitOpsInput: KotsGitOpsInput!, $uriToUpdate: String) {
+    updateGitOpsRepo(gitOpsInput: $gitOpsInput, uriToUpdate: $uriToUpdate)
+  }
+`;
+export const updateGitOpsRepo = gql(updateGitOpsRepoRaw);
 
 export const updateAppGitOpsRaw = `
   mutation updateAppGitOps($appId: String!, $clusterId: String!, $gitOpsInput: KotsGitOpsInput!) {
     updateAppGitOps(appId: $appId, clusterId: $clusterId, gitOpsInput: $gitOpsInput)
   }
 `;
-
 export const updateAppGitOps = gql(updateAppGitOpsRaw);
+
+export const resetGitOpsDataRaw = `
+  mutation resetGitOpsData {
+    resetGitOpsData
+  }
+`;
+export const resetGitOpsData = gql(resetGitOpsDataRaw);
 
 export const setPrometheusAddress = gql`
   mutation setPrometheusAddress($value: String!) {
@@ -123,11 +141,17 @@ export const syncAppLicense = gql`
     }
   }
 `;
+
 export const testGitOpsConnectionRaw = `
   mutation testGitOpsConnection($appId: String!, $clusterId: String!) {
     testGitOpsConnection(appId: $appId, clusterId: $clusterId)
   }
 `;
-
-
 export const testGitOpsConnection = gql(testGitOpsConnectionRaw);
+
+export const disableAppGitopsRaw = `
+  mutation disableAppGitops($appId: String!, $clusterId: String!) {
+    disableAppGitops(appId: $appId, clusterId: $clusterId)
+  }
+`;
+export const disableAppGitops = gql(disableAppGitopsRaw);

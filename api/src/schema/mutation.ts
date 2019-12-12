@@ -18,12 +18,16 @@ type Mutation {
   updateRegistryDetails(registryDetails: AppRegistryDetails!): Boolean
   resumeInstallOnline(slug: String!): KotsApp
   updateAppConfig(slug: String!, sequence: Int!, configGroups: [KotsConfigGroupInput]!, createNewVersion: Boolean): Boolean
+  updateDownstreamsStatus(slug: String!, sequence: Int!, status: String!): Boolean
   updateKotsApp(appId: String!, appName: String, iconUri: String): Boolean
 
-  setAppGitOps(appId: String!, clusterId: String!, gitOpsInput: KotsGitOpsInput!): String
-  updateAppGitOps(appId: String!, clusterId: String!, gitOpsInput: KotsGitOpsInput!): String
+  createGitOpsRepo(gitOpsInput: KotsGitOpsInput!): Boolean
+  updateGitOpsRepo(gitOpsInput: KotsGitOpsInput!, uriToUpdate: String): Boolean
+  updateAppGitOps(appId: String!, clusterId: String!, gitOpsInput: KotsGitOpsInput!): Boolean
   syncAppLicense(appSlug: String!, airgapLicense: String): KLicense
   testGitOpsConnection(appId: String!, clusterId: String!): Boolean
+  disableAppGitops(appId: String!, clusterId: String!): Boolean
+  resetGitOpsData: Boolean
 
   drainNode(name: String): Boolean
   deleteNode(name: String): Boolean

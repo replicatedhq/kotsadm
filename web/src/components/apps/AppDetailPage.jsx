@@ -159,7 +159,9 @@ class AppDetailPage extends Component {
 
     const app = getKotsAppQuery?.getKotsApp;
     const refreshAppData = getKotsAppQuery.refetch;
-    const loading = getKotsAppQuery?.loading || !rootDidInitialAppFetch;
+
+    // if there is app, don't render a loader to avoid flickering
+    const loading = (getKotsAppQuery?.loading || !rootDidInitialAppFetch) && !app;
 
     if (!rootDidInitialAppFetch) {
       return centeredLoader;
@@ -261,6 +263,7 @@ class AppDetailPage extends Component {
                     <Route exact path="/app/:slug/license" render={() =>
                       <AppLicense
                         app={app}
+                        syncCallback={this.refetchGraphQLData}
                       />
                     } />
                     <Route exact path="/app/:slug/registry-settings" render={() =>
@@ -271,6 +274,7 @@ class AppDetailPage extends Component {
                     <Route exact path="/app/:slug/gitops" render={() =>
                       <AppGitops
                         app={app}
+                        history={this.props.history}
                         refetch={() => this.props.getKotsAppQuery.refetch()}
                       />
                     } />
@@ -308,7 +312,7 @@ class AppDetailPage extends Component {
                 {`kubectl kots download <namespace>`}
               </CodeSnippet>
               <div className="u-marginTop--10 flex">
-                <button onClick={this.toggleDisplayDownloadModal} className="btn green primary">Ok, got it!</button>
+                <button onClick={this.toggleDisplayDownloadModal} className="btn blue primary">Ok, got it!</button>
               </div>
             </div>
           </Modal>

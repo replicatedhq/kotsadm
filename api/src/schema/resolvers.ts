@@ -7,7 +7,7 @@ import { Stores } from "./stores";
 import { TroubleshootQueries, TroubleshootMutations } from "../troubleshoot";
 import { KotsLicenseQueries, KotsLicenseMutations } from "../klicenses";
 import { PrefightQueries } from "../preflight";
-import { AppsQueries } from "../apps";
+import { AppsQueries, AppsMutations } from "../apps";
 import { KotsQueries, KotsDashboardQueries, KotsMutations } from "../kots_app";
 import { KurlQueries, KurlMutations } from "../kurl";
 import { MonitoringQueries, MonitoringMutations } from "../monitoring";
@@ -40,6 +40,7 @@ export const Resolvers = (stores: Stores, params: Params) => {
     ...KotsMutations(stores),
     ...SnapshotMutations(stores, params),
     ...KurlMutations(stores, params),
+    ...AppsMutations(stores),
   };
 
   return {

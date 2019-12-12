@@ -18,6 +18,12 @@ class PreflightResultPage extends Component {
     showWarningModal: false
   }
 
+  async componentWillUnmount() {
+    if (this.props.fromLicenseFlow && this.props.refetchListApps) {
+      await this.props.refetchListApps();
+    }
+  }
+
   deployKotsDownstream = async (force = false) => {
     try {
       const { data, history, match } = this.props;
@@ -34,7 +40,7 @@ class PreflightResultPage extends Component {
       await this.props.deployKotsVersion(preflightResultData.appSlug, sequence, preflightResultData.clusterSlug);
 
       history.push(`/app/${preflightResultData.appSlug}/version-history`);
-    } catch(error) {
+    } catch (error) {
       console.log(error);
     }
   }
@@ -86,8 +92,13 @@ class PreflightResultPage extends Component {
           <title>{`${this.props.appName ? `${this.props.appName} Admin Console` : "Admin Console"}`}</title>
         </Helmet>
         <div className="flex1 flex u-overflow--auto">
-          <div className="PreflightChecks--wrapper flex u-paddingTop--30 u-overflow--hidden">
-            <div className="u-minWidth--full u-minHeight--full">
+          <div className="PreflightChecks--wrapper flex flex-column u-paddingTop--30 u-overflow--hidden">
+            {this.props.history.location.pathname.includes("version-history") &&
+            <div className="u-fontWeight--bold u-color--astral u-cursor--pointer" onClick={() => this.props.history.goBack()}>
+              <span className="icon clickable backArrow-icon u-marginRight--10" style={{ verticalAlign: "0" }} />
+                Back
+            </div>}
+            <div className="u-minWidth--full u-minHeight--full u-marginTop--20">
               <p className="u-fontSize--header u-color--tuna u-fontWeight--bold">
                 Preflight checks
               </p>
@@ -115,23 +126,23 @@ class PreflightResultPage extends Component {
           <div className="flex-auto flex justifyContent--flexEnd">
             <button
               type="button"
-              className="btn primary u-marginBottom--15"
+              className="btn primary blue u-marginBottom--15"
               onClick={() => this.deployKotsDownstream(false)}
             >
               Continue
             </button>
           </div>
         ) : (
-          <div className="flex-auto flex justifyContent--flexEnd">
-            <button
-              type="button"
-              className="btn primary u-marginBottom--15"
-              onClick={this.showSkipModal}
-            >
-              Skip
+            <div className="flex-auto flex justifyContent--flexEnd">
+              <button
+                type="button"
+                className="btn primary blue u-marginBottom--15"
+                onClick={this.showSkipModal}
+              >
+                Skip
             </button>
-          </div>
-        )}
+            </div>
+          )}
 
         <Modal
           isOpen={showSkipModal}
@@ -146,7 +157,7 @@ class PreflightResultPage extends Component {
             <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">Skipping preflight checks will not cancel them. They will continue to run in the background. Do you want to continue to the {preflightResultData?.appSlug} dashboard? </p>
             <div className="u-marginTop--10 flex justifyContent--flexEnd">
               <Link to={`/app/${preflightResultData?.appSlug}`}>
-                <button type="button" className="btn green primary">Go to Dashboard</button>
+                <button type="button" className="btn blue primary">Go to Dashboard</button>
               </Link>
             </div>
           </div>
@@ -165,7 +176,7 @@ class PreflightResultPage extends Component {
             <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">Preflight is showing some issues, are you sure you want to continue?</p>
             <div className="u-marginTop--10 flex justifyContent--flexEnd">
               <button type="button" className="btn secondary" onClick={this.hideWarningModal}>Cancel</button>
-              <button type="button" className="btn green primary u-marginLeft--10" onClick={() => this.deployKotsDownstream(true)}>
+              <button type="button" className="btn blue primary u-marginLeft--10" onClick={() => this.deployKotsDownstream(true)}>
                 Deploy and continue
               </button>
             </div>

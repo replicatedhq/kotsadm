@@ -33,17 +33,19 @@ const GoString = Struct({
   n: "longlong"
 });
 
+const GoBool = "bool";
+
 function kots() {
   return ffi.Library("/lib/kots.so", {
     TestRegistryCredentials: ["void", [GoString, GoString, GoString, GoString, GoString]],
-    PullFromLicense: ["void", [GoString, GoString, GoString, GoString]],
-    PullFromAirgap: ["void", [GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString]],
-    UpdateCheck: ["void", [GoString, GoString]],
+    PullFromLicense: ["void", [GoString, GoString, GoString, GoString, GoString]],
+    PullFromAirgap: ["void", [GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString]],
+    UpdateCheck: ["void", [GoString, GoString, GoString]],
     ListUpdates: ["void", [GoString, GoString, GoString]],
-    UpdateDownload: ["void", [GoString, GoString, GoString, GoString]],
+    UpdateDownload: ["void", [GoString, GoString, GoString, GoString, GoString]],
     ReadMetadata: ["void", [GoString, GoString]],
     RemoveMetadata: ["void", [GoString, GoString]],
-    RewriteImagesInVersion: ["void", [GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString, GoString]],
+    RewriteVersion: ["void", [GoString, GoString, GoString, GoString, GoString, GoString, GoBool]],
     TemplateConfig: [GoString, [GoString, GoString, GoString]],
     EncryptString: [GoString, [GoString, GoString]],
     DecryptString: [GoString, [GoString, GoString]],
@@ -166,7 +168,8 @@ export async function kotsAppDownloadUpdate(cursor: string, app: KotsApp, regist
   const archive = path.join(tmpDir.name, "archive.tar.gz");
 
   try {
-    fs.writeFileSync(archive, await app.getArchive(""+(app.currentSequence!)));
+    fs.writeFileSync(archive, await app.getArchive("" + (app.currentSequence!)));
+    const namespace = getK8sNamespace();
 
     const statusServer = new StatusServer();
     await statusServer.start(tmpDir.name);
@@ -179,6 +182,10 @@ export async function kotsAppDownloadUpdate(cursor: string, app: KotsApp, regist
     archiveParam["p"] = archive;
     archiveParam["n"] = archive.length;
 
+    const namespaceParam = new GoString();
+    namespaceParam["p"] = namespace;
+    namespaceParam["n"] = namespace.length;
+
     const cursorParam = new GoString();
     cursorParam["p"] = cursor;
     cursorParam["n"] = cursor.length;
@@ -188,7 +195,7 @@ export async function kotsAppDownloadUpdate(cursor: string, app: KotsApp, regist
     registryJsonParam["p"] = registryJson;
     registryJsonParam["n"] = registryJson.length;
 
-    kots().UpdateDownload(socketParam, archiveParam, registryJsonParam, cursorParam);
+    kots().UpdateDownload(socketParam, archiveParam, namespaceParam, registryJsonParam, cursorParam);
     await statusServer.connection();
     const isUpdateAvailable: number = await statusServer.termination((resolve, reject, obj): boolean => {
       if (obj.status === "running") {
@@ -227,8 +234,9 @@ export async function kotsAppCheckForUpdate(currentCursor: string, app: KotsApp,
   const archive = path.join(tmpDir.name, "archive.tar.gz");
 
   try {
-    fs.writeFileSync(archive, await app.getArchive(""+(app.currentSequence!)));
+    fs.writeFileSync(archive, await app.getArchive("" + (app.currentSequence!)));
 
+    const namespace = getK8sNamespace();
     let isUpdateAvailable = -1;
 
     const statusServer = new StatusServer();
@@ -242,7 +250,11 @@ export async function kotsAppCheckForUpdate(currentCursor: string, app: KotsApp,
     archiveParam["p"] = archive;
     archiveParam["n"] = archive.length;
 
-    kots().UpdateCheck(socketParam, archiveParam);
+    const namespaceParam = new GoString();
+    namespaceParam["p"] = namespace;
+    namespaceParam["n"] = namespace.length;
+
+    kots().UpdateCheck(socketParam, archiveParam, namespaceParam);
     await statusServer.connection();
     await statusServer.termination((resolve, reject, obj): boolean => {
       // Return true if completed
@@ -327,29 +339,34 @@ async function saveUpdateVersion(archive: string, app: KotsApp, stores: Stores) 
 
 export async function kotsAppFromLicenseData(licenseData: string, name: string, downstreamName: string, stores: Stores): Promise<KotsApp> {
   const parsedLicense = yaml.safeLoad(licenseData);
-  if (parsedLicense.spec.isAirgapSupported) {
-    try {
-      const kotsApp = await stores.kotsAppStore.getPendingKotsAirgapApp();
-      await stores.kotsAppStore.updateKotsAppLicense(kotsApp.id, licenseData);
+  if (parsedLicense.apiVersion === "kots.io/v1beta1" && parsedLicense.kind === "License") {
+    if (parsedLicense.spec.isAirgapSupported) {
+      try {
+        const kotsApp = await stores.kotsAppStore.getPendingKotsAirgapApp();
+        await stores.kotsAppStore.updateKotsAppLicense(kotsApp.id, licenseData);
+        return kotsApp;
+      } catch (e) {
+        console.log("no pending airgap install found, creating a new app");
+      }
+
+      const kotsApp = await stores.kotsAppStore.createKotsApp(name, `replicated://${parsedLicense.spec.appSlug}`, licenseData, parsedLicense.spec.isAirgapSupported);
       return kotsApp;
-    } catch(e) {
-      console.log("no pending airgap install found, creating a new app");
     }
 
-    const kotsApp = await stores.kotsAppStore.createKotsApp(name, `replicated://${parsedLicense.spec.appSlug}`, licenseData, parsedLicense.spec.isAirgapSupported);
+    const kotsApp = await stores.kotsAppStore.createKotsApp(name, `replicated://${parsedLicense.spec.appSlug}`, licenseData, !!parsedLicense.spec.isAirgapSupported);
+    await kotsFinalizeApp(kotsApp, downstreamName, stores);
     return kotsApp;
+  } else {
+    throw new ReplicatedError("Uploaded license file is invalid")
   }
-
-  const kotsApp = await stores.kotsAppStore.createKotsApp(name, `replicated://${parsedLicense.spec.appSlug}`, licenseData, !!parsedLicense.spec.isAirgapSupported);
-  await kotsFinalizeApp(kotsApp, downstreamName, stores);
-
-  return kotsApp;
 }
 
 export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, stores: Stores) {
   const tmpDir = tmp.dirSync();
 
   try {
+    const namespace = getK8sNamespace();
+
     const statusServer = new StatusServer();
     await statusServer.start(tmpDir.name);
 
@@ -365,12 +382,16 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
     downstreamParam["p"] = downstreamName;
     downstreamParam["n"] = downstreamName.length;
 
+    const namespaceParam = new GoString();
+    namespaceParam["p"] = namespace;
+    namespaceParam["n"] = namespace.length;
+
     const out = path.join(tmpDir.name, "archive.tar.gz");
     const outParam = new GoString();
     outParam["p"] = out;
     outParam["n"] = out.length;
 
-    kots().PullFromLicense(socketParam, licenseDataParam, downstreamParam, outParam);
+    kots().PullFromLicense(socketParam, licenseDataParam, downstreamParam, namespaceParam, outParam);
     await statusServer.connection();
     await statusServer.termination((resolve, reject, obj): boolean => {
       // Return true if completed
@@ -402,6 +423,7 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
     const appIcon = await extractAppIconFromTarball(buffer);
     const kotsAppLicense = await extractKotsAppLicenseFromTarball(buffer);
     kotsApp.hasPreflight = !!preflightSpec;
+    kotsApp.currentSequence = 0;
 
     await stores.kotsAppStore.createMidstreamVersion(
       kotsApp.id,
@@ -419,9 +441,11 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
       appTitle,
       appIcon
     );
-
+    
+    const isAppConfigurable = await kotsApp.isAppConfigurable();
     const downstreams = await extractDownstreamNamesFromTarball(buffer);
     const clusters = await stores.clusterStore.listAllUsersClusters();
+
     for (const downstream of downstreams) {
       const cluster = _.find(clusters, (c: Cluster) => {
         return c.title === downstream;
@@ -431,15 +455,15 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
         continue;
       }
 
-      const downstreamState = kotsApp.hasPreflight
-        ? "pending_preflight"
-        : "deployed";
+      const downstreamState = isAppConfigurable
+        ? "pending_config"
+        : kotsApp.hasPreflight
+          ? "pending_preflight"
+          : "deployed";
 
       await stores.kotsAppStore.createDownstream(kotsApp.id, downstream, cluster.id);
       await stores.kotsAppStore.createDownstreamVersion(kotsApp.id, 0, cluster.id, installationSpec.versionLabel, downstreamState, "Kots Install", "", "");
     }
-
-    kotsApp.currentSequence = 0;
 
     return kotsApp;
   } finally {
@@ -448,6 +472,8 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
 }
 
 export function kotsPullFromAirgap(socket: string, out: string, app: KotsApp, licenseData: string, airgapDir: string, downstreamName: string, stores: Stores, registryHost: string, registryNamespace: string, username: string, password: string): any {
+  const namespace = getK8sNamespace();
+
   const socketParam = new GoString();
   socketParam["p"] = socket;
   socketParam["n"] = socket.length;
@@ -459,6 +485,10 @@ export function kotsPullFromAirgap(socket: string, out: string, app: KotsApp, li
   const downstreamParam = new GoString();
   downstreamParam["p"] = downstreamName;
   downstreamParam["n"] = downstreamName.length;
+
+  const namespaceParam = new GoString();
+  namespaceParam["p"] = namespace;
+  namespaceParam["n"] = namespace.length;
 
   const airgapDirParam = new GoString();
   airgapDirParam["p"] = airgapDir;
@@ -484,13 +514,14 @@ export function kotsPullFromAirgap(socket: string, out: string, app: KotsApp, li
   passwordParam["p"] = password;
   passwordParam["n"] = password.length;
 
-  kots().PullFromAirgap(socketParam, licenseDataParam, airgapDirParam, downstreamParam, outParam, registryHostParam, registryNamespaceParam, usernameParam, passwordParam);
+  kots().PullFromAirgap(socketParam, licenseDataParam, airgapDirParam, downstreamParam, namespaceParam, outParam, registryHostParam, registryNamespaceParam, usernameParam, passwordParam);
 
   // args are returned so they are not garbage collected before native code is done
   return {
     socketParam,
     licenseDataParam,
     downstreamParam,
+    namespaceParam,
     airgapDirParam,
     outParam,
     registryHostParam,
@@ -628,7 +659,7 @@ export async function kotsTemplateConfig(configPath: string, configContent: stri
 
   try {
     return yaml.safeLoad(templatedConfig["p"]);
-  } catch(err) {
+  } catch (err) {
     throw new ReplicatedError(`Failed to parse templated config ${err}`);
   }
 }
@@ -707,7 +738,7 @@ export async function getLatestLicense(licenseData: string): Promise<string> {
   }
 }
 
-export async function kotsRewriteImagesInVersion(app: KotsApp, downstreams: string[], registryInfo: KotsAppRegistryDetails, outputFile: string, stores: Stores): Promise<string> {
+export async function kotsRewriteVersion(archive: string, downstreams: string[], registryInfo: KotsAppRegistryDetails, copyImages: boolean, outputFile: string, stores: Stores): Promise<string> {
   const tmpDir = tmp.dirSync();
   try {
     const k8sNamespace = getK8sNamespace();
@@ -715,9 +746,6 @@ export async function kotsRewriteImagesInVersion(app: KotsApp, downstreams: stri
     const statusServer = new StatusServer();
     await statusServer.start(tmpDir.name);
 
-    const archive = path.join(tmpDir.name, "archive.tar.gz");
-    fs.writeFileSync(archive, await app.getArchive(""+(app.currentSequence!)));
-  
     const socketParam = new GoString();
     socketParam["p"] = statusServer.socketFilename;
     socketParam["n"] = statusServer.socketFilename.length;
@@ -739,23 +767,12 @@ export async function kotsRewriteImagesInVersion(app: KotsApp, downstreams: stri
     k8sNamespaceParam["p"] = k8sNamespace;
     k8sNamespaceParam["n"] = k8sNamespace.length;
 
-    const registryParam = new GoString();
-    registryParam["p"] = registryInfo.registryHostname;
-    registryParam["n"] = registryInfo.registryHostname.length;
+    const registryJson = JSON.stringify(registryInfo)
+    const registryJsonParam = new GoString();
+    registryJsonParam["p"] = registryJson;
+    registryJsonParam["n"] = registryJson.length;
 
-    const usernamedParam = new GoString();
-    usernamedParam["p"] = registryInfo.registryUsername;
-    usernamedParam["n"] = registryInfo.registryUsername.length;
-
-    const passwordParam = new GoString();
-    passwordParam["p"] = registryInfo.registryPassword;
-    passwordParam["n"] = registryInfo.registryPassword.length;
-
-    const namespaceParam = new GoString();
-    namespaceParam["p"] = registryInfo.namespace;
-    namespaceParam["n"] = registryInfo.namespace.length;
-
-    kots().RewriteImagesInVersion(socketParam, inputPathParam, outputFileParam, downstreamsParam, k8sNamespaceParam, registryParam, usernamedParam, passwordParam, namespaceParam);
+    kots().RewriteVersion(socketParam, inputPathParam, outputFileParam, downstreamsParam, k8sNamespaceParam, registryJsonParam, copyImages);
 
     let errrorMessage = "";
 
@@ -781,61 +798,10 @@ export async function kotsRewriteImagesInVersion(app: KotsApp, downstreams: stri
       throw new ReplicatedError(errrorMessage);
     }
 
-    await stores.kotsAppStore.setImageRewriteStatus("Generating new version", "running");
-
-    const params = await Params.getParams();
-    const buffer = fs.readFileSync(outputFile);
-    const newSequence = app.currentSequence! + 1;
-    const objectStorePath = path.join(params.shipOutputBucket.trim(), app.id, `${newSequence}.tar.gz`);
-    await putObject(params, objectStorePath, buffer, params.shipOutputBucket);
-
-    const installationSpec = await extractInstallationSpecFromTarball(buffer);
-    const supportBundleSpec = await extractSupportBundleSpecFromTarball(buffer);
-    const analyzersSpec = await extractAnalyzerSpecFromTarball(buffer);
-    const preflightSpec = await extractPreflightSpecFromTarball(buffer);
-    const appSpec = await extractAppSpecFromTarball(buffer);
-    const kotsAppSpec = await extractKotsAppSpecFromTarball(buffer);
-    const appTitle = await extractAppTitleFromTarball(buffer);
-    const appIcon = await extractAppIconFromTarball(buffer);
-    const kotsAppLicense = await extractKotsAppLicenseFromTarball(buffer);
-
-    await stores.kotsAppStore.createMidstreamVersion(
-      app.id,
-      newSequence,
-      installationSpec.versionLabel,
-      installationSpec.releaseNotes,
-      installationSpec.cursor,
-      installationSpec.encryptionKey,
-      supportBundleSpec,
-      analyzersSpec,
-      preflightSpec,
-      appSpec,
-      kotsAppSpec,
-      kotsAppLicense,
-      appTitle,
-      appIcon
-    );
-
-    const clusterIds = await stores.kotsAppStore.listClusterIDsForApp(app.id);
-    for (const clusterId of clusterIds) {
-      const downstreamGitops = await stores.kotsAppStore.getDownstreamGitOps(app.id, clusterId);
-
-      let commitUrl = "";
-      if (downstreamGitops.enabled) {
-        const commitMessage = `Updates to the upstream of ${app.name}`;
-        commitUrl = await createGitCommitForVersion(stores, app.id, clusterId, newSequence, commitMessage);
-      }
-
-      const diffSummary = await getDiffSummary(app);
-      await stores.kotsAppStore.createDownstreamVersion(app.id, newSequence, clusterId, installationSpec.versionLabel, "pending", "Upstream Update", diffSummary, commitUrl);
-    }
-
-    await stores.kotsAppStore.clearImageRewriteStatus();
-
     return "";
 
   } finally {
-    // tmpDir.removeCallback();
+    tmpDir.removeCallback();
   }
 }
 

@@ -71,9 +71,11 @@ class AirgapRegistrySettings extends Component {
       testMessage: "",
     });
 
+    const { slug } = this.props.app;
     this.props.client.query({
       query: validateRegistryInfo,
       variables: {
+        slug: slug,
         endpoint: this.state.hostname,
         username: this.state.username,
         password: this.state.password,
@@ -262,7 +264,7 @@ class AirgapRegistrySettings extends Component {
               null
             }
             <div className="u-marginTop--20">
-              <button className="btn primary" disabled={disableSubmitButton} onClick={this.onSubmit}>Save changes</button>
+              <button className="btn primary blue" disabled={disableSubmitButton} onClick={this.onSubmit}>Save changes</button>
             </div>
           </div>
         }

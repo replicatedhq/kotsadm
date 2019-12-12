@@ -30,6 +30,7 @@ export const listAppsRaw = `
         updatedAt
         slug
         currentSequence
+        isGitOpsSupported
         currentVersion {
           title
           status
@@ -48,13 +49,15 @@ export const listAppsRaw = `
             deployedAt
           }
           gitops {
-            id
             enabled
             provider
             uri
+            hostname
             path
             branch
             format
+            action
+            isConnected
           }
           pendingVersions {
             title
@@ -109,6 +112,7 @@ export const getKotsAppRaw = `
       hasPreflight
       isAirgap
       isConfigurable
+      isGitOpsSupported
       allowRollback
       currentVersion {
         title
@@ -153,13 +157,14 @@ export const getKotsAppRaw = `
           parentSequence
         }
         gitops {
-          id
           enabled
           provider
           uri
+          hostname
           path
           branch
           format
+          action
           deployKey
           isConnected
         }
@@ -323,13 +328,13 @@ export const getAppConfigGroups = gql`
         name
         type
         title
-        helpText
+        help_text
         recommended
         default
         value
-        multiValue
-        readOnly
-        writeOnce
+        multi_value
+        readonly
+        write_once
         when
         multiple
         hidden
@@ -386,13 +391,13 @@ export const templateConfigGroups = gql`
         name
         type
         title
-        helpText
+        help_text
         recommended
         default
         value
-        multiValue
-        readOnly
-        writeOnce
+        multi_value
+        readonly
+        write_once
         when
         multiple
         hidden
@@ -443,10 +448,21 @@ export const getPrometheusAddress = gql`
   query getPrometheusAddress {
     getPrometheusAddress
   }
-`
+`;
 
 export const getKotsLicenseType = gql`
   query getKotsLicenseType($slug: String!) {
     getKotsLicenseType(slug: $slug)
   }
-`
+`;
+
+export const getGitOpsRepo = gql`
+  query getGitOpsRepo {
+    getGitOpsRepo {
+      enabled
+      uri
+      provider
+      hostname
+    }
+  }
+`;
