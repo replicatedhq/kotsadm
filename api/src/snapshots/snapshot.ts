@@ -38,6 +38,7 @@ export interface SnapshotDetail {
 export interface SnapshotError {
   title: string;
   message: string;
+  namespace?: string;
 }
 
 export interface SnapshotVolume {
@@ -70,4 +71,24 @@ export interface SnapshotHookExec {
   stderr: string;
   warning: SnapshotError;
   error: SnapshotError;
+}
+
+export interface RestoreDetail {
+  name: string;
+  phase: SnapshotStatus,
+  volumes: Array<RestoreVolume>;
+  errors: Array<SnapshotError>;
+  warnings: Array<SnapshotError>;
+}
+
+export interface RestoreVolume {
+  name: string;
+  phase: SnapshotStatus,
+  podName: string;
+  podNamespace: string;
+  podVolumeName: string;
+  sizeBytes: number;
+  doneBytes: number;
+  started: string;
+  finished?: string;
 }

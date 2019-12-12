@@ -96,7 +96,7 @@ const SnapshotVolume = `
     started: String
     finished: String
   }
-`
+`;
 
 const SnapshotHook = `
   type SnapshotHook {
@@ -107,7 +107,7 @@ const SnapshotHook = `
     container: String
     execs: [SnapshotHookExec]
   }
-`
+`;
 
 const SnapshotHookExec = `
   type SnapshotHookExec {
@@ -119,4 +119,28 @@ const SnapshotHookExec = `
     warning: SnapshotError
     error: SnapshotError
   }
-`
+`;
+
+const RestoreDetail = `
+  type RestoreDetail {
+    name: String
+    phase: String
+    volumes: [RestoreVolume]
+    errors: [SnapshotError]
+    warnings: [SnapshotError]
+  }
+`;
+
+const RestoreVolume = `
+  type RestoreVolume {
+    name: String
+    phase: String
+    podName: String
+    podNamespace: String
+    podVolumeName: String
+    sizeBytes: Int
+    doneBytes: Int
+    started: String
+    finished?: String
+  }
+`;
