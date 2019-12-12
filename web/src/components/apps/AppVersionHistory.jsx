@@ -463,7 +463,8 @@ class AppVersionHistory extends Component {
         <div className="flex">
           <button className="btn secondary gray small u-marginRight--10" onClick={this.onCloseReleasesToDiff}>Cancel</button>
           <button
-            className={classNames("btn primary small blue", { "is-disabled u-pointerEvents--none": checkedReleasesToDiff.length !== 2 || showDiffOverlay })}
+            className="btn primary small blue"
+            disabled={checkedReleasesToDiff.length !== 2 || showDiffOverlay}
             onClick={() => {
               if (gitopsEnabled) {
                 const { firstHash, secondHash } = this.getDiffCommitHashes();
@@ -575,7 +576,8 @@ class AppVersionHistory extends Component {
       checkingUpdateTextShort = checkingUpdateTextShort.slice(0, 30) + "...";
     }
 
-    if (data?.loading) {
+    // only render loader if there is no app yet to avoid flickering
+    if (data?.loading && !app) {
       return (
         <div className="flex-column flex1 alignItems--center justifyContent--center">
           <Loader size="60" />
@@ -807,7 +809,7 @@ class AppVersionHistory extends Component {
               <button
                 onClick={this.onForceDeployClick}
                 type="button"
-                className="btn green primary"
+                className="btn blue primary"
               >
                 Deploy this version
               </button>
@@ -838,7 +840,7 @@ class AppVersionHistory extends Component {
               <button
                 onClick={this.onForceDeployClick}
                 type="button"
-                className="btn green primary">
+                className="btn blue primary">
                 Deploy this version
               </button>
               <button type="button" onClick={this.hideSkipModal} className="btn secondary u-marginLeft--20">Cancel</button>

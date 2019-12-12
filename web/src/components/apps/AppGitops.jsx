@@ -108,11 +108,11 @@ class AppGitops extends Component {
   finishGitOpsSetup = async repoDetails => {
     const {
       ownerRepo,
-      branch = "master",
-      path = "",
-      otherService = "",
-      action = "commit",
-      format = "single"
+      branch,
+      path,
+      otherService,
+      action,
+      format
     } = repoDetails;
 
     const { app } = this.props;
@@ -148,6 +148,10 @@ class AppGitops extends Component {
       }
       await this.props.updateAppGitOps(app.id, clusterId, gitOpsInput);
       await this.props.refetch();
+      
+      if (newUri !== oldUri || gitops?.branch !== branch) {
+        await this.handleTestConnection();
+      }
 
       this.setState({ showGitOpsSettings: false, ownerRepo });
     } catch(err) {
@@ -176,6 +180,19 @@ class AppGitops extends Component {
 
   hideGitOpsSettings = () => {
     this.setState({ showGitOpsSettings: false });
+  }
+
+  getProviderIconClassName = provider => {
+    switch (provider) {
+      case "github":
+        return "github-icon";
+      case "gitlab":
+        return "gitlab-icon";
+      case "bitbucket":
+        return "bitbucket-icon";
+      default:
+        return "github-icon";
+    }
   }
 
   render() {
@@ -245,7 +262,7 @@ class AppGitops extends Component {
                 ? <span className="icon connectionEstablished u-marginLeft--10" />
                 : <span className="icon onlyNoConnectionIcon u-marginLeft--10" />
               }
-              <span className="icon github-icon u-marginLeft--10" />
+              <span className={`icon ${this.getProviderIconClassName(gitops?.provider)} u-marginLeft--10`} />
             </div>
 
             {gitopsIsConnected ?
@@ -255,7 +272,7 @@ class AppGitops extends Component {
                   When an update is available for {appTitle}, the Admin Console will commit the fully<br/>rendered and deployable YAML to {gitops?.path ? `${gitops?.path}/rendered.yaml` : `the root of ${ownerRepo}/${gitops?.branch}`} in the {gitops?.branch} branch of<br/>the {ownerRepo} repo on {gitops?.provider}.
                 </p>
                 <div className="flex justifyContent--center">
-                  <button className={`btn secondary u-marginRight--10 ${disablingGitOps ? "is-disabled" : "red"}`} onClick={this.disableGitOps}>{disablingGitOps ? "Disabling GitOps" : "Disable GitOps"}</button>
+                  <button className="btn secondary red u-marginRight--10" disabled={disablingGitOps} onClick={this.disableGitOps}>{disablingGitOps ? "Disabling GitOps" : "Disable GitOps"}</button>
                   <button className="btn secondary lightBlue" onClick={this.updateGitOpsSettings}>Update GitOps Settings</button>
                 </div>
               </div>
@@ -284,7 +301,7 @@ class AppGitops extends Component {
 
                 <div className="flex justifyContent--spaceBetween alignItems--center">
                   <div className="flex">
-                    <button className={`btn secondary u-marginRight--10 ${testingConnection ? "is-disabled" : "lightBlue"}`} onClick={this.handleTestConnection}>{testingConnection ? "Testing connection" : "Try again"}</button>
+                    <button className="btn secondary lightBlue u-marginRight--10" disabled={testingConnection} onClick={this.handleTestConnection}>{testingConnection ? "Testing connection" : "Try again"}</button>
                     <button className="btn primary blue" onClick={this.goToTroubleshootPage}>Troubleshoot</button>
                   </div>
                   <button className="btn secondary dustyGray" onClick={this.updateGitOpsSettings}>Update GitOps Settings</button>
