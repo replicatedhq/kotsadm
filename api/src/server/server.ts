@@ -34,7 +34,6 @@ import { ReplicatedError } from "./errors";
 import { MetricStore } from "../monitoring/metric_store";
 import { ParamsStore } from "../params/params_store";
 import { ensureBucket } from "../util/s3";
-import { SnapshotStore } from "../snapshots";
 
 let mount = {
   "/": "${rootDir}/../controllers/{*.*s,!(ship)/*.*s}"
@@ -120,7 +119,6 @@ export class Server extends ServerLoader {
       preflightStore: new PreflightStore(pool),
       kotsAppStore: new KotsAppStore(pool, params),
       kotsAppStatusStore: new KotsAppStatusStore(pool, params),
-      snapshotStore: new SnapshotStore(pool, params),
       kurlStore: new KurlStore(pool, params),
       metricStore: new MetricStore(pool, params, paramsStore),
       paramsStore: new ParamsStore(pool, params),

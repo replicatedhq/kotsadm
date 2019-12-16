@@ -58,5 +58,10 @@ export const Query = `
     kurl: Kurl
 
     getPrometheusAddress: String
+
+    snapshotConfig: SnapshotConfig
+    listSnapshots: [Snapshot]
+    snapshotDetail: SnapshotDetail
+    restoreDetail: RestoreDetail    
   }
 `;

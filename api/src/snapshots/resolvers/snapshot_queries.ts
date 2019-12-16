@@ -7,7 +7,7 @@ import {
   SnapshotDetail,
   SnapshotStatus,
 } from "../snapshot";
-import { SnapshotConfig, SnapshotProvider } from "../snapshot_config";
+import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_config";
 
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {
@@ -20,6 +20,26 @@ export function SnapshotQueries(stores: Stores, params: Params) {
           provider: SnapshotProvider.S3AWS,
           bucket: "",
           prefix: "",
+          s3AWS: {
+            region: "",
+            accessKeyID: "",
+            accessKeySecret: "",
+          },
+          azure: {
+            tenantID: "",
+            resourceGroup: "",
+            storageAccount: "",
+            subscriptionID: "",
+            clientID: "",
+            clientSecret: "",
+            cloudName: AzureCloudName.Public,
+          },
+          s3Compatible: {
+            endpoint: "",
+            region: "",
+            accessKeyID: "",
+            accessKeySecret: "",
+          }
         },
       };
     },

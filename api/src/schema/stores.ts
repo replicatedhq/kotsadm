@@ -9,7 +9,6 @@ import { TroubleshootStore } from "../troubleshoot";
 import { KotsLicenseStore } from "../klicenses";
 import { PreflightStore } from "../preflight/preflight_store";
 import { KotsAppStore } from "../kots_app/kots_app_store";
-import { SnapshotStore } from "../snapshots/snapshots_store";
 import { KotsAppStatusStore } from "../kots_app/kots_app_status_store";
 import { KurlStore } from "../kurl/kurl_store";
 import { MetricStore } from "../monitoring/metric_store";
@@ -27,7 +26,6 @@ export interface Stores {
   kotsLicenseStore: KotsLicenseStore;
   preflightStore: PreflightStore;
   kotsAppStore: KotsAppStore;
-  snapshotStore: SnapshotStore;
   kotsAppStatusStore: KotsAppStatusStore;
   kurlStore: KurlStore;
   metricStore: MetricStore;

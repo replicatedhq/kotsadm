@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 // import { graphql, compose, withApollo } from "react-apollo";
+import { Link } from "react-router-dom"
 import Helmet from "react-helmet";
 import AppSnapshotsRow from "./AppSnapshotRow";
 import ScheduleSnapshotForm from "../shared/ScheduleSnapshotForm";
@@ -36,13 +37,14 @@ export default class AppSnapshots extends Component {
           <div className="flex flex-auto alignItems--flexStart justifyContent--spaceBetween">
             <p className="u-fontWeight--bold u-color--tuna u-fontSize--larger u-lineHeight--normal u-marginBottom--10">Snapshots</p>
             <div className="flex">
-              <button type="button" onClick={this.toggleScheduleSnapshotModal} className="btn secondary gray u-marginRight--10">Snapshot settings</button>
+              <Link to={`/app/${app.slug}/snapshots/settings`} className="replicated-link u-fontSize--small u-fontWeight--bold u-marginRight--20 flex alignItems--center"><span className="icon snapshotSettingsIcon u-marginRight--5" />Settings</Link>
+              <Link to={`/app/${app.slug}/snapshots/schedule`} className="replicated-link u-fontSize--small u-fontWeight--bold u-marginRight--20 flex alignItems--center"><span className="icon snapshotScheduleIcon u-marginRight--5" />Schedule</Link>
               <button type="button" className="btn primary blue">Start a snapshot</button>
             </div>
           </div>
           <div>
-            <AppSnapshotsRow snapshotTitle="Sentry Enterprise v.482" />
-            <AppSnapshotsRow snapshotTitle="Sentry Enterprise v.480" />
+            <AppSnapshotsRow snapshotTitle="Sentry Enterprise v.482" appSlug={app.slug} />
+            <AppSnapshotsRow snapshotTitle="Sentry Enterprise v.480" appSlug={app.slug} />
           </div>
         </div>
         {displayScheduleSnapshotModal &&

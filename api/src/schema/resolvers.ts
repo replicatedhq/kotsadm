@@ -24,7 +24,7 @@ export const Resolvers = (stores: Stores, params: Params) => {
     ...UserQueries(stores),
     ...MonitoringQueries(stores),
     ...KotsQueries(stores, params),
-    ...SnapshotQueries(stores),
+    ...SnapshotQueries(stores, params),
     ...KotsDashboardQueries(stores, params),
     ...KotsLicenseQueries(stores),
     ...KurlQueries(stores, params),
@@ -38,7 +38,7 @@ export const Resolvers = (stores: Stores, params: Params) => {
     ...MonitoringMutations(stores),
     ...KotsLicenseMutations(stores),
     ...KotsMutations(stores),
-    ...SnapshotMutations(stores, params),
+    ...SnapshotMutations(stores),
     ...KurlMutations(stores, params),
     ...AppsMutations(stores),
   };

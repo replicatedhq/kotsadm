@@ -1,3 +1,12 @@
+.snapshot-form-wrapper {
+  width: 100%;
+  max-width: 320px;
+
+  .BoxedCheckbox {
+    padding-left: 10px;
+  }
+}
+
 .cron-expression-text {
   position: absolute;
   font-size: 12px;

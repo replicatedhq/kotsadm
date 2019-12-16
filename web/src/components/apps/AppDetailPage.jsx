@@ -28,6 +28,8 @@ import GenerateSupportBundle from "../troubleshoot/GenerateSupportBundle";
 import AppSettings from "./AppSettings";
 import AppGitops from "./AppGitops";
 import AppSnapshots from "./AppSnapshots";
+import AppSnapshotSettings from "./AppSnapshotSettings";
+import AppSnapshotSchedule from "./AppSnapshotSchedule";
 
 import "../../scss/components/watches/WatchDetailPage.scss";
 
@@ -283,6 +285,15 @@ class AppDetailPage extends Component {
                         app={app}
                         refetch={() => this.props.getKotsAppQuery.refetch()}
                       />
+                    } />
+                    <Route exact path="/app/:slug/snapshots/settings" render={() =>
+                      <AppSnapshotSettings app={app} />
+                    } />
+                    <Route exact path="/app/:slug/snapshots/schedule" render={() =>
+                      <AppSnapshotSchedule app={app} />
+                    } />
+                    <Route exact path="/app/:slug/snapshots/:id" render={() =>
+                      <div>Snapshot details page</div>
                     } />
                     <Route component={NotFound} />
                   </Switch>
