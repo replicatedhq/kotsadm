@@ -59,8 +59,14 @@ export default class AppSnapshotSchedule extends Component {
   state = {
     retentionPolicy: "4",
     autoEnabled: false,
-    selectedSchedule: "weekly",
-    selectedRetentionUnit: "weeks",
+    selectedSchedule: {
+      value: "weekly",
+      label: "Weekly",
+    },
+    selectedRetentionUnit: {
+      value: "weeks",
+      label: "Weeks",
+    },
     frequency: "0 0 12 ? * MON *",
   };
 
@@ -114,10 +120,10 @@ export default class AppSnapshotSchedule extends Component {
     const { app } = this.props;
     const { hasValidCron } = this.state;
     const selectedRetentionUnit = RETENTION_UNITS.find((ru) => {
-      return ru.value === this.state.selectedRetentionUnit;
+      return ru.value === this.state.selectedRetentionUnit.value;
     });
     const selectedSchedule = SCHEDULES.find((schedule) => {
-      return schedule.value === this.state.selectedSchedule;
+      return schedule.value === this.state.selectedSchedule.value;
     });
     return (
       <div className="container flex-column flex1 u-overflow--auto u-paddingTop--30 u-paddingBottom--20 alignItems--center">

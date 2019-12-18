@@ -1,13 +1,14 @@
 import React, { Component } from "react";
-// import { graphql, compose, withApollo } from "react-apollo";
-import { Link } from "react-router-dom"
+import { graphql, compose, withApollo } from "react-apollo";
+import { Link, withRouter } from "react-router-dom"
 import Helmet from "react-helmet";
 import AppSnapshotsRow from "./AppSnapshotRow";
 import ScheduleSnapshotForm from "../shared/ScheduleSnapshotForm";
 import Modal from "react-modal";
-import "../../scss/components/gitops/GitOpsSettings.scss";
+import { listSnapshots } from "../../queries/SnapshotQueries";
+import "../../scss/components/snapshots/AppSnapshots.scss";
 
-export default class AppSnapshots extends Component {
+class AppSnapshots extends Component {
   
   state = {
     displayScheduleSnapshotModal: false
@@ -17,17 +18,40 @@ export default class AppSnapshots extends Component {
     this.setState({ displayScheduleSnapshotModal: !this.state.displayScheduleSnapshotModal });
   }
 
+  startManualSnapshot = () => {
+    console.log("to be implemented");
+  }
+
   handleScheduleSubmit = () => {
-    console.log("schedule mutation");
+    console.log("schedule mutation to be implemented");
   }
 
   render() {
     const {
       displayScheduleSnapshotModal
     } = this.state;
-    const { app } = this.props;
+    const { app, snapshots } = this.props;
     const appTitle = app.name;
-    
+  
+    if (!snapshots?.listSnapshots?.length) {
+      return (
+        <div className="container flex-column flex1 u-overflow--auto u-paddingTop--30 u-paddingBottom--20 justifyContent--center alignItems--center">
+          <div className="flex-column u-textAlign--center AppSnapshotsEmptyState--wrapper">
+            <p className="u-fontSize--largest u-fontWeight--bold u-color--tundora u-marginBottom--10">No snapshots have been made</p>
+            <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--30">There have been no snapshots made for {appTitle || "your application"} yet. You can manually trigger snapshots or you can set up automatic snapshots to be made on a custom schedule.</p>
+            <div className="flex justifyContent--center">
+              <div className="flex-auto u-marginRight--20">
+                <button className="btn secondary blue" onClick={this.startManualSnapshot}>Start a snapshot</button>
+              </div>
+              <div className="flex-auto">
+                <Link to={`/app/${app.slug}/snapshots/schedule`} className="btn primary blue">Schedule snapshots</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="container flex-column flex1 u-overflow--auto u-paddingTop--30 u-paddingBottom--20 alignItems--center">
         <Helmet>
@@ -42,10 +66,10 @@ export default class AppSnapshots extends Component {
               <button type="button" className="btn primary blue">Start a snapshot</button>
             </div>
           </div>
-          <div>
-            <AppSnapshotsRow snapshotTitle="Sentry Enterprise v.482" appSlug={app.slug} />
-            <AppSnapshotsRow snapshotTitle="Sentry Enterprise v.480" appSlug={app.slug} />
-          </div>
+          {snapshots?.listSnapshots && snapshots?.listSnapshots?.map((snapshot) => (
+            <AppSnapshotsRow key={`snapshot-${snapshot.name}-${snapshot.started}`} snapshot={snapshot} appSlug={app.slug} />
+          ))
+          }
         </div>
         {displayScheduleSnapshotModal &&
           <Modal
@@ -72,16 +96,17 @@ export default class AppSnapshots extends Component {
   }
 }
 
-// export default compose(
-//   withApollo,
-//   graphql(testGitOpsConnection, {
-//     props: ({ mutate }) => ({
-//       testGitOpsConnection: (appId, clusterId) => mutate({ variables: { appId, clusterId } })
-//     })
-//   }),
-//   graphql(updateAppGitOps, {
-//     props: ({ mutate }) => ({
-//       updateAppGitOps: (appId, clusterId, gitOpsInput) => mutate({ variables: { appId, clusterId, gitOpsInput } })
-//     })
-//   }),
-// )(AppSnapshots);
+export default compose(
+  withApollo,
+  withRouter,
+  graphql(listSnapshots, {
+    name: "snapshots",
+    options: ({ match }) => {
+      const slug = match.params.slug;
+      return {
+        variables: { slug },
+        fetchPolicy: "no-cache"
+      }
+    }
+  }),
+)(AppSnapshots);

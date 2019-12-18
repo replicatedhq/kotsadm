@@ -30,6 +30,7 @@ import AppGitops from "./AppGitops";
 import AppSnapshots from "./AppSnapshots";
 import AppSnapshotSettings from "./AppSnapshotSettings";
 import AppSnapshotSchedule from "./AppSnapshotSchedule";
+import AppSnapshotDetail from "./AppSnapshotDetail";
 
 import "../../scss/components/watches/WatchDetailPage.scss";
 
@@ -293,7 +294,7 @@ class AppDetailPage extends Component {
                       <AppSnapshotSchedule app={app} />
                     } />
                     <Route exact path="/app/:slug/snapshots/:id" render={() =>
-                      <div>Snapshot details page</div>
+                      <AppSnapshotDetail app={app} />
                     } />
                     <Route component={NotFound} />
                   </Switch>

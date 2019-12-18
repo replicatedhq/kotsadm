@@ -87,8 +87,8 @@ export default [
     tabName: "snapshots",
     displayName: "Snapshots",
     to: (slug) => `/app/${slug}/snapshots`,
-    displayRule: () => {
-      return true;
+    displayRule: (watch) => {
+      return watch.allowSnapshots;
     }
   }
 ];

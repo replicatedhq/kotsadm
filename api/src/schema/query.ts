@@ -60,7 +60,7 @@ export const Query = `
     getPrometheusAddress: String
 
     snapshotConfig: SnapshotConfig
-    listSnapshots: [Snapshot]
+    listSnapshots(slug: String!): [Snapshot]
     snapshotDetail: SnapshotDetail
     restoreDetail: RestoreDetail    
   }

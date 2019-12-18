@@ -494,7 +494,7 @@
 .icon.snapshotSettingsIcon {
   background-position: -129px -125px;
   width: 16px;
-  height: 16px;
+  height: 17px;
 }
 
 .icon.snapshotScheduleIcon {
@@ -503,3 +503,23 @@
   height: 16px;
 }
 
+.icon.snapshotDestination--aws {
+  background-position: -168px -229px;
+  width: 12px;
+  height: 14px;
+}
+.icon.snapshotDestination--azure {
+  background-position: -168px -245px;
+  width: 16px;
+  height: 14px;
+}
+.icon.snapshotDestination--google {
+  background-position: -168px -262px;
+  width: 16px;
+  height: 15px;
+}
+.icon.snapshotDestination--s3compatible {
+  background-position: -168px -279px;
+  width: 16px;
+  height: 16px;
+}
