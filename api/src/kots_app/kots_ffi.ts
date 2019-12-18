@@ -51,6 +51,7 @@ function kots() {
     DecryptString: [GoString, [GoString, GoString]],
     GetLatestLicense: [GoString, [GoString, GoString]],
     VerifyAirgapLicense: [GoString, [GoString]],
+    RenderFile: ["void", [GoString, GoString, GoString]],
   });
 }
 
@@ -228,6 +229,54 @@ export async function kotsAppDownloadUpdate(cursor: string, app: KotsApp, regist
   }
 }
 
+export async function kotsRenderFile(app: KotsApp, stores: Stores, input: string): Promise<string> {
+  const filename = tmp.tmpNameSync();
+  fs.writeFileSync(filename, input);
+
+  // for the status server
+  const tmpDir = tmp.dirSync();
+  const archive = path.join(tmpDir.name, "archive.tar.gz");
+
+  try {
+    fs.writeFileSync(archive, await app.getArchive("" + (app.currentSequence!)));
+
+    const statusServer = new StatusServer();
+    await statusServer.start(tmpDir.name);
+
+    const socketParam = new GoString();
+    socketParam["p"] = statusServer.socketFilename;
+    socketParam["n"] = statusServer.socketFilename.length;
+
+    const filepathParam = new GoString();
+    filepathParam["p"] = filename;
+    filepathParam["n"] = filename.length;
+
+    const archivePathParam = new GoString();
+    archivePathParam["p"] = archive;
+    archivePathParam["n"] = archive.length;
+
+    kots().RenderFile(socketParam, filepathParam, archivePathParam);
+    await statusServer.connection();
+    await statusServer.termination((resolve, reject, obj): boolean => {
+      // Return true if completed
+      if (obj.status === "terminated") {
+        if (obj.exit_code !== -1) {
+          resolve();
+        } else {
+          reject(new Error(`process failed: ${obj.display_message}`));
+        }
+        return true;
+      }
+      return false;
+    });
+
+    const rendered = fs.readFileSync(filename);
+    return rendered.toString();
+  } finally {
+    tmpDir.removeCallback();
+  }
+}
+
 export async function kotsAppCheckForUpdate(currentCursor: string, app: KotsApp, stores: Stores): Promise<boolean> {
   // We need to include the last archive because if there is an update, the ffi function will update it
   const tmpDir = tmp.dirSync();
@@ -332,8 +381,11 @@ async function saveUpdateVersion(archive: string, app: KotsApp, stores: Stores) 
       commitUrl = await createGitCommitForVersion(stores, app.id, clusterId, newSequence, commitMessage);
     }
 
+    const status = preflightSpec
+      ? "pending_preflight"
+      : "pending";
     const diffSummary = await getDiffSummary(app);
-    await stores.kotsAppStore.createDownstreamVersion(app.id, newSequence, clusterId, installationSpec.versionLabel, "pending", "Upstream Update", diffSummary, commitUrl);
+    await stores.kotsAppStore.createDownstreamVersion(app.id, newSequence, clusterId, installationSpec.versionLabel, status, "Upstream Update", diffSummary, commitUrl);
   }
 }
 
@@ -441,7 +493,7 @@ export async function kotsFinalizeApp(kotsApp: KotsApp, downstreamName: string, 
       appTitle,
       appIcon
     );
-    
+
     const isAppConfigurable = await kotsApp.isAppConfigurable();
     const downstreams = await extractDownstreamNamesFromTarball(buffer);
     const clusters = await stores.clusterStore.listAllUsersClusters();
