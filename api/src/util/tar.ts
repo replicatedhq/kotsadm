@@ -139,7 +139,11 @@ export function extractInstallationSpecFromTarball(tarball: Buffer): Promise<Ins
           return;
         }
 
-        const doc = yaml.safeLoad(data.toString());
+        // FAILSAFE_SCHEMA only supports strings, arrays and objects
+        // i.e: true/false will be parsed as "true"/"false". same for integers/floats
+        // this is used to avoid parsing SHAs like "9542e17" as a number
+        const doc = yaml.safeLoad(data.toString(), { schema: yaml.FAILSAFE_SCHEMA });
+
         if ((doc.apiVersion === "kots.io/v1beta1") && (doc.kind === "Installation")) {
           const spec = {
             cursor: doc.spec.updateCursor,
