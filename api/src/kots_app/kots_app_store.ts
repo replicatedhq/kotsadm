@@ -391,16 +391,17 @@ export class KotsAppStore {
     return apps;
   }
 
-  async updateDownstreamsStatus(appId: string, sequence: number, status: string): Promise<void> {
+  async updateDownstreamsStatus(appId: string, sequence: number, status: string, statusInfo: string): Promise<void> {
     const q = `
       update app_downstream_version
-      set status = $3
+      set status = $3, status_info = $4
       where app_id = $1 and sequence = $2
     `;
     const v = [
       appId,
       sequence,
       status,
+      statusInfo,
     ];
     await this.pool.query(q, v);
   }
@@ -441,9 +442,10 @@ export class KotsAppStore {
 
   async getDownstreamOutput(appId: string, clusterId: string, sequence: number): Promise<KotsDownstreamOutput> {
     const q = `
-      select dryrun_stdout, dryrun_stderr, apply_stdout, apply_stderr
-      from app_downstream_output
-      where app_id = $1 and cluster_id = $2 and downstream_sequence = $3
+      select adv.status, adv.status_info, ado.dryrun_stdout, ado.dryrun_stderr, ado.apply_stdout, ado.apply_stderr
+      from app_downstream_version adv LEFT JOIN app_downstream_output ado
+        ON adv.app_id = ado.app_id AND adv.cluster_id = ado.cluster_id AND adv.sequence = ado.downstream_sequence
+      where adv.app_id = $1 and adv.cluster_id = $2 and adv.sequence = $3
     `;
     const v = [
       appId,
@@ -457,16 +459,26 @@ export class KotsAppStore {
         dryrunStdout: "",
         dryrunStderr: "",
         applyStdout: "",
-        applyStderr: ""
+        applyStderr: "",
+        renderError: ""
       };
     };
 
     const row = result.rows[0];
+
+    let renderError: string | null;
+    if (row.status === "failed") {
+      renderError = row.status_info;
+    } else {
+      renderError = null;
+    }
+
     return {
       dryrunStdout: base64Decode(row.dryrun_stdout),
       dryrunStderr: base64Decode(row.dryrun_stderr),
       applyStdout: base64Decode(row.apply_stdout),
-      applyStderr: base64Decode(row.apply_stderr)
+      applyStderr: base64Decode(row.apply_stderr),
+      renderError: renderError,
     };
   }
 
@@ -497,12 +509,14 @@ export class KotsAppStore {
     appSpec: any,
     kotsAppSpec: any,
     kotsAppLicense: any,
+    configSpec: any,
+    configValues: any,
     appTitle: string | null,
     appIcon: string | null
   ): Promise<void> {
     const q = `insert into app_version (app_id, sequence, created_at, version_label, release_notes, update_cursor, encryption_key,
-        supportbundle_spec, analyzer_spec, preflight_spec, app_spec, kots_app_spec, kots_license)
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        supportbundle_spec, analyzer_spec, preflight_spec, app_spec, kots_app_spec, kots_license, config_spec, config_values)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       ON CONFLICT(app_id, sequence) DO UPDATE SET
       created_at = EXCLUDED.created_at,
       version_label = EXCLUDED.version_label,
@@ -514,7 +528,10 @@ export class KotsAppStore {
       preflight_spec = EXCLUDED.preflight_spec,
       app_spec = EXCLUDED.app_spec,
       kots_app_spec = EXCLUDED.kots_app_spec,
-      kots_license = EXCLUDED.kots_license`;
+      kots_license = EXCLUDED.kots_license,
+      config_spec = EXCLUDED.config_spec,
+      config_values = EXCLUDED.config_values
+    `;
     const v = [
       id,
       sequence,
@@ -529,6 +546,8 @@ export class KotsAppStore {
       appSpec,
       kotsAppSpec,
       kotsAppLicense,
+      configSpec,
+      configValues,
     ];
 
     await this.pool.query(q, v);
@@ -939,30 +958,8 @@ order by adv.sequence desc`;
     return result.rows[0].app_spec;
   }
 
-  async updateAppConfigCache(appId: string, sequence: string, configData: ConfigData) {
-    const q = `
-      INSERT INTO app_config_cache VALUES ($1, $2, $3, $4, $5, $6, $7)
-      ON CONFLICT(app_id, sequence) DO UPDATE SET
-      config_path = EXCLUDED.config_path,
-      config_content = EXCLUDED.config_content,
-      config_values_path = EXCLUDED.config_values_path,
-      config_values_content = EXCLUDED.config_values_content,
-      updated_at = EXCLUDED.updated_at
-    `;
-    const v = [
-      appId,
-      sequence,
-      configData.configPath,
-      configData.configContent,
-      configData.configValuesPath,
-      configData.configValuesContent,
-      new Date()
-    ];
-    await this.pool.query(q, v);
-  }
-
-  async getAppConfigCache(appId: string, sequence: string): Promise<ConfigData> {
-    const q = `select config_path, config_content, config_values_path, config_values_content from app_config_cache where app_id = $1 and sequence = $2`;
+  async getAppConfigData(appId: string, sequence: string): Promise<ConfigData | undefined> {
+    const q = `select config_spec, config_values from app_version where app_id = $1 and sequence = $2`;
     const v = [
       appId,
       sequence
@@ -971,18 +968,35 @@ order by adv.sequence desc`;
     const result = await this.pool.query(q, v);
 
     if (result.rows.length === 0) {
-      throw new ReplicatedError(`No config cache for app with ad  ${appId}`);
+      throw new ReplicatedError(`No config found for app with id ${appId}`);
     }
 
-    const row = result.rows[0]
-    const configData: ConfigData = {
-      configPath: row.config_path,
-      configContent: row.config_content,
-      configValuesPath: row.config_values_path,
-      configValuesContent: row.config_values_content
+    const row = result.rows[0];
+
+    if (!row.config_spec || !row.config_values) {
+      return undefined;
     }
+
+    const configData: ConfigData = {
+      configSpec: row.config_spec,
+      configValues: row.config_values,
+    };
 
     return configData;
+  }
+
+  /**
+   * this should be removed in 1.9.0 release
+   */
+  async updateAppConfigData(appId: string, sequence: string, configSpec: string, configValues: string): Promise<void> {
+    const q = `update app_version set config_spec = $1, config_values = $2 where app_id = $3 and sequence = $4`;
+    const v = [
+      configSpec,
+      configValues,
+      appId,
+      sequence,
+    ];
+    await this.pool.query(q, v);
   }
 
   async getAppEncryptionKey(appId: string, sequence: string): Promise<string> {
@@ -1287,14 +1301,14 @@ order by adv.sequence desc`;
     const v = [id];
 
     const result = await this.pool.query(q, v);
-    
+
     if (result.rowCount == 0) {
       throw new ReplicatedError("not found");
     }
     const row = result.rows[0];
 
     const current_sequence = row.current_sequence;
-    const qq = `SELECT preflight_spec FROM app_version WHERE app_id = $1 AND sequence = $2`;
+    const qq = `SELECT preflight_spec, config_spec FROM app_version WHERE app_id = $1 AND sequence = $2`;
 
     const vv = [
       id,
@@ -1318,6 +1332,8 @@ order by adv.sequence desc`;
     // This is to avoid a race condition when uploading a license file where the row in app_version
     // has not been created yet
     kotsApp.hasPreflight = !!rr.rows[0] && !!rr.rows[0].preflight_spec;
+    kotsApp.isConfigurable = !!rr.rows[0] && !!rr.rows[0].config_spec;
+
     return kotsApp;
   }
 
