@@ -494,7 +494,7 @@ export class KotsAppStore {
       preflight_spec = EXCLUDED.preflight_spec,
       app_spec = EXCLUDED.app_spec,
       kots_app_spec = EXCLUDED.kots_app_spec,
-      kots_license = EXCLUDED.kots_license
+      kots_license = EXCLUDED.kots_license,
       backup_spec = EXCLUDED.backup_spec`;
     const v = [
       id,
