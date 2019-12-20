@@ -1,11 +1,4 @@
-export enum SnapshotStatus {
-  New = "New",
-  FailedValidation = "FailedValidation",
-  InProgress = "InProgress",
-  Completed = "Completed",
-  PartiallyFailed = "PartiallyFailed",
-  Failed = "Failed",
-}
+import { Phase } from "./velero";
 
 export enum SnapshotTrigger {
   Manual = "manual",
@@ -15,9 +8,9 @@ export enum SnapshotTrigger {
 
 export interface Snapshot {
   name: string;
-  status: SnapshotStatus;
+  status: Phase;
   trigger: SnapshotTrigger;
-  appVersion: string;
+  appVersion: string|undefined;
   started: string;
   finished: string;
   expires: string;
@@ -75,7 +68,7 @@ export interface SnapshotHookExec {
 
 export interface RestoreDetail {
   name: string;
-  phase: SnapshotStatus,
+  phase: Phase,
   volumes: Array<RestoreVolume>;
   errors: Array<SnapshotError>;
   warnings: Array<SnapshotError>;
@@ -83,7 +76,7 @@ export interface RestoreDetail {
 
 export interface RestoreVolume {
   name: string;
-  phase: SnapshotStatus,
+  phase: Phase,
   podName: string;
   podNamespace: string;
   podVolumeName: string;
