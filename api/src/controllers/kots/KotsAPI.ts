@@ -18,6 +18,8 @@ import {
   extractAppIconFromTarball,
   extractKotsAppLicenseFromTarball,
   extractAnalyzerSpecFromTarball,
+  extractConfigSpecFromTarball,
+  extractConfigValuesFromTarball
   extractBackupSpecFromTarball
 } from "../../util/tar";
 import { Cluster } from "../../cluster";
@@ -286,6 +288,8 @@ export class KotsAPI {
     const appTitle = await extractAppTitleFromTarball(buffer);
     const appIcon = await extractAppIconFromTarball(buffer);
     const kotsAppLicense = await extractKotsAppLicenseFromTarball(buffer);
+    const configSpec = await extractConfigSpecFromTarball(buffer);
+    const configValues = await extractConfigValuesFromTarball(buffer);
     const backupSpec = await extractBackupSpecFromTarball(buffer);
 
     await request.app.locals.stores.kotsAppStore.createMidstreamVersion(
@@ -301,6 +305,8 @@ export class KotsAPI {
       appSpec,
       kotsAppSpec,
       kotsAppLicense,
+      configSpec,
+      configValues,
       appTitle,
       appIcon,
       backupSpec
@@ -557,6 +563,8 @@ export async function uploadUpdate(stores, slug, buffer, source) {
   const appIcon = await extractAppIconFromTarball(buffer);
   const installationSpec = await extractInstallationSpecFromTarball(buffer);
   const kotsAppLicense = await extractKotsAppLicenseFromTarball(buffer);
+  const configSpec = await extractConfigSpecFromTarball(buffer);
+  const configValues = await extractConfigValuesFromTarball(buffer);
   const backupSpec = await extractBackupSpecFromTarball(buffer);
 
   await stores.kotsAppStore.createMidstreamVersion(
@@ -572,6 +580,8 @@ export async function uploadUpdate(stores, slug, buffer, source) {
     appSpec,
     kotsAppSpec,
     kotsAppLicense,
+    configSpec,
+    configValues,
     appTitle,
     appIcon,
     backupSpec

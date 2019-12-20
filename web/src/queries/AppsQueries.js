@@ -361,6 +361,7 @@ export const getKotsDownstreamOutput = gql`
       dryrunStderr
       applyStdout
       applyStderr
+      renderError
     }
   }
 `;

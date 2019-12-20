@@ -15,15 +15,22 @@ export function SnapshotQueries(stores: Stores, params: Params) {
   return {
     async snapshotConfig(root: any, args: any, context: Context): Promise<SnapshotConfig> {
       return {
-        enabled: true,
-        schedule: "* * * * * *",
-        ttl: "720h",
+        autoEnabled: true,
+        autoSchedule: {
+          userSelected: "weekly",
+          schedule: "0 0 12 ? * MON *",
+        },
+        ttl: {
+          inputValue: "2",
+          inputTimeUnit: "weeks",
+          converted: "336h",
+        },
         store: {
           provider: SnapshotProvider.S3AWS,
           bucket: "",
-          prefix: "",
+          path: "",
           s3AWS: {
-            region: "",
+            region: "us-west-1",
             accessKeyID: "",
             accessKeySecret: "",
           },
@@ -37,10 +44,13 @@ export function SnapshotQueries(stores: Stores, params: Params) {
             cloudName: AzureCloudName.Public,
           },
           s3Compatible: {
-            endpoint: "",
-            region: "",
-            accessKeyID: "",
-            accessKeySecret: "",
+            endpoint: "/s3-comp-endpoint",
+            region: "us-west-1",
+            accessKeyID: "23543423543245",
+            accessKeySecret: "adsf2sdfg3245642sdfsf",
+          },
+          google: {
+            serviceAccount: `{ "key": "value" }`
           }
         },
       };

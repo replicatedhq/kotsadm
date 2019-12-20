@@ -1,8 +1,10 @@
 import React, { Component } from "react";
 import Select from "react-select";
-// import { graphql, compose, withApollo } from "react-apollo";
-import { Link } from "react-router-dom"
+import { graphql, compose, withApollo } from "react-apollo";
+import { Link, withRouter } from "react-router-dom"
 import MonacoEditor from "react-monaco-editor";
+import find from "lodash/find";
+import { snapshotSettings } from "../../queries/SnapshotQueries";
 import "../../scss/components/shared/SnapshotForm.scss";
 
 const DESTINATIONS = [
@@ -43,16 +45,13 @@ const AZURE_CLOUD_NAMES = [
   }
 ];
 
-export default class AppSnapshotSettings extends Component {
+class AppSnapshotSettings extends Component {
   state = {
-    selectedDestination: {
-      value: "aws",
-      label: "Amazon S3",
-    },
+    determiningDestination: true,
+    selectedDestination: {},
     s3bucket: "",
     s3Region: "",
     s3Path: "",
-    s3Endpoint: "",
     useIam: false,
     s3KeyId: "",
     s3KeySecret: "",
@@ -75,6 +74,64 @@ export default class AppSnapshotSettings extends Component {
     s3CompatibleEndpoint: "",
     s3CompatibleRegion: ""
   };
+
+  setFields = () => {
+    const { snapshotSettings } = this.props;
+    if (!snapshotSettings.snapshotConfig) return;
+    const { store } = snapshotSettings.snapshotConfig;
+
+    if (store.s3AWS) {
+      const useIam = !!store.s3AWS.accessKeyID.length || !!store.s3AWS.accessKeySecret.length;
+      return this.setState({
+        determiningDestination: false,
+        selectedDestination: find(DESTINATIONS, ["value", "aws"]),
+        s3bucket: store.bucket,
+        s3Region: store.s3AWS.region,
+        s3Path: store.path,
+        useIam,
+        s3KeyId: store.s3AWS.accessKeyID || "",
+        s3KeySecret: store.s3AWS.accessKeySecret || ""
+      });
+    }
+
+    if (store.azure) {
+      return this.setState({
+        determiningDestination: false,
+        selectedDestination: find(DESTINATIONS, ["value", "azure"]),
+        azureSubscriptionId: store.azure.subscriptionID,
+        azureTenantId: store.azure.tenantID,
+        azureClientId: store.azure.clientID,
+        azureClientSecret: store.azure.clientSecret,
+        azureResourceGroupName: store.azure.resourceGroup,
+        azureStorageAccountId: store.azure.storageAccount,
+        selectedAzureCloudName: find(AZURE_CLOUD_NAMES, ["value", store.azure.cloudName])
+      });
+    }
+
+    if (store.google) {
+      return this.setState({
+        determiningDestination: false,
+        selectedDestination: find(DESTINATIONS, ["value", "google"]),
+        gcsServiceAccount: store.google.serviceAccount
+      });
+    }
+
+    if (store.s3Compatible) {
+      return this.setState({
+        determiningDestination: false,
+        selectedDestination: find(DESTINATIONS, ["value", "s3compatible"]),
+        s3CompatibleKeyId: store.s3Compatible.accessKeyID,
+        s3CompatibleKeySecret: store.s3Compatible.accessKeySecret,
+        s3CompatibleEndpoint: store.s3Compatible.endpoint,
+        s3CompatibleRegion: store.s3Compatible.region
+      });
+    }
+    // if nothing exists yet, we've determined default state is good
+    this.setState({
+      determiningDestination: false,
+      selectedDestination: find(DESTINATIONS, ["value", "aws"]),
+    });
+  }
 
   handleFormChange = (field, e) => {
     let nextState = {};
@@ -144,26 +201,22 @@ export default class AppSnapshotSettings extends Component {
                 <input type="text" className="Input" placeholder="/path/to/destination" value={this.state.s3Path} onChange={(e) => { this.handleFormChange("s3Path", e) }}/>
               </div>
               <div className="flex1 u-paddingLeft--5">
-                <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Endpoint</p>
-                <input type="text" className="Input" placeholder="endpoint" value={this.state.s3Endpoint} onChange={(e) => { this.handleFormChange("s3Endpoint", e) }}/>
-              </div>
-            </div>
-
-            <div className="flex1 u-marginBottom--30">
-              <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left">
-                <div className={`BoxedCheckbox flex-auto flex alignItems--center ${this.state.useIam ? "is-active" : ""}`}>
-                  <input
-                    type="checkbox"
-                    className="u-cursor--pointer u-marginLeft--10"
-                    id="useIam"
-                    checked={this.state.useIam}
-                    onChange={(e) => { this.handleFormChange("useIam", e) }}
-                  />
-                  <label htmlFor="useIam" className="flex1 flex u-width--full u-position--relative u-cursor--pointer u-userSelect--none">
-                    <div className="flex1">
-                      <p className="u-color--tuna u-fontSize--normal u-fontWeight--medium">Use IAM Role</p>
-                    </div>
-                  </label>
+                <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">&nbsp;</p>
+                <div className="BoxedCheckbox-wrapper flex1 u-textAlign--left">
+                  <div className={`BoxedCheckbox flex-auto flex alignItems--center ${this.state.useIam ? "is-active" : ""}`}>
+                    <input
+                      type="checkbox"
+                      className="u-cursor--pointer u-marginLeft--10"
+                      id="useIam"
+                      checked={this.state.useIam}
+                      onChange={(e) => { this.handleFormChange("useIam", e) }}
+                    />
+                    <label htmlFor="useIam" className="flex1 flex u-width--full u-position--relative u-cursor--pointer u-userSelect--none">
+                      <div className="flex1">
+                        <p className="u-color--tuna u-fontSize--normal u-fontWeight--medium">Use IAM Role</p>
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -295,6 +348,18 @@ export default class AppSnapshotSettings extends Component {
     }
   }
 
+  componentDidUpdate = (lastProps) => {
+    if (this.props.snapshotSettings.snapshotConfig && this.props.snapshotSettings.snapshotConfig !== lastProps.snapshotSettings.snapshotConfig) {
+      this.setFields();
+    }
+  }
+
+  componentDidMount = () => {
+    if (this.props.snapshotSettings.snapshotConfig) {
+      this.setFields();
+    }
+  }
+
   render() {
     const { app } = this.props;
     const selectedDestination = DESTINATIONS.find((d) => {
@@ -330,15 +395,19 @@ export default class AppSnapshotSettings extends Component {
                 />
               </div>
             </div>
-            {this.renderDestinationFields()}
-            <div className="flex u-marginBottom--30">
-              <div className="u-marginRight--10">
-                <Link to={`/app/${app?.slug}/snapshots`} className="btn secondary">Cancel</Link>
-              </div>
+            {!this.state.determiningDestination &&
               <div>
-                <button className="btn primary blue" onClick={this.onSubmit}>Update settings</button>
+                {this.renderDestinationFields()}
+                <div className="flex u-marginBottom--30">
+                  <div className="u-marginRight--10">
+                    <Link to={`/app/${app?.slug}/snapshots`} className="btn secondary">Cancel</Link>
+                  </div>
+                  <div>
+                    <button className="btn primary blue" onClick={this.onSubmit}>Update settings</button>
+                  </div>
+                </div>
               </div>
-            </div>
+            }
           </form>
         </div>
       </div>
@@ -346,16 +415,17 @@ export default class AppSnapshotSettings extends Component {
   }
 }
 
-// export default compose(
-//   withApollo,
-//   graphql(testGitOpsConnection, {
-//     props: ({ mutate }) => ({
-//       testGitOpsConnection: (appId, clusterId) => mutate({ variables: { appId, clusterId } })
-//     })
-//   }),
-//   graphql(updateAppGitOps, {
-//     props: ({ mutate }) => ({
-//       updateAppGitOps: (appId, clusterId, gitOpsInput) => mutate({ variables: { appId, clusterId, gitOpsInput } })
-//     })
-//   }),
-// )(AppSnapshots);
+export default compose(
+  withApollo,
+  withRouter,
+  graphql(snapshotSettings, {
+    name: "snapshotSettings",
+    options: ({ match }) => {
+      const slug = match.params.slug;
+      return {
+        variables: { slug },
+        fetchPolicy: "no-cache"
+      }
+    }
+  })
+)(AppSnapshotSettings);

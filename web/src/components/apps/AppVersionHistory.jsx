@@ -10,13 +10,12 @@ import Modal from "react-modal";
 import moment from "moment";
 import changeCase from "change-case";
 import find from "lodash/find";
-import map from "lodash/map";
 import Loader from "../shared/Loader";
 import MarkdownRenderer from "@src/components/shared/MarkdownRenderer";
 import DownstreamWatchVersionDiff from "@src/components/watches/DownstreamWatchVersionDiff";
 import { getKotsDownstreamHistory, getKotsDownstreamOutput, getUpdateDownloadStatus } from "../../queries/AppsQueries";
 import { checkForKotsUpdates } from "../../mutations/AppsMutations";
-import { Utilities, hasPendingPreflight, getPreflightResultState, getGitProviderDiffUrl, getCommitHashFromUrl } from "../../utilities/utilities";
+import { Utilities, isAwaitingResults, getPreflightResultState, getGitProviderDiffUrl, getCommitHashFromUrl } from "../../utilities/utilities";
 import { Repeater } from "../../utilities/repeater";
 
 import "@src/scss/components/watches/WatchVersionHistory.scss";
@@ -172,7 +171,6 @@ class AppVersionHistory extends Component {
     }
 
     const isCurrentVersion = version.sequence === downstream.currentVersion?.sequence;
-    const isPendingVersion = find(downstream.pendingVersions, { sequence: version.sequence });
     const isPastVersion = find(downstream.pastVersions, { sequence: version.sequence });
     const showActions = !isPastVersion || app.allowRollback;
 
@@ -184,11 +182,11 @@ class AppVersionHistory extends Component {
             disabled={isCurrentVersion}
             onClick={() => this.deployVersion(version)}
           >
-            {isPendingVersion ?
-              "Deploy" :
+            {isPastVersion ?
+              "Rollback" :
               isCurrentVersion ?
                 "Deployed" :
-                "Rollback"
+                "Deploy"
             }
           </button>
         }
@@ -262,7 +260,7 @@ class AppVersionHistory extends Component {
     const tabs = Object.keys(logs);
     return (
       <div className="flex action-tab-bar u-marginTop--10">
-        {map(tabs, tab => (
+        {tabs.filter(tab => tab !== "renderError").map(tab => (
           <div className={`tab-item blue ${tab === selectedTab && "is-active"}`} key={tab} onClick={() => this.setState({ selectedTab: tab })}>
             {tab}
           </div>
@@ -300,6 +298,10 @@ class AppVersionHistory extends Component {
     await this.props.makeCurrentVersion(match.params.slug, version.sequence, clusterSlug);
     await this.props.data.refetch();
     this.setState({ versionToDeploy: null });
+
+    if (this.props.updateCallback) {
+      this.props.updateCallback();
+    }
   }
 
   onForceDeployClick = () => {
@@ -600,7 +602,7 @@ class AppVersionHistory extends Component {
     const currentDownstreamVersion = downstream?.currentVersion;
     const versionHistory = data?.getKotsDownstreamHistory?.length ? data.getKotsDownstreamHistory : [];
 
-    if (hasPendingPreflight(versionHistory)) {
+    if (isAwaitingResults(versionHistory)) {
       data?.startPolling(2000);
     } else {
       data?.stopPolling();
@@ -768,11 +770,11 @@ class AppVersionHistory extends Component {
               </div>
             ) : (
                 <div className="flex-column flex1">
-                  {this.renderLogsTabs()}
-                  <div className="flex-column flex1 u-border--gray monaco-editor-wrapper">
+                  {logs.renderError ?
+                    <div className="flex-column flex1 u-border--gray monaco-editor-wrapper">
                     <MonacoEditor
                       language="json"
-                      value={logs[selectedTab]}
+                      value={logs.renderError}
                       height="100%"
                       width="100%"
                       options={{
@@ -785,6 +787,27 @@ class AppVersionHistory extends Component {
                       }}
                     />
                   </div>
+                  :
+                  <div className="flex-column flex1">
+                    {this.renderLogsTabs()}
+                    <div className="flex-column flex1 u-border--gray monaco-editor-wrapper">
+                      <MonacoEditor
+                        language="json"
+                        value={logs[selectedTab]}
+                        height="100%"
+                        width="100%"
+                        options={{
+                          readOnly: true,
+                          contextmenu: false,
+                          minimap: {
+                            enabled: false
+                          },
+                          scrollBeyondLastLine: false,
+                        }}
+                      />
+                    </div>
+                  </div>
+                  }
                   <div className="u-marginTop--20 flex">
                     <button type="button" className="btn primary" onClick={this.hideLogsModal}>Ok, got it!</button>
                   </div>

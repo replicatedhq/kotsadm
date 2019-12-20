@@ -1,9 +1,24 @@
 const SnapshotConfig = `
   type SnapshotConfig {
-    enabled: Boolean
-    schedule: String
-    ttl: String
+    autoEnabled: Boolean
+    autoSchedule: SnapshotSchedule
+    ttl: SnapshotTTl
     store: SnapshotStore
+  }
+`;
+
+const SnapshotSchedule = `
+  type SnapshotSchedule {
+    userSelected: String
+    schedule: String
+  }
+`;
+
+const SnapshotTTl = `
+  type SnapshotTTl {
+    inputValue: String
+    inputTimeUnit: String
+    converted: String
   }
 `;
 
@@ -11,10 +26,11 @@ const SnapshotStore = `
   type SnapshotStore {
     provider: String
     bucket: String
-    prefix: String
+    path: String
     s3AWS: SnapshotStoreS3AWS
     azure: SnapshotStoreAzure
     s3Compatible: SnapshotStoreS3Compatible
+    google: SnapshotStoreGoogle
   }
 `;
 
@@ -147,6 +163,8 @@ const RestoreVolume = `
 export default [
   SnapshotConfig,
   SnapshotStore,
+  SnapshotSchedule,
+  SnapshotTTl,
   SnapshotStoreS3AWS,
   SnapshotStoreS3Compatible,
   SnapshotStoreAzure,
