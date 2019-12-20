@@ -1,8 +1,19 @@
 export interface SnapshotConfig {
-  enabled: boolean;
-  schedule: string;
-  ttl: string;
+  autoEnabled: boolean;
+  autoSchedule: SnapshotSchedule;
+  ttl: SnapshotTTl;
   store: SnapshotStore;
+}
+
+export interface SnapshotSchedule {
+  userSelected: string;
+  schedule: string;
+}
+
+export interface SnapshotTTl {
+  inputValue: string;
+  inputTimeUnit: string;
+  converted: string;
 }
 
 export enum SnapshotProvider {
@@ -46,7 +57,7 @@ export interface SnapshotStoreGoogle {
 export interface SnapshotStore {
   provider: SnapshotProvider;
   bucket: String;
-  prefix?: String;
+  path?: String;
   s3AWS?: SnapshotStoreS3AWS;
   s3Compatible?: SnapshotStoreS3Compatible;
   azure?: SnapshotStoreAzure;

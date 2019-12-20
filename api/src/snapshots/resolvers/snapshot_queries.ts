@@ -14,15 +14,22 @@ export function SnapshotQueries(stores: Stores, params: Params) {
   return {
     async snapshotConfig(root: any, args: any, context: Context): Promise<SnapshotConfig> {
       return {
-        enabled: true,
-        schedule: "* * * * * *",
-        ttl: "720h",
+        autoEnabled: true,
+        autoSchedule: {
+          userSelected: "weekly",
+          schedule: "0 0 12 ? * MON *",
+        },
+        ttl: {
+          inputValue: "2",
+          inputTimeUnit: "weeks",
+          converted: "336h",
+        },
         store: {
           provider: SnapshotProvider.S3AWS,
           bucket: "",
-          prefix: "",
+          path: "",
           s3AWS: {
-            region: "",
+            region: "us-west-1",
             accessKeyID: "",
             accessKeySecret: "",
           },
@@ -36,10 +43,13 @@ export function SnapshotQueries(stores: Stores, params: Params) {
             cloudName: AzureCloudName.Public,
           },
           s3Compatible: {
-            endpoint: "",
-            region: "",
-            accessKeyID: "",
-            accessKeySecret: "",
+            endpoint: "/s3-comp-endpoint",
+            region: "us-west-1",
+            accessKeyID: "23543423543245",
+            accessKeySecret: "adsf2sdfg3245642sdfsf",
+          },
+          google: {
+            serviceAccount: `{ "key": "value" }`
           }
         },
       };
@@ -48,19 +58,18 @@ export function SnapshotQueries(stores: Stores, params: Params) {
     async listSnapshots(root: any, args: any, context: Context): Promise<Array<Snapshot>> {
       const { slug } = args;
       console.log(slug);
-      // return [{
-      //   name: "v.482 Manual Snapshot",
-      //   status: SnapshotStatus.Completed,
-      //   trigger: SnapshotTrigger.Manual,
-      //   appVersion: "1.0.0",
-      //   started: "2019-12-18T20:45:32+00:00",
-      //   finished: "2019-12-18T21:49:37+00:00",
-      //   expires: "2020-01-12T00:00:00+00:00",
-      //   volumeCount: 5,
-      //   volumeSuccessCount: 5,
-      //   volumeBytes: 350810305
-      // }];
-      return [];
+      return [{
+        name: "v.482 Manual Snapshot",
+        status: SnapshotStatus.Completed,
+        trigger: SnapshotTrigger.Manual,
+        appVersion: "1.0.0",
+        started: "2019-12-18T20:45:32+00:00",
+        finished: "2019-12-18T21:49:37+00:00",
+        expires: "2020-01-12T00:00:00+00:00",
+        volumeCount: 5,
+        volumeSuccessCount: 5,
+        volumeBytes: 350810305
+      }];
     },
 
     async snapshotDetail(root: any, args: any, context: Context): Promise<SnapshotDetail> {

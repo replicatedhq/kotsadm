@@ -1,8 +1,10 @@
 import React, { Component } from "react";
 import Select from "react-select";
-// import { graphql, compose, withApollo } from "react-apollo";
-import { Link } from "react-router-dom"
-import { getCronFrequency, getReadableCronDescriptor } from "../../utilities/utilities"
+import { graphql, compose, withApollo } from "react-apollo";
+import { Link, withRouter } from "react-router-dom"
+import { getCronFrequency, getReadableCronDescriptor } from "../../utilities/utilities";
+import { snapshotConfig } from "../../queries/SnapshotQueries";
+import find from "lodash/find";
 import "../../scss/components/shared/SnapshotForm.scss";
 
 const SCHEDULES = [
@@ -55,20 +57,34 @@ const RETENTION_UNITS = [
   }
 ];
 
-export default class AppSnapshotSchedule extends Component {
+class AppSnapshotSchedule extends Component {
   state = {
-    retentionPolicy: "4",
+    retentionInput: "",
     autoEnabled: false,
-    selectedSchedule: {
-      value: "weekly",
-      label: "Weekly",
-    },
-    selectedRetentionUnit: {
-      value: "weeks",
-      label: "Weeks",
-    },
-    frequency: "0 0 12 ? * MON *",
+    selectedSchedule: {},
+    selectedRetentionUnit: {},
+    frequency: "",
   };
+
+  setFields = () => {
+    const { snapshotConfig } = this.props;
+    if (snapshotConfig.snapshotConfig) {
+      this.setState({
+        autoEnabled: snapshotConfig.snapshotConfig.autoEnabled,
+        retentionInput: snapshotConfig.snapshotConfig.ttl.inputValue,
+        selectedRetentionUnit: find(RETENTION_UNITS, ["value", snapshotConfig.snapshotConfig.ttl.inputTimeUnit]),
+        selectedSchedule: find(SCHEDULES, ["value", snapshotConfig.snapshotConfig.autoSchedule.userSelected]),
+        frequency: snapshotConfig.snapshotConfig.autoSchedule.schedule
+      }, () => this.getReadableCronExpression());
+    } else {
+      this.setState({
+        retentionInput: "4",
+        selectedRetentionUnit: find(RETENTION_UNITS, ["value", "weeks"]),
+        selectedSchedule: find(SCHEDULES, ["value", "weekly"]),
+        frequency: "0 0 12 ? * MON *"
+      }, () => this.getReadableCronExpression())
+    }
+  }
 
   handleFormChange = (field, e) => {
     let nextState = {};
@@ -112,8 +128,17 @@ export default class AppSnapshotSchedule extends Component {
     this.setState({ selectedRetentionUnit: retentionUnit });
   }
 
+  componentDidUpdate = (lastProps) => {
+    if (this.props.snapshotConfig.snapshotConfig && this.props.snapshotConfig.snapshotConfig !== lastProps.snapshotConfig.snapshotConfig) {
+      this.setFields();
+    }
+  }
+
   componentDidMount = () => {
     this.getReadableCronExpression();
+    if (this.props.snapshotConfig.snapshotConfig) {
+      this.setFields();
+    }
   }
 
   render() {
@@ -191,7 +216,7 @@ export default class AppSnapshotSchedule extends Component {
                 <p className="u-fontSize--small u-color--dustyGray u-fontWeight--normal u-lineHeight--normal u-marginBottom--10">Snapshots older than this will be deleted.</p>
                 <div className="flex u-marginBottom--20">
                   <div className="flex-auto u-paddingRight--5">
-                    <input type="text" className="Input" placeholder="4" value={this.state.retentionPolicy} onChange={(e) => { this.handleFormChange("retentionPolicy", e) }}/>
+                    <input type="text" className="Input" placeholder="4" value={this.state.retentionInput} onChange={(e) => { this.handleFormChange("retentionInput", e) }}/>
                   </div>
                   <div className="flex1 u-paddingLeft--5">
                     <Select
@@ -216,16 +241,17 @@ export default class AppSnapshotSchedule extends Component {
   }
 }
 
-// export default compose(
-//   withApollo,
-//   graphql(testGitOpsConnection, {
-//     props: ({ mutate }) => ({
-//       testGitOpsConnection: (appId, clusterId) => mutate({ variables: { appId, clusterId } })
-//     })
-//   }),
-//   graphql(updateAppGitOps, {
-//     props: ({ mutate }) => ({
-//       updateAppGitOps: (appId, clusterId, gitOpsInput) => mutate({ variables: { appId, clusterId, gitOpsInput } })
-//     })
-//   }),
-// )(AppSnapshots);
+export default compose(
+  withApollo,
+  withRouter,
+  graphql(snapshotConfig, {
+    name: "snapshotConfig",
+    options: ({ match }) => {
+      const slug = match.params.slug;
+      return {
+        variables: { slug },
+        fetchPolicy: "no-cache"
+      }
+    }
+  })
+)(AppSnapshotSchedule);
