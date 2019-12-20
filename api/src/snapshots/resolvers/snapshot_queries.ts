@@ -6,8 +6,9 @@ import {
   Snapshot,
   SnapshotDetail,
   SnapshotStatus,
+  SnapshotTrigger,
 } from "../snapshot";
-import { SnapshotConfig, SnapshotProvider } from "../snapshot_config";
+import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_config";
 
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {
@@ -20,11 +21,45 @@ export function SnapshotQueries(stores: Stores, params: Params) {
           provider: SnapshotProvider.S3AWS,
           bucket: "",
           prefix: "",
+          s3AWS: {
+            region: "",
+            accessKeyID: "",
+            accessKeySecret: "",
+          },
+          azure: {
+            tenantID: "",
+            resourceGroup: "",
+            storageAccount: "",
+            subscriptionID: "",
+            clientID: "",
+            clientSecret: "",
+            cloudName: AzureCloudName.Public,
+          },
+          s3Compatible: {
+            endpoint: "",
+            region: "",
+            accessKeyID: "",
+            accessKeySecret: "",
+          }
         },
       };
     },
 
     async listSnapshots(root: any, args: any, context: Context): Promise<Array<Snapshot>> {
+      const { slug } = args;
+      console.log(slug);
+      // return [{
+      //   name: "v.482 Manual Snapshot",
+      //   status: SnapshotStatus.Completed,
+      //   trigger: SnapshotTrigger.Manual,
+      //   appVersion: "1.0.0",
+      //   started: "2019-12-18T20:45:32+00:00",
+      //   finished: "2019-12-18T21:49:37+00:00",
+      //   expires: "2020-01-12T00:00:00+00:00",
+      //   volumeCount: 5,
+      //   volumeSuccessCount: 5,
+      //   volumeBytes: 350810305
+      // }];
       return [];
     },
 

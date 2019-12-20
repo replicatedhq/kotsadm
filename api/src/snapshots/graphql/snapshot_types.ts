@@ -3,7 +3,7 @@ const SnapshotConfig = `
     enabled: Boolean
     schedule: String
     ttl: String
-    store: Store
+    store: SnapshotStore
   }
 `;
 
@@ -12,9 +12,9 @@ const SnapshotStore = `
     provider: String
     bucket: String
     prefix: String
-    s3AWS: s3AWS
-    azure: Azure
-    s3Compatible: S3Compatible
+    s3AWS: SnapshotStoreS3AWS
+    azure: SnapshotStoreAzure
+    s3Compatible: SnapshotStoreS3Compatible
   }
 `;
 
@@ -42,7 +42,6 @@ const SnapshotStoreAzure = `
     resourceGroup: String
     storageAccount: String
     subscriptionID: String
-    tenantID: String
     clientID: String
     clientSecret: String
     cloudName: String
@@ -51,7 +50,7 @@ const SnapshotStoreAzure = `
 
 const SnapshotStoreGoogle = `
   type SnapshotStoreGoogle {
-    serviceAccount: String;
+    serviceAccount: String
   }
 `;
 
@@ -74,8 +73,8 @@ const SnapshotDetail = `
   type SnapshotDetail {
     name: String
     namespaces: [String]
-    hooks: [Hook]
-    volumes: [Volume]
+    hooks: [SnapshotHook]
+    volumes: [SnapshotVolume]
     errors: [SnapshotError]
     warnings: [SnapshotError]
   }
@@ -91,8 +90,8 @@ const SnapshotError = `
 const SnapshotVolume = `
   type SnapshotVolume {
     name: String
-    sizeBytes: Number
-    doneBytes: Number
+    sizeBytes: Int
+    doneBytes: Int
     started: String
     finished: String
   }
@@ -141,6 +140,23 @@ const RestoreVolume = `
     sizeBytes: Int
     doneBytes: Int
     started: String
-    finished?: String
+    finished: String
   }
 `;
+
+export default [
+  SnapshotConfig,
+  SnapshotStore,
+  SnapshotStoreS3AWS,
+  SnapshotStoreS3Compatible,
+  SnapshotStoreAzure,
+  SnapshotStoreGoogle,
+  Snapshot,
+  SnapshotDetail,
+  SnapshotError,
+  SnapshotVolume,
+  SnapshotHook,
+  SnapshotHookExec,
+  RestoreDetail,
+  RestoreVolume
+]

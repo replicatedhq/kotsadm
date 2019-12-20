@@ -1,4 +1,4 @@
-FROM node:10
+FROM node:10 AS build
 WORKDIR /src
 ADD . /src
 
@@ -8,8 +8,6 @@ RUN make deps-prod
 RUN curl -L https://install.goreleaser.com/github.com/tj/node-prune.sh | bash && ./bin/node-prune
 
 FROM node:10-buster-slim
-COPY --from=0 /src/build /src/build
-COPY --from=0 /src/node_modules /src/node_modules
 
 # Install Kubectl
 ENV KUBECTL_VERSION=v1.16.1
@@ -27,13 +25,13 @@ RUN curl -L "https://github.com/kubernetes-sigs/kustomize/releases/download/v2.0
   mv /tmp/kustomize /usr/local/bin
 
 # Install kots.so
-RUN curl -L "https://github.com/replicatedhq/kots/releases/download/v1.5.0-beta.1/kots.so_linux_amd64.tar.gz" > /tmp/kots.tar.gz && \
+RUN curl -L "https://github.com/replicatedhq/kots/releases/download/v1.7.0-beta.1/kots.so_linux_amd64.tar.gz" > /tmp/kots.tar.gz && \
   cd /tmp && tar xzvf kots.tar.gz && \
   mv /tmp/kots.so /lib/kots.so && \
   rm -rf /tmp/*
 
 # Install troubleshoot.so
-RUN curl -L "https://github.com/replicatedhq/troubleshoot/releases/download/v0.9.13/troubleshoot.so_0.9.13_linux_amd64.tar.gz" > /tmp/troubleshoot.tar.gz && \
+RUN curl -L "https://github.com/replicatedhq/troubleshoot/releases/download/v0.9.14/troubleshoot.so_linux_amd64.tar.gz" > /tmp/troubleshoot.tar.gz && \
   cd /tmp && tar xzvf troubleshoot.tar.gz && \
   mv /tmp/troubleshoot.so /lib/troubleshoot.so && \
   rm -rf /tmp/*
@@ -46,6 +44,9 @@ ADD ./deploy/policy.json /etc/containers/policy.json
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
     libgpgme-dev libdevmapper-dev \
   && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /src/build /src/build
+COPY --from=build /src/node_modules /src/node_modules
 
 EXPOSE 3000
 ARG commit=unknown

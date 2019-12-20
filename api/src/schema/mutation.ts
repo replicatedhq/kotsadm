@@ -36,6 +36,12 @@ type Mutation {
 
   setPrometheusAddress(value: String!): Boolean
   deletePrometheusAddress: Boolean
+
+  saveSnapshotConfig: Boolean
+  saveSnapshotStore: Boolean
+  manualSnapshot: Boolean
+  restoreSnapshot: Boolean
+  deleteSnapshot: Boolean
 }
 `;
 

@@ -483,6 +483,11 @@ export class KotsApp {
     }
   }
 
+  public async isGitOpsSupported(stores: Stores): Promise<boolean> {
+    const sequence = this.currentSequence || 0;
+    return await stores.kotsAppStore.isGitOpsSupported(this.id, sequence);
+  }
+  
   public async isAppConfigurable(): Promise<boolean> {
     const sequence = Number.isInteger(this.currentSequence!) ? `${this.currentSequence}` : "";
     if (sequence === "") {
@@ -504,6 +509,18 @@ export class KotsApp {
       /* not a valid app spec */
     }
 
+    return false;
+  }
+
+  private async isAllowSnapshots(stores: Stores): Promise<boolean> {
+    const parsedKotsAppSpec = await stores.kotsAppStore.getKotsAppSpec(this.id, this.currentSequence!);
+    try {
+      if (parsedKotsAppSpec && parsedKotsAppSpec.allowSnapshots) {
+        return true;
+      }
+    } catch {
+      /* not a valid app spec */
+    }
     return false;
   }
 
@@ -534,7 +551,9 @@ export class KotsApp {
     return {
       ...this,
       isConfigurable: () => this.isAppConfigurable(),
+      isGitOpsSupported: () => this.isGitOpsSupported(stores),
       allowRollback: () => this.isAllowRollback(stores),
+      allowSnapshots: () => this.isAllowSnapshots(stores),
       currentVersion: () => this.getCurrentAppVersion(stores),
       downstreams: _.map(downstreams, (downstream) => {
         const kotsSchemaCluster = downstream.toKotsAppSchema(this.id, stores);
@@ -609,13 +628,13 @@ export interface KotsConfigItem {
   name: string;
   type: string;
   title: string;
-  helpText: string;
+  help_text: string;
   recommended: boolean;
   default: string;
   value: string;
-  multiValue: [string];
-  readOnly: boolean;
-  writeOnce: boolean;
+  multi_value: [string];
+  readonly: boolean;
+  write_once: boolean;
   when: string;
   multiple: boolean;
   hidden: boolean;

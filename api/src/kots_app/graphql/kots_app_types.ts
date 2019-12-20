@@ -25,8 +25,10 @@ const KotsApp = `
     currentVersion: KotsVersion
     hasPreflight: Boolean
     isConfigurable: Boolean
+    isGitOpsSupported: Boolean
     allowRollback: Boolean
     kubectlVersion: String
+    allowSnapshots: Boolean
   }
 `;
 
@@ -171,13 +173,13 @@ const KotsConfigItem = `
     name: String
     type: String
     title: String
-    helpText: String
+    help_text: String
     recommended: Boolean
     default: String
     value: String
-    multiValue: [String]
-    readOnly: Boolean
-    writeOnce: Boolean
+    multi_value: [String]
+    readonly: Boolean
+    write_once: Boolean
     when: String
     multiple: Boolean
     hidden: Boolean
@@ -193,13 +195,13 @@ const KotsConfigItemInput = `
     name: String
     type: String
     title: String
-    helpText: String
+    help_text: String
     recommended: Boolean
     default: String
     value: String
-    multiValue: [String]
-    readOnly: Boolean
-    writeOnce: Boolean
+    multi_value: [String]
+    readonly: Boolean
+    write_once: Boolean
     when: String
     multiple: Boolean
     hidden: Boolean

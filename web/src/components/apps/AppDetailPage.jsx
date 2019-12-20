@@ -27,6 +27,10 @@ import SupportBundleAnalysis from "../troubleshoot/SupportBundleAnalysis";
 import GenerateSupportBundle from "../troubleshoot/GenerateSupportBundle";
 import AppSettings from "./AppSettings";
 import AppGitops from "./AppGitops";
+import AppSnapshots from "./AppSnapshots";
+import AppSnapshotSettings from "./AppSnapshotSettings";
+import AppSnapshotSchedule from "./AppSnapshotSchedule";
+import AppSnapshotDetail from "./AppSnapshotDetail";
 
 import "../../scss/components/watches/WatchDetailPage.scss";
 
@@ -262,6 +266,7 @@ class AppDetailPage extends Component {
                     <Route exact path="/app/:slug/license" render={() =>
                       <AppLicense
                         app={app}
+                        syncCallback={this.refetchGraphQLData}
                       />
                     } />
                     <Route exact path="/app/:slug/registry-settings" render={() =>
@@ -275,6 +280,21 @@ class AppDetailPage extends Component {
                         history={this.props.history}
                         refetch={() => this.props.getKotsAppQuery.refetch()}
                       />
+                    } />
+                    <Route exact path="/app/:slug/snapshots" render={() =>
+                      <AppSnapshots
+                        app={app}
+                        refetch={() => this.props.getKotsAppQuery.refetch()}
+                      />
+                    } />
+                    <Route exact path="/app/:slug/snapshots/settings" render={() =>
+                      <AppSnapshotSettings app={app} />
+                    } />
+                    <Route exact path="/app/:slug/snapshots/schedule" render={() =>
+                      <AppSnapshotSchedule app={app} />
+                    } />
+                    <Route exact path="/app/:slug/snapshots/:id" render={() =>
+                      <AppSnapshotDetail app={app} />
                     } />
                     <Route component={NotFound} />
                   </Switch>
@@ -304,7 +324,7 @@ class AppDetailPage extends Component {
                 {`kubectl kots download <namespace>`}
               </CodeSnippet>
               <div className="u-marginTop--10 flex">
-                <button onClick={this.toggleDisplayDownloadModal} className="btn green primary">Ok, got it!</button>
+                <button onClick={this.toggleDisplayDownloadModal} className="btn blue primary">Ok, got it!</button>
               </div>
             </div>
           </Modal>

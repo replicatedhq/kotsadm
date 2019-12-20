@@ -5,6 +5,7 @@ import { Switch, Route, Redirect, Router } from "react-router-dom";
 import { ApolloProvider } from "react-apollo";
 import { Helmet } from "react-helmet";
 import Modal from "react-modal";
+import find from "lodash/find";
 import ConnectionTerminated from "./ConnectionTerminated";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
@@ -176,13 +177,19 @@ class Root extends Component {
     }
   }
 
-  ping = async () => {
+  ping = async (tries = 0) => {
     await GraphQLClient.query({
       query: ping,
       fetchPolicy: "no-cache"
     }).then(() => {
       this.setState({ connectionTerminated: false });
     }).catch(() => {
+      if (tries < 2) {
+        setTimeout(() => {
+          this.ping(tries + 1);
+        }, 1000);
+        return;
+      }
       this.setState({ connectionTerminated: true });
     });
   }
@@ -209,16 +216,23 @@ class Root extends Component {
   }
 
   componentDidUpdate = async (lastProps, lastState) => {
-    if (this.state.connectionTerminated !== lastState.connectionTerminated && this.state.connectionTerminated) {
-      clearInterval(this.interval);
-    }
-    if (this.state.connectionTerminated !== lastState.connectionTerminated && !this.state.connectionTerminated) {
-      this.interval = setInterval(async () => await this.ping(), 10000);
+    if (this.state.connectionTerminated !== lastState.connectionTerminated) {
+      if (this.interval) {
+        clearInterval(this.interval);
+      }
+      if (!this.state.connectionTerminated) {
+        this.interval = setInterval(async () => await this.ping(), 10000);
+      }
     }
   }
 
   componentWillUnmount() {
     clearInterval(this.interval);
+  }
+
+  isGitOpsSupported = () => {
+    const apps = this.state.listApps;
+    return !!find(apps, app => app.isGitOpsSupported);
   }
 
   render() {
@@ -248,7 +262,9 @@ class Root extends Component {
                   logo={themeState.navbarLogo || this.state.appLogo}
                   refetchListApps={this.refetchListApps}
                   fetchingMetadata={this.state.fetchingMetadata}
-                  isKurlEnabled={this.state.isKurlEnabled} />
+                  isKurlEnabled={this.state.isKurlEnabled}
+                  isGitOpsSupported={this.isGitOpsSupported()}
+                />
                 <div className="flex1 flex-column u-overflow--hidden">
                   <Switch>
 
@@ -261,8 +277,8 @@ class Root extends Component {
 
                     }}/>
                     <Route exact path="/login" render={props => (<Login {...props} onLoginSuccess={this.refetchListApps} appName={this.state.selectedAppName} />) } />
-                    <ProtectedRoute path="/preflight" render={props => <PreflightResultPage {...props} appName={this.state.selectedAppName} /> }/>
-                    <ProtectedRoute exact path="/:slug/config" render={props => <AppConfig {...props} fromLicenseFlow={true} />} />
+                    <ProtectedRoute path="/preflight" render={props => <PreflightResultPage {...props} appName={this.state.selectedAppName} fromLicenseFlow={true} refetchListApps={this.refetchListApps} /> }/>
+                    <ProtectedRoute exact path="/:slug/config" render={props => <AppConfig {...props} fromLicenseFlow={true} refetchListApps={this.refetchListApps} />} />
                     <Route exact path="/signup" component={Signup} />
                     <Route exact path="/secure-console" render={props => <SecureAdminConsole {...props} logo={this.state.appLogo} appName={this.state.selectedAppName} onLoginSuccess={this.refetchListApps} fetchingMetadata={this.state.fetchingMetadata} />} />
                     <ProtectedRoute exact path="/upload-license" render={props => <UploadLicenseFile {...props} logo={this.state.appLogo} appName={this.state.selectedAppName} fetchingMetadata={this.state.fetchingMetadata} onUploadSuccess={this.refetchListApps} />} />
@@ -275,23 +291,7 @@ class Root extends Component {
                     <ProtectedRoute path="/cluster/manage" render={(props) => <ClusterNodes {...props} appName={this.state.selectedAppName} />} />
                     <ProtectedRoute path="/gitops" render={(props) => <GitOps {...props} appName={this.state.selectedAppName} />} />
                     <ProtectedRoute
-                      path="/apps"
-                      render={
-                        props => (
-                          <AppDetailPage
-                            {...props}
-                            rootDidInitialAppFetch={rootDidInitialWatchFetch}
-                            listApps={listApps}
-                            refetchListApps={this.refetchListApps}
-                            onActiveInitSession={this.handleActiveInitSession}
-                            appNameSpace={this.state.appNameSpace}
-                            appName={this.state.selectedAppName}
-                          />
-                        )
-                      }
-                    />
-                    <ProtectedRoute
-                      path="/app/:slug/:tab?"
+                      path={["/apps", "/app/:slug/:tab?"]}
                       render={
                         props => (
                           <AppDetailPage
