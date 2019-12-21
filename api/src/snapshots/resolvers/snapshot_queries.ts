@@ -9,7 +9,7 @@ import {
 } from "../snapshot";
 import { Phase } from "../velero";
 import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_config";
-import { listVeleroBackups } from "./listVeleroBackups";
+import { listVeleroBackups } from "./veleroClient";
 
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {

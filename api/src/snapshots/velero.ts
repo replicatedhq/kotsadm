@@ -8,21 +8,21 @@ export interface Backup {
   kind?: string,
   metadata: V1ObjectMeta,
   spec: BackupSpec,
-  status: BackupStatus,
+  status?: BackupStatus,
 }
 
 export interface BackupSpec {
-  excludedNamespaces: Array<string>,
-  excludedResources: Array<string>,
-  hooks: Hooks,
+  excludedNamespaces?: Array<string>,
+  excludedResources?: Array<string>,
+  hooks?: Hooks,
   includeClusterResources?: boolean|null,
-  includedNamespaces: Array<string>,
-  includedResources: Array<string>,
-  labelSelector: V1LabelSelector,
+  includedNamespaces?: Array<string>,
+  includedResources?: Array<string>,
+  labelSelector?: V1LabelSelector,
   snapshotVolumes?: boolean|null,
   storageLocation: string,
   ttl: string,
-  volumeSnapshotLocations: Array<string>,
+  volumeSnapshotLocations?: Array<string>,
 }
 
 export interface Hooks {
