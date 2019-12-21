@@ -115,7 +115,7 @@ export class Server extends ServerLoader {
       featureStore: new FeatureStore(pool, params),
       healthzStore: new HealthzStore(pool, params),
       helmChartStore: new HelmChartStore(pool),
-      snapshotStore: new SnapshotsStore(pool, params),
+      snapshotsStore: new SnapshotsStore(pool, params),
       troubleshootStore: new TroubleshootStore(pool, params),
       kotsLicenseStore: new KotsLicenseStore(pool, params),
       preflightStore: new PreflightStore(pool),

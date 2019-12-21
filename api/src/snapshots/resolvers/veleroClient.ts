@@ -79,18 +79,22 @@ export async function createVeleroBackup(backup: Backup): Promise<Backup> {
     resolveWithFullResponse: true,
     simple: true,
     body: backup,
+    json: true,
   };
   Object.assign(options, req);
 
   const response = await request(url, options);
   switch (response.statusCode) {
   case 201:
-    return JSON.parse(response.body);
+    return response.body;
+    break;
   case 403:
     // TODO namespace
     throw new ReplicatedError("RBAC misconfigured for creating velero.io/v1 Backups in Velero namespace");
+    break;
   case 404:
     throw new ReplicatedError("Velero is not installed in this cluster");
+    break;
   }
 
   throw new Error(`Create velero.io/v1 Backups: ${response.statusCode}`);

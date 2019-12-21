@@ -4,8 +4,8 @@ import {
 } from "@kubernetes/client-node";
 
 export interface Backup {
-  apiVersion?: string,
-  kind?: string,
+  apiVersion: string,
+  kind: string,
   metadata: V1ObjectMeta,
   spec: BackupSpec,
   status?: BackupStatus,

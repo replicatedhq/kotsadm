@@ -6,6 +6,7 @@ import AppSnapshotsRow from "./AppSnapshotRow";
 import ScheduleSnapshotForm from "../shared/ScheduleSnapshotForm";
 import Modal from "react-modal";
 import { listSnapshots } from "../../queries/SnapshotQueries";
+import { manualSnapshot } from "../../mutations/SnapshotMutations";
 import "../../scss/components/snapshots/AppSnapshots.scss";
 
 class AppSnapshots extends Component {
@@ -19,7 +20,24 @@ class AppSnapshots extends Component {
   }
 
   startManualSnapshot = () => {
-    console.log("to be implemented");
+    console.log("start a manual snapshot!");
+    const { app } = this.props;
+    this.props.manualSnapshot(app.id)
+      .then(response => {
+        console.log(response);
+      })
+      .catch(err => {
+        console.log(err);
+        err.graphQLErrors.map(({ msg }) => {
+          this.setState({
+            message: msg,
+            messageType: "error"
+          });
+        });
+      })
+      .finally(() => {
+
+      });
   }
 
   handleScheduleSubmit = () => {
@@ -82,7 +100,7 @@ class AppSnapshots extends Component {
             <div className="flex">
               <Link to={`/app/${app.slug}/snapshots/settings`} className="replicated-link u-fontSize--small u-fontWeight--bold u-marginRight--20 flex alignItems--center"><span className="icon snapshotSettingsIcon u-marginRight--5" />Settings</Link>
               <Link to={`/app/${app.slug}/snapshots/schedule`} className="replicated-link u-fontSize--small u-fontWeight--bold u-marginRight--20 flex alignItems--center"><span className="icon snapshotScheduleIcon u-marginRight--5" />Schedule</Link>
-              <button type="button" className="btn primary blue">Start a snapshot</button>
+              <button type="button" className="btn primary blue" onClick={this.startManualSnapshot}>Start a snapshot</button>
             </div>
           </div>
           {snapshots?.listSnapshots && snapshots?.listSnapshots?.map((snapshot) => (
@@ -128,4 +146,9 @@ export default compose(
       }
     }
   }),
+  graphql(manualSnapshot, {
+    props: ({ mutate }) => ({
+      manualSnapshot: (appId) =>  mutate({ variables: { appId } })
+    })
+  })
 )(AppSnapshots);

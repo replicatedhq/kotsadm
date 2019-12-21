@@ -6,7 +6,8 @@ import { Backup } from "./velero";
 
 export class SnapshotsStore {
   constructor(
-    private readonly pool: pg.Pool
+    private readonly pool: pg.Pool,
+    private readonly params: Params
   ) {}
 
   async getKotsBackupSpec(appId: string, sequence: number): Promise<Backup> {
