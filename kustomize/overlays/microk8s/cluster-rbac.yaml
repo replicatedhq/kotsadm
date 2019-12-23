@@ -58,6 +58,14 @@ rules:
   verbs:
   - list
   - delete
+- apiGroups:
+  - "velero.io"
+  resources:
+  - backups
+  verbs:
+  - create
+  - list
+  - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

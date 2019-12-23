@@ -39,7 +39,7 @@ type Mutation {
 
   saveSnapshotConfig: Boolean
   saveSnapshotStore: Boolean
-  manualSnapshot: Boolean
+  manualSnapshot(appId: String!): Boolean
   restoreSnapshot: Boolean
   deleteSnapshot: Boolean
 }

@@ -5,11 +5,12 @@ import {
   RestoreDetail,
   Snapshot,
   SnapshotDetail,
-  SnapshotStatus,
   SnapshotTrigger,
   SnapshotHookPhase,
 } from "../snapshot";
+import { Phase } from "../velero";
 import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_config";
+import { listVeleroBackups } from "./veleroClient";
 
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {
@@ -58,19 +59,9 @@ export function SnapshotQueries(stores: Stores, params: Params) {
 
     async listSnapshots(root: any, args: any, context: Context): Promise<Array<Snapshot>> {
       const { slug } = args;
-      console.log(slug);
-      return [{
-        name: "v.482 Manual Snapshot",
-        status: SnapshotStatus.Completed,
-        trigger: SnapshotTrigger.Manual,
-        appVersion: "1.0.0",
-        started: "2019-12-18T20:45:32+00:00",
-        finished: "2019-12-18T21:49:37+00:00",
-        expires: "2020-01-12T00:00:00+00:00",
-        volumeCount: 5,
-        volumeSuccessCount: 5,
-        volumeBytes: 350810305
-      }];
+      const backups = await listVeleroBackups();
+
+      return backups;
     },
 
     async snapshotDetail(root: any, args: any, context: Context): Promise<SnapshotDetail> {
@@ -130,10 +121,10 @@ export function SnapshotQueries(stores: Stores, params: Params) {
     async restoreDetail(root: any, args: any, context: Context): Promise<RestoreDetail> {
       return {
         name: "azure-4-20191212175928",
-        phase: SnapshotStatus.InProgress,
+        phase: Phase.InProgress,
         volumes: [{
           name: "azure-4-20191212175928",
-          phase: SnapshotStatus.InProgress,
+          phase: Phase.InProgress,
           podName: "kotsadm-api-855f6f6d48-z497z",
           podNamespace: "default",
           podVolumeName: "backups",
