@@ -10,7 +10,7 @@ import {
 } from "../snapshot";
 import { Phase } from "../velero";
 import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_config";
-import { listVeleroBackups } from "./veleroClient";
+import { VeleroClient } from "./veleroClient";
 
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {
@@ -59,9 +59,10 @@ export function SnapshotQueries(stores: Stores, params: Params) {
 
     async listSnapshots(root: any, args: any, context: Context): Promise<Array<Snapshot>> {
       const { slug } = args;
-      const backups = await listVeleroBackups();
+      const client = new VeleroClient("velero"); // TODO namespace
+      const snapshots = await client.listSnapshots();
 
-      return _.filter(backups, { appSlug: slug });
+      return _.filter(snapshots, { appSlug: slug });
     },
 
     async snapshotDetail(root: any, args: any, context: Context): Promise<SnapshotDetail> {

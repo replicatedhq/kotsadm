@@ -1,7 +1,7 @@
 import { Context } from "../../context";
 import { Stores } from "../../schema/stores";
 import { Backup } from "../velero";
-import { createVeleroBackup } from "./veleroClient";
+import { VeleroClient } from "./veleroClient";
 import { ReplicatedError } from "../../server/errors";
 import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, SnapshotTrigger } from "../snapshot";
 
@@ -52,7 +52,9 @@ export function SnapshotMutations(stores: Stores) {
         }
       };
 
-      backup = await createVeleroBackup(backup);
+      // TODO namespace
+      const velero = new VeleroClient("velero");
+      await velero.createBackup(backup);
     },
 
     async restoreSnapshot(root: any, args: any, context: Context): Promise<void> {
