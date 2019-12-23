@@ -1,5 +1,9 @@
 import { Phase } from "./velero";
 
+export const snapshotTriggerKey = "kots.io/snapshot-trigger";
+export const kotsAppSlugKey = "kots.io/app-slug";
+export const kotsAppSequenceKey = "kots.io/app-sequence";
+
 export enum SnapshotTrigger {
   Manual = "manual",
   Schedule = "schedule",
@@ -9,7 +13,8 @@ export enum SnapshotTrigger {
 export interface Snapshot {
   name: string;
   status: Phase;
-  trigger: SnapshotTrigger;
+  trigger: SnapshotTrigger|undefined;
+  appSlug: string|undefined;
   appVersion: string|undefined;
   started: string;
   finished: string;

@@ -4,8 +4,8 @@ import {
 } from "@kubernetes/client-node";
 import { ReplicatedError } from "../../server/errors";
 import request, { RequestPromiseOptions } from "request-promise";
-import { Snapshot, SnapshotTrigger } from "../snapshot";
-import { Backup } from "../velero";
+import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, Snapshot, SnapshotTrigger } from "../snapshot";
+import { Backup, Phase } from "../velero";
 
 export async function listVeleroBackups(): Promise<Array<Snapshot>> {
   const kc = new KubeConfig();
@@ -42,13 +42,25 @@ export async function listVeleroBackups(): Promise<Array<Snapshot>> {
 }
 
 function snapshotFromBackup(backup: Backup): Snapshot {
+  let trigger: SnapshotTrigger|undefined = undefined;
+  switch (backup.metadata.annotations && backup.metadata.annotations[snapshotTriggerKey]) {
+  case SnapshotTrigger.Manual:
+    trigger = SnapshotTrigger.Manual;
+    break;
+  case SnapshotTrigger.PreUpgrade:
+    trigger = SnapshotTrigger.PreUpgrade;
+    break;
+  case SnapshotTrigger.Schedule:
+    trigger = SnapshotTrigger.Schedule;
+    break;
+  }
+
   return {
     name: backup.metadata.name!,
-    status: backup.status!.phase, // ?
-    // TODO
-    trigger: SnapshotTrigger.Manual,
-    // TODO
-    appVersion: backup.metadata.annotations && backup.metadata.annotations["kots.io/app-version"],
+    status: backup.status ? backup.status.phase : Phase.New,
+    trigger,
+    appSlug: backup.metadata.annotations && backup.metadata.annotations[kotsAppSlugKey],
+    appVersion: backup.metadata.annotations && backup.metadata.annotations[kotsAppSequenceKey],
     started: backup.status!.startTimestamp,
     finished: backup.status!.completionTimestamp,
     expires: backup.status!.expiration,

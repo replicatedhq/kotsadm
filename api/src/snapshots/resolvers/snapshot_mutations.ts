@@ -3,6 +3,7 @@ import { Stores } from "../../schema/stores";
 import { Backup } from "../velero";
 import { createVeleroBackup } from "./veleroClient";
 import { ReplicatedError } from "../../server/errors";
+import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, SnapshotTrigger } from "../snapshot";
 
 export function SnapshotMutations(stores: Stores) {
   return {
@@ -16,6 +17,7 @@ export function SnapshotMutations(stores: Stores) {
 
     async manualSnapshot(root: any, args: any, context: Context): Promise<void> {
       const { appId } = args;
+      const app = await stores.kotsAppStore.getApp(appId);
       const kotsVersion = await stores.kotsAppStore.getCurrentAppVersion(appId);
       if (!kotsVersion) {
         throw new ReplicatedError("App does not have a current version");
@@ -32,6 +34,11 @@ export function SnapshotMutations(stores: Stores) {
         kind: "Backup",
         metadata: {
           name,
+          annotations: {
+            [snapshotTriggerKey]: SnapshotTrigger.Manual,
+            [kotsAppSlugKey]: app.slug,
+            [kotsAppSequenceKey]: kotsVersion.sequence.toString(),
+          }
         },
         spec: {
           excludedNamespaces: spec.excludedNamespaces,

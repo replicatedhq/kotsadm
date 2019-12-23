@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import { Stores } from "../../schema/stores";
 import { Params } from "../../server/params";
 import { Context } from "../../context";
@@ -60,7 +61,7 @@ export function SnapshotQueries(stores: Stores, params: Params) {
       const { slug } = args;
       const backups = await listVeleroBackups();
 
-      return backups;
+      return _.filter(backups, { appSlug: slug });
     },
 
     async snapshotDetail(root: any, args: any, context: Context): Promise<SnapshotDetail> {
