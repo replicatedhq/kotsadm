@@ -61,7 +61,7 @@ export const Query = `
 
     listSnapshots(slug: String!): [Snapshot]
     snapshotConfig(slug: String!): SnapshotConfig
-    snapshotDetail: SnapshotDetail
+    snapshotDetail(slug: String!): SnapshotDetail
     restoreDetail: RestoreDetail    
   }
 `;

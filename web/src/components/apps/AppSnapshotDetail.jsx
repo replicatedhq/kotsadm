@@ -1,13 +1,15 @@
 import React, { Component } from "react";
-// import { graphql, compose, withApollo } from "react-apollo";
-import { Link } from "react-router-dom"
+import { graphql, compose, withApollo } from "react-apollo";
+import { Link, withRouter } from "react-router-dom";
+import { formatByteSize } from "../../utilities/utilities";
+import { snapshotDetail } from "../../queries/SnapshotQueries";
 
-export default class AppSnapshotDetail extends Component {
+class AppSnapshotDetail extends Component {
   state = {
   };
 
   render() {
-    const { app } = this.props;
+    const { app, snapshotDetail } = this.props;
     return (
       <div className="container flex-column flex1 u-overflow--auto u-paddingTop--30 u-paddingBottom--20">
         <p className="u-marginBottom--30 u-fontSize--small u-color--tundora u-fontWeight--medium">
@@ -26,10 +28,50 @@ export default class AppSnapshotDetail extends Component {
           </div>
         </div>
 
-        <div className="flex1 u-marginTop--30 u-marginBottom--40">
+        <div className="flex-column flex-auto u-marginTop--30 u-marginBottom--40">
           <p className="u-fontSize--larger u-fontWeight--bold u-color--tuna u-marginBottom--10">Snapshot timeline</p>
-          <div className="u-border--gray u-padding--15">
+          <div className="flex1 u-border--gray u-padding--15">
             Graph is here
+          </div>
+        </div>
+
+        <div className="flex flex-auto u-marginBottom--30">
+          <div className="flex-column flex1 u-marginRight--20">
+            <div className="dashboard-card-wrapper flex1">
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Volumes</p>
+              {snapshotDetail?.snapshotDetail?.volumes?.map((volume) => (
+                <div className="flex flex1">
+                  <div className="flex1">
+                    <p>{volume.name}</p>
+                    <p>Size: {formatByteSize(volume.doneBytes)}/{formatByteSize(volume.sizeBytes)}</p>
+                  </div>
+                  <div className="flex-column flex1 allignItems--center justifyContent--flexEnd">
+                    <div>
+                      <span className={`status-indicator success`}>[Successful]</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+              }
+            </div>
+          </div>
+          <div className="flex-column flex1 u-marginLeft--20">
+            <div className="dashboard-card-wrapper flex1">
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Pre-snapshot scripts</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-auto u-marginBottom--30">
+          <div className="flex-column flex1 u-marginRight--20">
+            <div className="dashboard-card-wrapper flex1">
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Namespaces</p>
+            </div>
+          </div>
+          <div className="flex-column flex1 u-marginLeft--20">
+            <div className="dashboard-card-wrapper flex1">
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Warnings</p>
+            </div>
           </div>
         </div>
 
@@ -38,16 +80,17 @@ export default class AppSnapshotDetail extends Component {
   }
 }
 
-// export default compose(
-//   withApollo,
-//   graphql(testGitOpsConnection, {
-//     props: ({ mutate }) => ({
-//       testGitOpsConnection: (appId, clusterId) => mutate({ variables: { appId, clusterId } })
-//     })
-//   }),
-//   graphql(updateAppGitOps, {
-//     props: ({ mutate }) => ({
-//       updateAppGitOps: (appId, clusterId, gitOpsInput) => mutate({ variables: { appId, clusterId, gitOpsInput } })
-//     })
-//   }),
-// )(AppSnapshots);
+export default compose(
+  withApollo,
+  withRouter,
+  graphql(snapshotDetail, {
+    name: "snapshotDetail",
+    options: ({ match }) => {
+      const slug = match.params.slug;
+      return {
+        variables: { slug },
+        fetchPolicy: "no-cache"
+      }
+    }
+  })
+)(AppSnapshotDetail);

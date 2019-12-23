@@ -7,6 +7,7 @@ import {
   Snapshot,
   SnapshotDetail,
   SnapshotTrigger,
+  SnapshotHookPhase,
 } from "../snapshot";
 import { Phase } from "../velero";
 import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_config";
@@ -68,9 +69,52 @@ export function SnapshotQueries(stores: Stores, params: Params) {
     async snapshotDetail(root: any, args: any, context: Context): Promise<SnapshotDetail> {
       return {
         name: "azure-4",
-        namespaces: [],
-        hooks: [],
-        volumes: [],
+        namespaces: ["sentry-enterprise-1", "sentry-enterprise-2"],
+        hooks: [{
+          name: "",
+          phase: SnapshotHookPhase.Pre,
+          command: "",
+          selector: "",
+          container: "",
+          execs: [{
+            name: "",
+            started: "",
+            finished: "",
+            stdout: "",
+            stderr: "",
+            warning: {
+              title: "",
+              message: ""
+            },
+            error: {
+              title: "",
+              message: ""
+            }
+          }]
+        }],
+        volumes: [
+          {
+            name: "Redis",
+            sizeBytes: 350810305,
+            doneBytes: 350810305,
+            started: "",
+            finished: ""
+          },
+          {
+            name: "Postgres",
+            sizeBytes: 750810305,
+            doneBytes: 750810305,
+            started: "",
+            finished: ""
+          },
+          {
+            name: "Postgres-2",
+            sizeBytes: 150810305,
+            doneBytes: 150810305,
+            started: "",
+            finished: ""
+          }
+        ],
         errors: [],
         warnings: [],
       };

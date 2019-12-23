@@ -74,3 +74,51 @@ export const snapshotSettingsRaw = `
 `;
 
 export const snapshotSettings = gql(snapshotSettingsRaw);
+
+export const snapshotDetailRaw = `
+  query snapshotDetail($slug: String!) {
+    snapshotDetail(slug: $slug) {
+      name
+      namespaces
+      hooks {
+        name
+        phase
+        command
+        selector
+        container
+        execs {
+          name
+          started
+          finished
+          stdout
+          stderr
+          warning {
+            title
+            message
+          }
+          error {
+            title
+            message
+          }
+        }
+      }
+      volumes {
+        name
+        sizeBytes
+        doneBytes
+        started
+        finished
+      }
+      errors {
+        title
+        message
+      }
+      warnings{
+        title
+        message
+      }
+    }
+  }
+`;
+
+export const snapshotDetail = gql(snapshotDetailRaw);
