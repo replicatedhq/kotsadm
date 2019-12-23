@@ -19,7 +19,7 @@ import {
   extractKotsAppLicenseFromTarball,
   extractAnalyzerSpecFromTarball,
   extractConfigSpecFromTarball,
-  extractConfigValuesFromTarball
+  extractConfigValuesFromTarball,
   extractBackupSpecFromTarball
 } from "../../util/tar";
 import { Cluster } from "../../cluster";
