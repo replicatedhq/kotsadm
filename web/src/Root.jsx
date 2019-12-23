@@ -13,6 +13,7 @@ import GitHubAuth from "./components/github_auth/GitHubAuth";
 import GitHubInstall from "./components/github_install/GitHubInstall";
 import GitOps from "././components/clusters/GitOps";
 import PreflightResultPage from "./components/PreflightResultPage";
+import PreChecksPage from "./components/PreChecksPage";
 import AppConfig from "./components/apps/AppConfig";
 import AppDetailPage from "./components/apps/AppDetailPage";
 import ClusterNodes from "./components/apps/ClusterNodes";
@@ -277,6 +278,7 @@ class Root extends Component {
 
                     }}/>
                     <Route exact path="/login" render={props => (<Login {...props} onLoginSuccess={this.refetchListApps} appName={this.state.selectedAppName} />) } />
+                    <ProtectedRoute path="/pre-checks" render={props => <PreChecksPage {...props} appName={this.state.selectedAppName} fromLicenseFlow={true} refetchListApps={this.refetchListApps} /> }/>
                     <ProtectedRoute path="/preflight" render={props => <PreflightResultPage {...props} appName={this.state.selectedAppName} fromLicenseFlow={true} refetchListApps={this.refetchListApps} /> }/>
                     <ProtectedRoute exact path="/:slug/config" render={props => <AppConfig {...props} fromLicenseFlow={true} refetchListApps={this.refetchListApps} />} />
                     <Route exact path="/signup" component={Signup} />
