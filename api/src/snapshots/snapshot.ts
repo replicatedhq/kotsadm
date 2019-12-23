@@ -3,6 +3,9 @@ import { Phase } from "./velero";
 export const snapshotTriggerKey = "kots.io/snapshot-trigger";
 export const kotsAppSlugKey = "kots.io/app-slug";
 export const kotsAppSequenceKey = "kots.io/app-sequence";
+export const snapshotVolumeCountKey = "kots.io/snapshot-volume-count";
+export const snapshotVolumeSuccessCountKey = "kots.io/snapshot-volume-success-count";
+export const snapshotVolumeBytesKey = "kots.io/snapshot-volume-bytes";
 
 export enum SnapshotTrigger {
   Manual = "manual",

@@ -62,6 +62,7 @@ rules:
   - "velero.io"
   resources:
   - backups
+  - podvolumebackups
   verbs:
   - create
   - list
