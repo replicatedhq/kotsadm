@@ -155,3 +155,10 @@ export const disableAppGitopsRaw = `
   }
 `;
 export const disableAppGitops = gql(disableAppGitopsRaw);
+
+export const ignorePreflightPermissionErrorsRaw = `
+mutation ignorePreflightPermissionErrors($appSlug: String, $clusterSlug: String, $sequence: Int) {
+  ignorePreflightPermissionErrors(appSlug: $appSlug, clusterSlug: $clusterSlug, sequence: $sequence)
+}
+`;
+export const ignorePreflightPermissionErrors = gql(ignorePreflightPermissionErrorsRaw);
