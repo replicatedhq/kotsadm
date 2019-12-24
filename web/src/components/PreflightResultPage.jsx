@@ -1,9 +1,10 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import { graphql, compose } from "react-apollo";
+import { graphql, compose, withApollo } from "react-apollo";
 import { Helmet } from "react-helmet";
 import { withRouter } from "react-router-dom";
 import Modal from "react-modal";
+import MonacoEditor from "react-monaco-editor"; 
 
 import { getKotsPreflightResult, getLatestKotsPreflightResult } from "@src/queries/AppsQueries";
 import { deployKotsVersion } from "@src/mutations/AppsMutations";
@@ -11,12 +12,13 @@ import Loader from "./shared/Loader";
 import PreflightRenderer from "./PreflightRenderer";
 import { getPreflightResultState } from "../utilities/utilities";
 import "../scss/components/PreflightCheckPage.scss";
+import { ignorePreflightPermissionErrors } from "../mutations/AppsMutations";
 
 class PreflightResultPage extends Component {
   state = {
     showSkipModal: false,
     showWarningModal: false
-  }
+  };
 
   async componentWillUnmount() {
     if (this.props.fromLicenseFlow && this.props.refetchListApps) {
@@ -69,6 +71,61 @@ class PreflightResultPage extends Component {
     });
   }
 
+  ignorePermissionErrors = () => {
+    const preflightResultData = this.props.data.getKotsPreflightResult || this.props.data.getLatestKotsPreflightResult;
+    const sequence = this.props.match.params.sequence ? parseInt(this.props.match.params.sequence, 10) : 0;
+    this.props.client.mutate({
+      mutation: ignorePreflightPermissionErrors,
+      variables: {
+        appSlug: preflightResultData.appSlug,
+        clusterSlug: preflightResultData.clusterSlug,
+        sequence: sequence,
+      },
+    }).then(() => {
+      this.props.data.refetch();
+    });
+  }
+
+  renderErrors = (errors) => {
+    const valueFromAPI = errors.map(error => {
+      return error.error;
+    }).join("\n");
+
+    return (
+      <div className="flex flex1 flex-column">
+        <div className="flex flex1 u-height--full u-width--full u-marginTop--5 u-marginBottom--20">
+          <div className="flex-column u-width--full u-overflow--hidden">
+            <div className="flex-column flex flex1 u-padding--20">
+              <p className="u-fontSize--larger u-fontWeight--bold u-color--tuna">Pre-Checks for {this.props.appTitle || "your application"}</p>
+              <p className="u-marginTop--10 u-marginBottom--10 u-fontSize--normal u-lineHeight--normal u-color--dustyGray u-fontWeight--normal">Some resources that are required for preflight checks to pass were forbidden. We recommend granting access to these resources before proceeding</p>
+              <div className="flex-column flex flex1 monaco-editor-wrapper u-border--gray">
+                <MonacoEditor
+                  language="bash"
+                  value={valueFromAPI}
+                  height="100%"
+                  width="100%"
+                  options={{
+                    readOnly: true,
+                    contextmenu: false,
+                    minimap: {
+                      enabled: false
+                    },
+                    scrollBeyondLastLine: false,
+                  }}
+                />
+              </div>
+              <div className="u-marginTop--30">
+                <button type="button" className="btn primary blue" onClick={this.ignorePermissionErrors}>
+                  Run preflight checks anyways
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   render() {
     const { data } = this.props;
     const { showSkipModal, showWarningModal } = this.state;
@@ -84,8 +141,13 @@ class PreflightResultPage extends Component {
       if (showSkipModal) {
         this.hideSkipModal();
       }
+      
+      const preflightJSON = JSON.parse(preflightResultData?.result);
+      if (preflightJSON?.errors) {
+        return this.renderErrors(preflightJSON?.errors);
+      }
     }
-
+  
     return (
       <div className="flex-column flex1 container">
         <Helmet>
@@ -188,6 +250,7 @@ class PreflightResultPage extends Component {
 }
 
 export default compose(
+  withApollo,
   withRouter,
   graphql(getKotsPreflightResult, {
     skip: props => {

@@ -27,6 +27,7 @@ type Mutation {
   syncAppLicense(appSlug: String!, airgapLicense: String): KLicense
   testGitOpsConnection(appId: String!, clusterId: String!): Boolean
   disableAppGitops(appId: String!, clusterId: String!): Boolean
+  ignorePreflightPermissionErrors(appSlug: String, clusterSlug: String, sequence: Int): Boolean
   resetGitOpsData: Boolean
 
   drainNode(name: String): Boolean

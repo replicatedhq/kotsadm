@@ -4,6 +4,11 @@ import { Params } from "../server/params";
 import { PreflightResult } from "./";
 import { ReplicatedError } from "../server/errors";
 
+interface PreflightParams {
+  url: string
+  ignorePermissions: boolean
+}
+
 export class PreflightStore {
   constructor(
     private readonly pool: pg.Pool
@@ -63,6 +68,9 @@ export class PreflightStore {
   async getLatestKotsPreflightResult(): Promise<PreflightResult> {
     const q = `SELECT id FROM app WHERE current_sequence = 0 ORDER BY created_at DESC LIMIT 1`;
     const r = await this.pool.query(q);
+    if (r.rows.length === 0) {
+      throw new ReplicatedError(`No app has been installed yet`);
+    }
     const appId = r.rows[0].id;
 
     const qq =
@@ -89,11 +97,12 @@ export class PreflightStore {
     return preflightResult;
   }
 
-  async getPendingPreflightUrls(): Promise<string[]> {
+  async getPendingPreflightParams(): Promise<PreflightParams[]> {
     const params = await Params.getParams();
     const q =
       `SELECT
         app_downstream_version.sequence as sequence,
+        app_downstream_version.preflight_ignore_permissions,
         app.slug as app_slug,
         cluster.slug as cluster_slug
       FROM app_downstream_version
@@ -103,17 +112,23 @@ export class PreflightStore {
 
     const result = await this.pool.query(q);
 
-    const preflightUrls: string[] = [];
+    const preflightParams: PreflightParams[] = [];
     for (const row of result.rows) {
       const {
         app_slug: appSlug,
         cluster_slug: clusterSlug,
-        sequence
+        sequence,
+        preflight_ignore_permissions: ignorePermissions,
       } = row;
-      preflightUrls.push(`${params.shipApiEndpoint}/api/v1/preflight/${appSlug}/${clusterSlug}/${sequence}`);
+
+      const param: PreflightParams = {
+        url: `${params.shipApiEndpoint}/api/v1/preflight/${appSlug}/${clusterSlug}/${sequence}`,
+        ignorePermissions: ignorePermissions,
+      };
+      preflightParams.push(param);
     }
 
-    return preflightUrls;
+    return preflightParams;
   }
 
 
