@@ -1,4 +1,6 @@
 import crypto from "crypto";
+import zlib from "zlib";
+import { parse } from "logfmt";
 import * as _ from "lodash";
 import {
   KubeConfig,
@@ -13,8 +15,13 @@ import {
   snapshotVolumeSuccessCountKey,
   snapshotVolumeBytesKey,
   Snapshot,
-  SnapshotTrigger} from "../snapshot";
+  SnapshotDetail,
+  SnapshotHook,
+  SnapshotHookPhase,
+  SnapshotTrigger,
+  SnapshotVolume } from "../snapshot";
 import { Backup, Phase } from "../velero";
+import { sleep } from "../../util/utilities";
 
 interface VolumeSummary {
   count: number,
@@ -41,9 +48,6 @@ export class VeleroClient {
 
   async request(method: string, kind: string, selector?: string, body?: any): Promise<any> {
     let url = `${this.server}/apis/velero.io/v1/namespaces/${this.ns}/${kind}`;
-    if (method === "PUT") {
-      url += `/${body.metadata.name}`;
-    }
     if (selector) {
       url += `?labelSelector=${selector}`;
     }
@@ -52,8 +56,8 @@ export class VeleroClient {
     const options: RequestPromiseOptions = {
       method,
       body,
+      simple: false,
       resolveWithFullResponse: true,
-      simple: true,
       json: true,
     };
     Object.assign(options, req);
@@ -162,6 +166,117 @@ export class VeleroClient {
     const body = await this.request("POST", "backups", void 0, backup);
 
     return body;
+  }
+
+  async getSnapshotDetail(name: string): Promise<SnapshotDetail> {
+    const path = `backups/${name}`;
+    const backup = await this.request("GET", path);
+
+    const hooks: Array<SnapshotHook> = [];
+    _.each(backup.spec.hooks && backup.spec.hooks.resources, (hook) => {
+      const name = hook.name;
+      // TODO includedNamespaces, excludedNamespaces, includedResources, excludedResources
+      const selector = ""; // TODO there should be a function for this already
+
+      _.each(hook.pre, (exec) => {
+        hooks.push({
+          name,
+          selector,
+          phase: SnapshotHookPhase.Pre,
+          container: exec.container,
+          command: exec.command, // TODO stringify?
+          execs: [], // TODO parse logs
+        });
+      });
+
+      _.each(hook.post, (exec) => {
+        hooks.push({
+          name,
+          selector,
+          phase: SnapshotHookPhase.Post,
+          container: exec.container,
+          command: exec.command, // TODO stringify?
+          execs: [], // TODO parse logs
+        });
+      });
+    });
+
+
+    const selector = `velero.io/backup-name=${getValidName(name)}`;
+    const volumeList = await this.request("GET", "podvolumebackups", selector);
+    const volumes: Array<SnapshotVolume> = [];
+
+    _.each(volumeList.items, (pvb) => {
+      volumes.push({
+        name: pvb.metadata.name,
+        sizeBytes: pvb.status.progress.totalBytes,
+        doneBytes: pvb.status.progress.doneBytes,
+        started: pvb.status.startTimestamp,
+        finished: pvb.status.finishedTimestamp,
+      });
+    });
+
+    const logs = await this.getBackupLogs(name);
+    console.log(logs);
+
+    return {
+      name,
+      namespaces: backup.spec.includedNamespaces,
+      hooks,
+      volumes,
+      errors: [], // TODO parse logs
+      warnings: [], // TODO parse logs
+    };
+  }
+
+  async getBackupLogs(name: string): Promise<Array<any>> {
+    const url = await this.getLogsURL("backup", name);
+    const options = {
+      method: "GET",
+      simple: true,
+      encoding: null, // get a Buffer for the response
+    };
+    const buffer = await request(url, options);
+
+    return new Promise((resolve, reject) => {
+      zlib.gunzip(buffer, (err, buffer) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(_.map(buffer.toString().split("\n"), parse));
+      });
+    });
+  }
+
+  async getLogsURL(kind, name: string): Promise<string> {
+    const drname = getValidName(`${kind}-logs-${name}-${Date.now()}`);
+
+    let downloadrequest = {
+      apiVersion: "velero.io/v1",
+      kind: "DownloadRequest",
+      metadata: {
+        name: drname,
+      },
+      spec: {
+        target: {
+          kind: "BackupLog",
+          name,
+        },
+      }
+    };
+    await this.request("POST", "downloadrequests", void 0, downloadrequest);
+
+    for (let i = 0; i < 30; i++) {
+      const body = await this.request("GET", `downloadrequests/${drname}`);
+      if (body.status && body.status.downloadURL) {
+        await this.request("DELETE", `downloadrequests/${drname}`);
+        return body.status.downloadURL;
+      }
+      await sleep(1);
+    }
+
+    throw new Error(`Timed out waiting for DownloadRequest for ${kind}/${name} logs`);
   }
 }
 

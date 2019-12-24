@@ -76,8 +76,8 @@ export const snapshotSettingsRaw = `
 export const snapshotSettings = gql(snapshotSettingsRaw);
 
 export const snapshotDetailRaw = `
-  query snapshotDetail($slug: String!) {
-    snapshotDetail(slug: $slug) {
+  query snapshotDetail($slug: String!, $id: String!) {
+    snapshotDetail(slug: $slug, id: $id) {
       name
       namespaces
       hooks {

@@ -87,8 +87,9 @@ export default compose(
     name: "snapshotDetail",
     options: ({ match }) => {
       const slug = match.params.slug;
+      const id = match.params.id;
       return {
-        variables: { slug },
+        variables: { slug, id },
         fetchPolicy: "no-cache"
       }
     }
