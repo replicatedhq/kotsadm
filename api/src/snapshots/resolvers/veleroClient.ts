@@ -22,6 +22,7 @@ import {
   SnapshotVolume } from "../snapshot";
 import { Backup, Phase } from "../velero";
 import { sleep } from "../../util/utilities";
+import { parseLogs } from "./parseBackupLogs";
 
 interface VolumeSummary {
   count: number,
@@ -46,11 +47,8 @@ export class VeleroClient {
     this.server = cluster.server;
   }
 
-  async request(method: string, kind: string, selector?: string, body?: any): Promise<any> {
-    let url = `${this.server}/apis/velero.io/v1/namespaces/${this.ns}/${kind}`;
-    if (selector) {
-      url += `?labelSelector=${selector}`;
-    }
+  async request(method: string, path: string, body?: any): Promise<any> {
+    let url = `${this.server}/apis/velero.io/v1/namespaces/${this.ns}/${path}`;
     const req = { url };
     await this.kc.applyToRequest(req);
     const options: RequestPromiseOptions = {
@@ -69,7 +67,7 @@ export class VeleroClient {
     case 204:
       return response.body
     case 403:
-      throw new ReplicatedError(`RBAC misconfigured for ${method} velero.io/v1 ${kind} from namespace ${this.ns}`);
+      throw new ReplicatedError(`RBAC misconfigured for ${method} velero.io/v1 ${path} in namespace ${this.ns}`);
     case 404:
       throw new ReplicatedError("Velero is not installed in this cluster");
     }
@@ -122,7 +120,7 @@ export class VeleroClient {
         backup.metadata.annotations[snapshotVolumeCountKey] = volumeCount.toString();
         backup.metadata.annotations[snapshotVolumeSuccessCountKey] = volumeSuccessCount.toString();
         backup.metadata.annotations[snapshotVolumeBytesKey] = volumeBytes.toString();
-        await this.request("PUT", "backups", void 0, backup);
+        await this.request("PUT", `backups/${backup.metadata.name}`, backup);
       }
     }
 
@@ -147,7 +145,7 @@ export class VeleroClient {
     let bytes = 0;
 
     const selector = `velero.io/backup-name=${getValidName(backupName)}`;
-    const body = await this.request("GET", "podvolumebackups", selector);
+    const body = await this.request("GET", `podvolumebackups?lableSelector=${selector}`);
 
     _.each(body.items, (pvb) => {
       count++;
@@ -163,7 +161,7 @@ export class VeleroClient {
   }
 
   async createBackup(backup: Backup): Promise<Backup> {
-    const body = await this.request("POST", "backups", void 0, backup);
+    const body = await this.request("POST", "backups", backup);
 
     return body;
   }
@@ -171,14 +169,21 @@ export class VeleroClient {
   async getSnapshotDetail(name: string): Promise<SnapshotDetail> {
     const path = `backups/${name}`;
     const backup = await this.request("GET", path);
+    const logs = await this.getBackupLogs(name);
+    const parsedLogs = parseLogs(logs);
 
     const hooks: Array<SnapshotHook> = [];
     _.each(backup.spec.hooks && backup.spec.hooks.resources, (hook) => {
       const name = hook.name;
-      // TODO includedNamespaces, excludedNamespaces, includedResources, excludedResources
       const selector = ""; // TODO there should be a function for this already
 
       _.each(hook.pre, (exec) => {
+        _.each(logs, (log) => {
+          if (log.hookName === name) {
+            console.log(log);
+          }
+        });
+
         hooks.push({
           name,
           selector,
@@ -201,9 +206,8 @@ export class VeleroClient {
       });
     });
 
-
     const selector = `velero.io/backup-name=${getValidName(name)}`;
-    const volumeList = await this.request("GET", "podvolumebackups", selector);
+    const volumeList = await this.request("GET", `podvolumebackups?labelSelector=${selector}`);
     const volumes: Array<SnapshotVolume> = [];
 
     _.each(volumeList.items, (pvb) => {
@@ -215,9 +219,6 @@ export class VeleroClient {
         finished: pvb.status.finishedTimestamp,
       });
     });
-
-    const logs = await this.getBackupLogs(name);
-    console.log(logs);
 
     return {
       name,
@@ -265,7 +266,7 @@ export class VeleroClient {
         },
       }
     };
-    await this.request("POST", "downloadrequests", void 0, downloadrequest);
+    await this.request("POST", "downloadrequests", downloadrequest);
 
     for (let i = 0; i < 30; i++) {
       const body = await this.request("GET", `downloadrequests/${drname}`);

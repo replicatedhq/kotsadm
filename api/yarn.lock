@@ -628,6 +628,13 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.149.tgz#1342d63d948c6062838fbf961012f74d4e638440"
   integrity sha512-ijGqzZt/b7BfzcK9vTrS6MFljQRPn5BFWOx8oE0GYxribu6uV+aA9zZuXI1zc/etK9E8nrgdoF2+LgUw7+9tJQ==
 
+"@types/logfmt@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@types/logfmt/-/logfmt-1.2.1.tgz#981f9821464fc4a82a0aa2884b9c03d90c23ad99"
+  integrity sha512-kBeA+qbJAoyhIHBCOKEQYRDKPYyvt2m77cl1ZJUGfig8f5kgXZ7KOlPBN3/5whkwkK4nm47GN0bzdeObMWoYXQ==
+  dependencies:
+    "@types/node" "*"
+
 "@types/long@*", "@types/long@^4.0.0":
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@types/long/-/long-4.0.0.tgz#719551d2352d301ac8b81db732acb6bdc28dbdef"
