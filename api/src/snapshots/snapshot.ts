@@ -56,22 +56,19 @@ export enum SnapshotHookPhase {
 }
 
 export interface SnapshotHook {
-  name: string;
-  phase: SnapshotHookPhase;
+  namespace: string;
+  phase: SnapshotHookPhase,
+  podName: string;
+  containerName: string;
   command: string;
-  selector: string;
-  container: string;
-  execs: Array<SnapshotHookExec>;
-}
-
-export interface SnapshotHookExec {
-  name: string;
-  started: string;
-  finished: string;
+  hookName: string;
   stdout: string;
   stderr: string;
-  warning: SnapshotError;
-  error: SnapshotError;
+  started: string;
+  finished: string;
+  status: "Completed"|"InProgress"|"Failed",
+  errors: Array<SnapshotError>,
+  warnings: Array<SnapshotError>,
 }
 
 export interface RestoreDetail {

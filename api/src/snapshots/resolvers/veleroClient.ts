@@ -22,7 +22,7 @@ import {
   SnapshotVolume } from "../snapshot";
 import { Backup, Phase } from "../velero";
 import { sleep } from "../../util/utilities";
-import { parseLogs } from "./parseBackupLogs";
+import { parseBackupLogs, ParsedBackupLogs } from "./parseBackupLogs";
 
 interface VolumeSummary {
   count: number,
@@ -170,41 +170,6 @@ export class VeleroClient {
     const path = `backups/${name}`;
     const backup = await this.request("GET", path);
     const logs = await this.getBackupLogs(name);
-    const parsedLogs = parseLogs(logs);
-
-    const hooks: Array<SnapshotHook> = [];
-    _.each(backup.spec.hooks && backup.spec.hooks.resources, (hook) => {
-      const name = hook.name;
-      const selector = ""; // TODO there should be a function for this already
-
-      _.each(hook.pre, (exec) => {
-        _.each(logs, (log) => {
-          if (log.hookName === name) {
-            console.log(log);
-          }
-        });
-
-        hooks.push({
-          name,
-          selector,
-          phase: SnapshotHookPhase.Pre,
-          container: exec.container,
-          command: exec.command, // TODO stringify?
-          execs: [], // TODO parse logs
-        });
-      });
-
-      _.each(hook.post, (exec) => {
-        hooks.push({
-          name,
-          selector,
-          phase: SnapshotHookPhase.Post,
-          container: exec.container,
-          command: exec.command, // TODO stringify?
-          execs: [], // TODO parse logs
-        });
-      });
-    });
 
     const selector = `velero.io/backup-name=${getValidName(name)}`;
     const volumeList = await this.request("GET", `podvolumebackups?labelSelector=${selector}`);
@@ -223,14 +188,14 @@ export class VeleroClient {
     return {
       name,
       namespaces: backup.spec.includedNamespaces,
-      hooks,
+      hooks: logs.execs,
       volumes,
-      errors: [], // TODO parse logs
-      warnings: [], // TODO parse logs
+      errors: logs.errors,
+      warnings: logs.warnings,
     };
   }
 
-  async getBackupLogs(name: string): Promise<Array<any>> {
+  async getBackupLogs(name: string): Promise<ParsedBackupLogs> {
     const url = await this.getLogsURL("backup", name);
     const options = {
       method: "GET",
@@ -245,7 +210,7 @@ export class VeleroClient {
           reject(err);
           return;
         }
-        resolve(_.map(buffer.toString().split("\n"), parse));
+        resolve(parseBackupLogs(buffer));
       });
     });
   }

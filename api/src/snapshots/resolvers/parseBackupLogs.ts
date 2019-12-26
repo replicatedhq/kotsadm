@@ -1,28 +1,12 @@
 import * as _ from "lodash";
-import { SnapshotError, SnapshotHookPhase } from "../snapshot";
+import { SnapshotError, SnapshotHook, SnapshotHookPhase } from "../snapshot";
 import { parse } from "logfmt";
 
 const stdoutPrefix = "stdout: ";
 const stderrPrefix = "stderr: ";
 
-export interface ParsedExec {
-  namespace: string;
-  phase: SnapshotHookPhase,
-  podName: string;
-  containerName: string;
-  command: string;
-  hookName: string;
-  stdout: string;
-  stderr: string;
-  started: string;
-  finished: string;
-  status: "Completed"|"InProgress"|"Failed",
-  errors: Array<SnapshotError>,
-  warnings: Array<SnapshotError>,
-}
-
 export interface ParsedBackupLogs {
-  execs: Array<ParsedExec>;
+  execs: Array<SnapshotHook>;
   errors: Array<SnapshotError>;
   warnings: Array<SnapshotError>;
 }
@@ -82,7 +66,7 @@ export function parseBackupLogs(buffer: Buffer): ParsedBackupLogs {
   });
   const errors: Array<SnapshotError>  = [];
   const warnings: Array<SnapshotError> = [];
-  const execs: Array<ParsedExec> = [];
+  const execs: Array<SnapshotHook> = [];
   const openExecs: any = {};
 
   _.each(logs, (line) => {
