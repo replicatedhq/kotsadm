@@ -41,10 +41,8 @@ export function SnapshotMutations(stores: Stores) {
           }
         },
         spec: {
-          excludedNamespaces: spec.excludedNamespaces,
-          // TODO add in kotsadm if it's same namespace
-          excludedResources: spec.excludedResources,
           hooks: spec.hooks,
+          // TODO template and maybe modify
           includedNamespaces: spec.includedNamespaces,
           ttl: spec.ttl,
           // TODO

@@ -115,24 +115,18 @@ const SnapshotVolume = `
 
 const SnapshotHook = `
   type SnapshotHook {
-    name: String
+    hookName: String
+    namespace: String
     phase: String
+    podName: String
     command: String
-    selector: String
-    container: String
-    execs: [SnapshotHookExec]
-  }
-`;
-
-const SnapshotHookExec = `
-  type SnapshotHookExec {
-    name: String
-    started: String
-    finished: String
+    containerName: String
     stdout: String
     stderr: String
-    warning: SnapshotError
-    error: SnapshotError
+    started: String
+    finished: String
+    errors: [SnapshotError]
+    warnings: [SnapshotError]
   }
 `;
 
@@ -174,7 +168,6 @@ export default [
   SnapshotError,
   SnapshotVolume,
   SnapshotHook,
-  SnapshotHookExec,
   RestoreDetail,
   RestoreVolume
 ]

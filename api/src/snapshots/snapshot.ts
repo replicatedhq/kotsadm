@@ -27,8 +27,7 @@ export interface Snapshot {
   volumeBytes: number;
 }
 
-export interface SnapshotDetail {
-  name: string;
+export interface SnapshotDetail extends Snapshot {
   namespaces: Array<string>;
   hooks: Array<SnapshotHook>;
   volumes: Array<SnapshotVolume>;
@@ -66,7 +65,6 @@ export interface SnapshotHook {
   stderr: string;
   started: string;
   finished: string;
-  status: "Completed"|"InProgress"|"Failed",
   errors: Array<SnapshotError>,
   warnings: Array<SnapshotError>,
 }

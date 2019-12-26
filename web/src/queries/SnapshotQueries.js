@@ -81,25 +81,23 @@ export const snapshotDetailRaw = `
       name
       namespaces
       hooks {
-        name
+        hookName
         phase
         command
-        selector
-        container
-        execs {
-          name
-          started
-          finished
-          stdout
-          stderr
-          warning {
-            title
-            message
-          }
-          error {
-            title
-            message
-          }
+        containerName
+        podName
+        namespace
+        stdout
+        stderr
+        started
+        finished
+        warnings {
+          title
+          message
+        }
+        errors {
+          title
+          message
         }
       }
       volumes {

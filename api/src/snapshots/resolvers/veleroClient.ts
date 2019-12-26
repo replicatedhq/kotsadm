@@ -16,6 +16,7 @@ import {
   snapshotVolumeBytesKey,
   Snapshot,
   SnapshotDetail,
+  SnapshotError,
   SnapshotHook,
   SnapshotHookPhase,
   SnapshotTrigger,
@@ -169,7 +170,7 @@ export class VeleroClient {
   async getSnapshotDetail(name: string): Promise<SnapshotDetail> {
     const path = `backups/${name}`;
     const backup = await this.request("GET", path);
-    const logs = await this.getBackupLogs(name);
+    const snapshot = await this.snapshotFromBackup(backup);
 
     const selector = `velero.io/backup-name=${getValidName(name)}`;
     const volumeList = await this.request("GET", `podvolumebackups?labelSelector=${selector}`);
@@ -179,19 +180,37 @@ export class VeleroClient {
       volumes.push({
         name: pvb.metadata.name,
         sizeBytes: pvb.status.progress.totalBytes,
-        doneBytes: pvb.status.progress.doneBytes,
+        doneBytes: pvb.status.progress.bytesDone,
         started: pvb.status.startTimestamp,
-        finished: pvb.status.finishedTimestamp,
+        finished: pvb.status.completionTimestamp,
+      });
+    });
+
+    let logs
+    if (snapshot.status === Phase.Completed || snapshot.status === Phase.PartiallyFailed || snapshot.status === Phase.Failed) {
+      try {
+        logs = await this.getBackupLogs(name);
+      } catch(e) {
+        console.log(`Failed to get backup logs: ${e.message}`);
+      }
+    }
+
+    const errors: Array<SnapshotError> = logs ? logs.error : [];
+
+    _.each(backup.status.validationErrors, (message: string) => {
+      errors.push({
+        title: "Validation Error",
+        message,
       });
     });
 
     return {
-      name,
+      ...snapshot,
       namespaces: backup.spec.includedNamespaces,
-      hooks: logs.execs,
       volumes,
-      errors: logs.errors,
-      warnings: logs.warnings,
+      errors,
+      hooks: logs && logs.execs,
+      warnings: logs && logs.warnings,
     };
   }
 

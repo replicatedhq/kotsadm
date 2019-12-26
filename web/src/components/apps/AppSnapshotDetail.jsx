@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { graphql, compose, withApollo } from "react-apollo";
 import { Link, withRouter } from "react-router-dom";
+import filter from "lodash/filter";
 import { formatByteSize } from "../../utilities/utilities";
 import { snapshotDetail } from "../../queries/SnapshotQueries";
 
@@ -8,7 +9,20 @@ class AppSnapshotDetail extends Component {
   state = {
   };
 
+  preSnapshotScripts() {
+    return filter(this.props.snapshotDetail?.snapshotDetail?.hooks, (hook) => {
+      return hook.phase === "pre";
+    });
+  }
+
+  postSnapshotScripts() {
+    return filter(this.props.snapshotDetail?.snapshotDetail?.hooks, (hook) => {
+      return hook.phase === "post";
+    });
+  }
+
   render() {
+    console.log(this.preSnapshotScripts());
     const { app, snapshotDetail } = this.props;
     return (
       <div className="container flex-column flex1 u-overflow--auto u-paddingTop--30 u-paddingBottom--20">
@@ -40,7 +54,7 @@ class AppSnapshotDetail extends Component {
             <div className="dashboard-card-wrapper flex1">
               <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Volumes</p>
               {snapshotDetail?.snapshotDetail?.volumes?.map((volume) => (
-                <div className="flex flex1">
+                <div className="flex flex1" key={volume.name}>
                   <div className="flex1">
                     <p>{volume.name}</p>
                     <p>Size: {formatByteSize(volume.doneBytes)}/{formatByteSize(volume.sizeBytes)}</p>
@@ -58,6 +72,12 @@ class AppSnapshotDetail extends Component {
           <div className="flex-column flex1 u-marginLeft--20">
             <div className="dashboard-card-wrapper flex1">
               <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Pre-snapshot scripts</p>
+              <ul>
+                {this.preSnapshotScripts().map((hook, i) => (
+                  // stdout and stderr may have newlines. errors and warnings arrays are also available on hook object.
+                  <li key={i}>Namespace: {hook.namespace} Pod: {hook.podName}, Container: {hook.containerName}, Hook Name: {hook.hookName}, Command: {hook.command}, Stdout: {hook.stdout}, Stderr: {hook.Stderr}, Started: {hook.started}, Finished: {hook.finished}</li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
