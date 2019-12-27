@@ -1,9 +1,13 @@
+import * as _ from "lodash";
+import * as yaml from "js-yaml";
 import { Context } from "../../context";
 import { Stores } from "../../schema/stores";
+import { Params } from "../../server/params";
 import { Backup } from "../velero";
 import { VeleroClient } from "./veleroClient";
 import { ReplicatedError } from "../../server/errors";
 import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, SnapshotTrigger } from "../snapshot";
+import { getK8sNamespace, kotsRenderFile } from "../../kots_app/kots_ffi";
 
 export function SnapshotMutations(stores: Stores) {
   return {
@@ -25,9 +29,17 @@ export function SnapshotMutations(stores: Stores) {
 
       const name = `manual-${Date.now()}`;
 
-      // TODO is the yaml templated or are individual properties templated?
-      const base = await stores.snapshotsStore.getKotsBackupSpec(appId, kotsVersion.sequence);
+      const tmpl = await stores.snapshotsStore.getKotsBackupSpec(appId, kotsVersion.sequence);
+      const rendered = await kotsRenderFile(app, stores, tmpl);
+      const base = yaml.safeLoad(rendered) as Backup;
       const spec = (base && base.spec) || {};
+
+      const namespaces = _.compact(spec.includedNamespaces);
+      // TODO operator may have a different target namespace
+      const ownNS = getK8sNamespace();
+      if (namespaces.length === 0) {
+        namespaces.push(getK8sNamespace());
+      }
 
       let backup: Backup = {
         apiVersion: "velero.io/v1",
@@ -42,13 +54,22 @@ export function SnapshotMutations(stores: Stores) {
         },
         spec: {
           hooks: spec.hooks,
-          // TODO template and maybe modify
-          includedNamespaces: spec.includedNamespaces,
+          includedNamespaces: namespaces,
           ttl: spec.ttl,
           // TODO
           storageLocation: "local-ceph-rgw",
         }
       };
+
+      if (_.includes(namespaces, ownNS)) {
+        backup.spec.labelSelector = {
+          matchExpressions: [{
+            key: "app.kubernetes.io/name",
+            operator: "NotIn",
+            values: ["kotsadm"],
+          }],
+        }
+      }
 
       // TODO namespace
       const velero = new VeleroClient("velero");

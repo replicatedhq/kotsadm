@@ -1,6 +1,9 @@
 bases:
   - ../github
 
+commonLabels:
+  app.kubernetes.io/name: kotsadm
+
 patchesStrategicMerge:
   - ./kotsadm-api-nodeport.yaml
   - ./kotsadm-api-service-account.yaml

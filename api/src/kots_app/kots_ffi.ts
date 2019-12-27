@@ -884,7 +884,7 @@ export async function verifyAirgapLicense(licenseData: string): Promise<string> 
   return license["p"];
 }
 
-export function getK8sNamespace(): String {
+export function getK8sNamespace(): string {
   if (process.env["DEV_NAMESPACE"]) {
     return String(process.env["DEV_NAMESPACE"]);
   }

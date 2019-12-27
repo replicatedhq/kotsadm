@@ -1,5 +1,4 @@
 import pg from "pg";
-import yaml from "js-yaml";
 import { Params } from "../server/params";
 import { ReplicatedError } from "../server/errors";
 import { Backup } from "./velero";
@@ -10,7 +9,7 @@ export class SnapshotsStore {
     private readonly params: Params
   ) {}
 
-  async getKotsBackupSpec(appId: string, sequence: number): Promise<Backup> {
+  async getKotsBackupSpec(appId: string, sequence: number): Promise<string> {
     const q = `
       SELECT backup_spec FROM app_version WHERE app_id = $1 AND sequence = $2
     `;
@@ -21,6 +20,6 @@ export class SnapshotsStore {
       throw new ReplicatedError(`Unable to find Backup Spec with appId ${appId} for sequence ${sequence}`);
     }
 
-    return yaml.safeLoad(result.rows[0].backup_spec);
+    return result.rows[0].backup_spec;
   }
 }
