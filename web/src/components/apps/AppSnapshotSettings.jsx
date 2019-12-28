@@ -5,6 +5,7 @@ import { Link, withRouter } from "react-router-dom"
 import MonacoEditor from "react-monaco-editor";
 import find from "lodash/find";
 import { snapshotSettings } from "../../queries/SnapshotQueries";
+import { snapshotProviderAWS, snapshotProviderS3Compatible, snapshotProviderAzure, snapshotProviderGoogle } from "../../mutations/SnapshotMutations";
 import "../../scss/components/shared/SnapshotForm.scss";
 
 const DESTINATIONS = [
@@ -155,8 +156,96 @@ class AppSnapshotSettings extends Component {
     this.setState({ gcsServiceAccount: value });
   }
 
-  onSubmit = () => {
-    console.log("submit settings here");
+  onSubmit = (e) => {
+    e.preventDefault();
+    switch (this.state.selectedDestination.value) {
+    case "aws":
+      this.snapshotProviderAWS();
+      break;
+    case "azure":
+      this.snapshotProviderAzure();
+      break;
+    case "google":
+      this.snapshotProviderGoogle();
+      break;
+    case "s3compatible":
+      this.snapshotProviderS3Compatible();
+    }
+  }
+
+  snapshotProviderAWS = () => {
+    this.props.snapshotProviderAWS(
+      this.state.s3bucket,
+      this.state.s3Path,
+      this.state.s3Region,
+      this.state.useIam && this.state.s3KeyId,
+      this.state.useIam && this.state.s3KeySecret,
+    ).catch(err => {
+        console.log(err);
+        err.graphQLErrors.map(({ msg }) => {
+          this.setState({
+            message: msg,
+            messageType: "error"
+          });
+        });
+      });
+  }
+
+  snapshotProviderAzure = () => {
+    this.props.snapshotProviderAzure(
+      this.state.s3bucket,
+      this.state.s3Path,
+      this.state.azureTenantId,
+      this.state.azureResourceGroupName,
+      this.state.azureStorageAccountId,
+      this.state.azureSubscriptionId,
+      this.state.azureClientId,
+      this.state.azureClientSecret,
+      this.state.selectedAzureCloudName.value,
+    ).catch(err => {
+        console.log(err);
+        err.graphQLErrors.map(({ msg }) => {
+          this.setState({
+            message: msg,
+            messageType: "error"
+          });
+        });
+      });
+  }
+
+  snapshotProviderGoogle = () => {
+    this.props.snapshotProviderGoogle(
+      this.state.s3Bucket,
+      this.state.s3Path,
+      this.state.gcsServiceAccount
+    ).catch(err => {
+        console.log(err);
+        err.graphQLErrors.map(({ msg }) => {
+          this.setState({
+            message: msg,
+            messageType: "error"
+          });
+        });
+      });
+  }
+
+  snapshotProviderS3Compatible = () => {
+    this.props.snapshotProviderS3Compatible(
+      this.state.s3bucket,
+      this.state.s3Path,
+      this.state.s3CompatibleRegion,
+      this.state.s3CompatibleEndpoint,
+      this.state.s3CompatibleKeyId,
+      this.state.s3CompatibleKeySecret,
+    ).catch(err => {
+        console.log(err);
+        err.graphQLErrors.map(({ msg }) => {
+          this.setState({
+            message: msg,
+            messageType: "error"
+          });
+        });
+      });
   }
 
   renderIcons = (destination) => {
@@ -427,5 +516,26 @@ export default compose(
         fetchPolicy: "no-cache"
       }
     }
+  }),
+  graphql(snapshotProviderAWS, {
+    props: ({ mutate }) => ({
+      snapshotProviderAWS: (bucket, prefix, region, accessKeyID, accessKeySecret) => mutate({ variables: { bucket, prefix, region, accessKeyID, accessKeySecret } })
+    })
+  }),
+  graphql(snapshotProviderS3Compatible, {
+    props: ({ mutate }) => ({
+      snapshotProviderS3Compatible: (bucket, prefix, region, endpoint, accessKeyID, accessKeySecret) => mutate({ variables: { bucket, prefix, region, endpoint, accessKeyID, accessKeySecret } })
+    })
+  }),
+  graphql(snapshotProviderGoogle, {
+    props: ({ mutate }) => ({
+      snapshotProviderGoogle: (bucket, prefix, serviceAccount) => mutate({ variables: { bucket, prefix, serviceAccount } } )
+    })
+  }),
+  graphql(snapshotProviderAzure, {
+    props: ({ mutate }) => ({
+      snapshotProviderAzure: (bucket, prefix, tenantID, resourceGroup, storageAccount, subscriptionID, clientID, clientSecret, cloudName) => mutate({ variables: { bucket, prefix, tenantID, resourceGroup, storageAccount, subscriptionID, clientID, clientSecret, cloudName } })
+    })
   })
+
 )(AppSnapshotSettings);

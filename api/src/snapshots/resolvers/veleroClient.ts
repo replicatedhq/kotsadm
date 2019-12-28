@@ -3,7 +3,9 @@ import zlib from "zlib";
 import { parse } from "logfmt";
 import * as _ from "lodash";
 import {
+  CoreV1Api,
   KubeConfig,
+  V1Secret,
 } from "@kubernetes/client-node";
 import { ReplicatedError } from "../../server/errors";
 import request, { RequestPromiseOptions } from "request-promise";
@@ -21,9 +23,17 @@ import {
   SnapshotHookPhase,
   SnapshotTrigger,
   SnapshotVolume } from "../snapshot";
+import {
+  SnapshotProvider,
+  SnapshotStore,
+  SnapshotStoreAzure,
+  SnapshotStoreS3AWS,
+  SnapshotStoreGoogle } from "../";
 import { Backup, Phase } from "../velero";
 import { sleep } from "../../util/utilities";
 import { parseBackupLogs, ParsedBackupLogs } from "./parseBackupLogs";
+
+const backupStorageLocationName = "kotsadm-velero-backend";
 
 interface VolumeSummary {
   count: number,
@@ -67,6 +77,9 @@ export class VeleroClient {
     case 201: // fallthrough
     case 204:
       return response.body
+    case 400:
+      console.log(response.body);
+      break
     case 403:
       throw new ReplicatedError(`RBAC misconfigured for ${method} velero.io/v1 ${path} in namespace ${this.ns}`);
     case 404:
@@ -263,6 +276,118 @@ export class VeleroClient {
 
     throw new Error(`Timed out waiting for DownloadRequest for ${kind}/${name} logs`);
   }
+
+  async saveSnapshotStore(store: SnapshotStore): Promise<void> {
+    const backupStorageLocation = {
+      apiVersion: "velero.io/v1",
+      kind: "BackupStorageLocation",
+      metadata: {
+        name: backupStorageLocationName,
+        namespace: this.ns,
+      },
+      spec: {
+        provider: store.provider,
+        objectStorage: {
+          bucket: store.bucket,
+          path: store.path,
+        },
+        config: {},
+      },
+    };
+    let credentialsSecret: V1Secret;
+
+    console.log(store);
+
+    switch (store.provider) {
+    case SnapshotProvider.S3AWS:
+      if (!_.isObject(store.s3AWS)) {
+        throw new ReplicatedError("s3AWS store configuration is required");
+      }
+      backupStorageLocation.spec.config = {
+        region: store.s3AWS!.region,
+      };
+      credentialsSecret = awsCredentialsSecret(this.ns, store.s3AWS!);
+      break;
+
+    case SnapshotProvider.S3Compatible:
+      if (!_.isObject(store.s3Compatible)) {
+        throw new ReplicatedError("s3Compatible store configuration is required");
+      }
+      backupStorageLocation.spec.config = {
+        region: store.s3Compatible!.region,
+        endpoint: store.s3Compatible!.endpoint,
+      };
+      credentialsSecret = awsCredentialsSecret(this.ns, store.s3Compatible!);
+      break;
+
+    case SnapshotProvider.Azure:
+      if (!_.isObject(store.azure)) {
+        throw new ReplicatedError("azure store configuration is required");
+      }
+      backupStorageLocation.spec.config = {
+        resourceGroup: store.azure!.resourceGroup,
+        storageAccount: store.azure!.storageAccount,
+        subscriptionId: store.azure!.subscriptionID,
+      };
+      credentialsSecret = azureCredentialsSecret(this.ns, store.azure!);
+      break;
+
+    case SnapshotProvider.Google:
+      if (!_.isObject(store.google)) {
+        throw new ReplicatedError("google store configuration is required");
+      }
+      backupStorageLocation.spec.config = {};
+      credentialsSecret = googleCredentialsSecret(this.ns, store.google!);
+      break;
+
+    default:
+      throw new ReplicatedError(`unknown snapshot provider: ${_.escape(store.provider)}`);
+    }
+
+    try {
+      const body = await this.request("GET", `backupstoragelocations/${backupStorageLocationName}`);
+      body.spec = backupStorageLocation.spec;
+      await this.request("PUT", `backupstoragelocations/${backupStorageLocationName}`, body);
+    } catch(e) {
+      console.log(e);
+      try {
+        await this.request("POST", "backupstoragelocations", backupStorageLocation);
+      } catch(e) {
+        console.log(e);
+      }
+    }
+
+    const corev1 = this.kc.makeApiClient(CoreV1Api);
+    try {
+      const { response } = await corev1.readNamespacedSecret(credentialsSecret.metadata!.name!, this.ns);
+      if (response.statusCode === 200) {
+        try {
+          await corev1.replaceNamespacedSecret(credentialsSecret.metadata!.name!, this.ns, credentialsSecret);
+        } catch(e) {
+          console.log(e);
+        }
+      } else {
+        try {
+          await corev1.createNamespacedSecret(this.ns, credentialsSecret);
+        } catch(e) {
+          console.log(e);
+        }
+      }
+    } catch(e) {
+      console.log(e);
+      console.log(credentialsSecret.metadata!.name);
+      try {
+        await corev1.createNamespacedSecret(this.ns, credentialsSecret);
+      } catch(e) {
+        console.log(e);
+      }
+    }
+  }
+
+  async listSnapshotStores(): Promise<Array<string>> {
+    const body = await this.request("GET", "backupstoragelocations");
+    return body.items;
+  }
 }
 
 function maybeParseInt(s: string|undefined): number|undefined {
@@ -287,4 +412,52 @@ function getValidName(label: string): string {
   const sha = shasum.digest("hex");
 
   return label.slice(0, DNS1035LabelMaxLength - 6) + sha.slice(0, 6);
+}
+
+function azureCredentialsSecret(namespace: string, azure: SnapshotStoreAzure): V1Secret {
+  return {
+    apiVersion: "v1",
+    kind: "Secret",
+    metadata: {
+      name: "azure-credentials",
+    },
+    stringData: {
+      cloud: `AZURE_SUBSCRIPTION_ID=${azure.subscriptionID}
+AZURE_TENANT_ID=${azure.tenantID}
+AZURE_CLIENT_ID=${azure.clientID}
+AZURE_CLIENT_SECRET=${azure.clientSecret}
+AZURE_RESOURCE_GROUP=${azure.resourceGroup}
+AZURE_CLOUD_NAME=${azure.cloudName}`,
+    },
+  };
+}
+
+function awsCredentialsSecret(namespace: string, aws: SnapshotStoreS3AWS): V1Secret {
+  return {
+    apiVersion: "v1",
+    kind: "Secret",
+    metadata: {
+      name: "azure-credentials",
+      namespace,
+    },
+    stringData: {
+      cloud: `[default]
+aws_access_key_id=${aws.accessKeyID}
+aws_secret_access_key=${aws.accessKeySecret}`,
+    },
+  };
+}
+
+function googleCredentialsSecret(namespace: string, google: SnapshotStoreGoogle): V1Secret {
+  return {
+    apiVersion: "v1",
+    kind: "Secret",
+    metadata: {
+      name: "google-credentials",
+      namespace,
+    },
+    stringData: {
+      cloud: google.serviceAccount,
+    },
+  };
 }

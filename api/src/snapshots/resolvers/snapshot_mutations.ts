@@ -7,6 +7,7 @@ import { Backup } from "../velero";
 import { VeleroClient } from "./veleroClient";
 import { ReplicatedError } from "../../server/errors";
 import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, SnapshotTrigger } from "../snapshot";
+import { SnapshotStore, SnapshotProvider } from "../snapshot_config";
 import { getK8sNamespace, kotsRenderFile } from "../../kots_app/kots_ffi";
 
 export function SnapshotMutations(stores: Stores) {
@@ -15,8 +16,33 @@ export function SnapshotMutations(stores: Stores) {
       // ttl and schedule
     },
 
-    async saveSnapshotStore(root: any, args: any, context: Context): Promise<void> {
-      // provider
+    async snapshotProviderAWS(root: any, args: any, context: Context): Promise<void> {
+      const { bucket, prefix, region, accessKeyID, accessKeySecret } = args;
+      const config: SnapshotStore = {
+        bucket,
+        path: prefix,
+        provider: SnapshotProvider.S3AWS,
+        s3AWS: {
+          region,
+          accessKeyID,
+          accessKeySecret,
+        },
+      };
+      const client = new VeleroClient("velero"); // TODO velero namespace
+
+      client.saveSnapshotStore(config);
+    },
+
+    async snapshotProviderS3Compatible(root: any, args: any, context: Context): Promise<void> {
+      const { bucket, prefix, region, endpoint, accessKeyID, accessKeySecret } = args;
+    },
+
+    async snapshotProviderAzure(root: any, args: any, context: Context): Promise<void> {
+      const { bucket, prefix, tenantID, resourceGroup,  storageAccount, subscriptionID, clientID, clientSecret, cloudName } = args;
+    },
+
+    async snapshotProviderGoogle(root: any, args: any, context: Context): Promise<void> {
+      const { bucket, prefix, serviceAccount } = args;
     },
 
     async manualSnapshot(root: any, args: any, context: Context): Promise<void> {

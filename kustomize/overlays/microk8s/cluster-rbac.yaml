@@ -64,12 +64,21 @@ rules:
   - backups
   - podvolumebackups
   - downloadrequests
+  - backupstoragelocations
   verbs:
   - create
   - list
   - get
   - update
   - delete
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
