@@ -132,12 +132,9 @@ export class PreflightStore {
     return preflightParams;
   }
 
-  async getPreflightCommand(appSlug?: string): Promise<string> {
+  async getPreflightCommand(appSlug: string, clusterSlug: string, sequence: string): Promise<string> {
     const params = await Params.getParams();
-    let url = `${params.apiAdvertiseEndpoint}/api/v1/preflight`;
-    if (appSlug) {
-      url = `${url}/${appSlug}`;
-    }
+    let url = `${params.apiAdvertiseEndpoint}/api/v1/preflight/${appSlug}/${clusterSlug}/${sequence}`;
     const preflightCommand = `
 curl https://krew.sh/preflight | bash
 kubectl preflight ${url}
