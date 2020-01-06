@@ -309,7 +309,9 @@ export default compose(
       const { match } = props
       return {
         variables: {
-          appSlug: match.params.slug
+          appSlug: match.params.slug,
+          clusterSlug: match.params.downstreamSlug,
+          sequence: match.params.sequence,
         }
       }
     }

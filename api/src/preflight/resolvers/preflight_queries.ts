@@ -21,7 +21,8 @@ export function PrefightQueries(stores: Stores) {
     },
 
     async getPreflightCommand(root: any, args: any, context: Context): Promise<string> {
-      return await stores.preflightStore.getPreflightCommand(args.appSlug);
+      const { appSlug, clusterSlug, sequence } = args;
+      return await stores.preflightStore.getPreflightCommand(appSlug, clusterSlug, sequence);
     }
   };
 }
