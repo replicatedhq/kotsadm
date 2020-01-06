@@ -33,7 +33,7 @@ import { Backup, Phase } from "../velero";
 import { sleep } from "../../util/utilities";
 import { parseBackupLogs, ParsedBackupLogs } from "./parseBackupLogs";
 
-const backupStorageLocationName = "kotsadm-velero-backend";
+export const backupStorageLocationName = "kotsadm-velero-backend";
 
 interface VolumeSummary {
   count: number,
@@ -289,7 +289,7 @@ export class VeleroClient {
         provider: store.provider,
         objectStorage: {
           bucket: store.bucket,
-          path: store.path,
+          prefix: store.path,
         },
         config: {},
       },
@@ -385,9 +385,16 @@ export class VeleroClient {
     }
   }
 
-  async listSnapshotStores(): Promise<Array<string>> {
-    const body = await this.request("GET", "backupstoragelocations");
-    return body.items;
+  async listBackends(): Promise<Array<string>> {
+    try {
+      const body = await this.request("GET", "backupstoragelocations");
+
+      return _.map(body.items, (item: any) => {
+        return item.metadata.name;
+      });
+    } catch(e) {
+      throw e;
+    }
   }
 }
 

@@ -4,7 +4,7 @@ import { Context } from "../../context";
 import { Stores } from "../../schema/stores";
 import { Params } from "../../server/params";
 import { Backup } from "../velero";
-import { VeleroClient } from "./veleroClient";
+import { backupStorageLocationName, VeleroClient } from "./veleroClient";
 import { ReplicatedError } from "../../server/errors";
 import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, SnapshotTrigger } from "../snapshot";
 import { SnapshotStore, SnapshotProvider } from "../snapshot_config";
@@ -67,6 +67,23 @@ export function SnapshotMutations(stores: Stores) {
         namespaces.push(getK8sNamespace());
       }
 
+      // TODO namespace
+      const velero = new VeleroClient("velero");
+
+      let backend: string;
+      try {
+        const backends = await velero.listBackends();
+        if (_.includes(backends, backupStorageLocationName)) {
+          backend = backupStorageLocationName;
+        } else if (_.includes(backends, "local-ceph-rgw")) {
+          backend = "local-ceph-rgw";
+        } else {
+          throw new ReplicatedError("No backupstoragelocation configured");
+        }
+      } catch (e) {
+        throw e;
+      }
+
       let backup: Backup = {
         apiVersion: "velero.io/v1",
         kind: "Backup",
@@ -82,8 +99,7 @@ export function SnapshotMutations(stores: Stores) {
           hooks: spec.hooks,
           includedNamespaces: namespaces,
           ttl: spec.ttl,
-          // TODO
-          storageLocation: "local-ceph-rgw",
+          storageLocation: backend,
         }
       };
 
@@ -97,9 +113,11 @@ export function SnapshotMutations(stores: Stores) {
         }
       }
 
-      // TODO namespace
-      const velero = new VeleroClient("velero");
-      await velero.createBackup(backup);
+      try {
+        await velero.createBackup(backup);
+      } catch (e) {
+        throw e;
+      }
     },
 
     async restoreSnapshot(root: any, args: any, context: Context): Promise<void> {
