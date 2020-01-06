@@ -30,7 +30,7 @@ export function SnapshotMutations(stores: Stores) {
       };
       const client = new VeleroClient("velero"); // TODO velero namespace
 
-      client.saveSnapshotStore(config);
+      return client.saveSnapshotStore(config);
     },
 
     async snapshotProviderS3Compatible(root: any, args: any, context: Context): Promise<void> {

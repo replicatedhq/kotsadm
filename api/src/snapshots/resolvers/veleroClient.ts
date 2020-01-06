@@ -296,8 +296,6 @@ export class VeleroClient {
     };
     let credentialsSecret: V1Secret;
 
-    console.log(store);
-
     switch (store.provider) {
     case SnapshotProvider.S3AWS:
       if (!_.isObject(store.s3AWS)) {
@@ -354,6 +352,7 @@ export class VeleroClient {
         await this.request("POST", "backupstoragelocations", backupStorageLocation);
       } catch(e) {
         console.log(e);
+        return;
       }
     }
 
@@ -365,21 +364,23 @@ export class VeleroClient {
           await corev1.replaceNamespacedSecret(credentialsSecret.metadata!.name!, this.ns, credentialsSecret);
         } catch(e) {
           console.log(e);
+          return;
         }
       } else {
         try {
           await corev1.createNamespacedSecret(this.ns, credentialsSecret);
         } catch(e) {
           console.log(e);
+          return;
         }
       }
     } catch(e) {
       console.log(e);
-      console.log(credentialsSecret.metadata!.name);
       try {
         await corev1.createNamespacedSecret(this.ns, credentialsSecret);
       } catch(e) {
         console.log(e);
+        return;
       }
     }
   }
@@ -437,7 +438,7 @@ function awsCredentialsSecret(namespace: string, aws: SnapshotStoreS3AWS): V1Sec
     apiVersion: "v1",
     kind: "Secret",
     metadata: {
-      name: "azure-credentials",
+      name: "aws-credentials",
       namespace,
     },
     stringData: {
