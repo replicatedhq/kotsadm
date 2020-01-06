@@ -5,8 +5,8 @@ import { Helmet } from "react-helmet";
 import { withRouter } from "react-router-dom";
 import Modal from "react-modal";
 import MonacoEditor from "react-monaco-editor"; 
-
-import { getKotsPreflightResult, getLatestKotsPreflightResult } from "@src/queries/AppsQueries";
+import CodeSnippet from "./shared/CodeSnippet";
+import { getKotsPreflightResult, getLatestKotsPreflightResult, getPreflightCommand } from "@src/queries/AppsQueries";
 import { deployKotsVersion } from "@src/mutations/AppsMutations";
 import Loader from "./shared/Loader";
 import PreflightRenderer from "./PreflightRenderer";
@@ -17,7 +17,8 @@ import { ignorePreflightPermissionErrors } from "../mutations/AppsMutations";
 class PreflightResultPage extends Component {
   state = {
     showSkipModal: false,
-    showWarningModal: false
+    showWarningModal: false,
+    showErrorDetails: false,
   };
 
   async componentWillUnmount() {
@@ -86,6 +87,16 @@ class PreflightResultPage extends Component {
     });
   }
 
+  toggleShowErrorDetails = () => {
+    this.setState({
+      showErrorDetails: !this.state.showErrorDetails
+    })
+  }
+
+  retryResults = () => {
+    this.props.data.refetch();
+  }
+
   renderErrors = (errors) => {
     const valueFromAPI = errors.map(error => {
       return error.error;
@@ -94,30 +105,54 @@ class PreflightResultPage extends Component {
     return (
       <div className="flex flex1 flex-column">
         <div className="flex flex1 u-height--full u-width--full u-marginTop--5 u-marginBottom--20">
-          <div className="flex-column u-width--full u-overflow--hidden">
-            <div className="flex-column flex flex1 u-padding--20">
-              <p className="u-fontSize--larger u-fontWeight--bold u-color--tuna">Pre-Checks for {this.props.appTitle || "your application"}</p>
-              <p className="u-marginTop--10 u-marginBottom--10 u-fontSize--normal u-lineHeight--normal u-color--dustyGray u-fontWeight--normal">Some resources that are required for preflight checks to pass were forbidden. We recommend granting access to these resources before proceeding</p>
-              <div className="flex-column flex flex1 monaco-editor-wrapper u-border--gray">
-                <MonacoEditor
-                  language="bash"
-                  value={valueFromAPI}
-                  height="100%"
-                  width="100%"
-                  options={{
-                    readOnly: true,
-                    contextmenu: false,
-                    minimap: {
-                      enabled: false
-                    },
-                    scrollBeyondLastLine: false,
-                  }}
-                />
+          <div className="flex-column u-width--full u-overflow--hidden u-paddingTop--30 u-paddingBottom--5 alignItems--center justifyContent--center">
+            <div className="PreChecksBox-wrapper flex-column u-padding--20">
+              <div className="flex">
+                {this.props.logo &&
+                  <div className="flex-auto u-marginRight--10">
+                    <div className="watch-icon" style={{ backgroundImage: `url(${this.props.logo})`, width: "36px", height: "36px" }}></div>
+                  </div>
+                }
+                <h2 className="u-fontSize--largest u-color--tuna u-fontWeight--bold u-lineHeight--normal">Unable to automatically run preflight checks</h2>
               </div>
-              <div className="u-marginTop--30">
-                <button type="button" className="btn primary blue" onClick={this.ignorePermissionErrors}>
-                  Run preflight checks anyways
-                </button>
+              <p className="u-marginTop--10 u-marginBottom--10 u-fontSize--normal u-lineHeight--normal u-color--dustyGray u-fontWeight--normal">
+                The Kubernetes RBAC policy that the Admin Console is running with does not have access to complete the Preflight Checks. It’s recommended that you run these manually before proceeding.
+              </p>
+              <p className="replicated-link u-fontSize--normal u-marginBottom--10" onClick={this.toggleShowErrorDetails}>{this.state.showErrorDetails ? "Hide details" : "Show details"}</p>
+              {this.state.showErrorDetails &&
+                <div className="flex-column flex flex1 monaco-editor-wrapper u-border--gray">
+                  <MonacoEditor
+                    language="bash"
+                    value={valueFromAPI}
+                    height="300"
+                    width="100%"
+                    options={{
+                      readOnly: true,
+                      contextmenu: false,
+                      minimap: {
+                        enabled: false
+                      },
+                      scrollBeyondLastLine: false,
+                    }}
+                  />
+                </div>
+              }
+              <div className="u-marginTop--20">
+                <h2 className="u-fontSize--largest u-color--tuna u-fontWeight--bold u-lineHeight--normal">Run Preflight Checks Manually</h2>
+                <p className="u-fontSize--normal u-color--dustyGray u-lineHeight--normal u-marginBottom--20">Run the commands below from your workstation to complete the Preflight Checks.</p>
+                <CodeSnippet
+                  language="bash"
+                  canCopy={true}
+                  onCopyText={<span className="u-color--chateauGreen">Command has been copied to your clipboard</span>}
+                >
+                  {this.props.getPreflightCommand?.getPreflightCommand ? this.props.getPreflightCommand?.getPreflightCommand : this.props.getPreflightCommand.error ? "There was an error generating the commands, please try again." : "Getting commands..."}
+                </CodeSnippet>
+              </div>
+              <div className="u-marginTop--30 flex justifyContent--flexEnd">
+                <span className="replicated-link u-fontSize--normal" onClick={this.retryResults}>Try again</span>
+                <span className="replicated-link u-marginLeft--20 u-fontSize--normal" onClick={this.ignorePermissionErrors}>
+                  Proceed with limited Preflights
+                </span>
               </div>
             </div>
           </div>
@@ -135,17 +170,14 @@ class PreflightResultPage extends Component {
       ? null
       : data.getKotsPreflightResult || data.getLatestKotsPreflightResult;
     const hasData = preflightResultData?.result;
-
+    let preflightJSON = {};
     if (hasData) {
       data.stopPolling();
       if (showSkipModal) {
         this.hideSkipModal();
       }
       
-      const preflightJSON = JSON.parse(preflightResultData?.result);
-      if (preflightJSON?.errors) {
-        return this.renderErrors(preflightJSON?.errors);
-      }
+      preflightJSON = JSON.parse(preflightResultData?.result);
     }
   
     return (
@@ -160,7 +192,7 @@ class PreflightResultPage extends Component {
               <span className="icon clickable backArrow-icon u-marginRight--10" style={{ verticalAlign: "0" }} />
                 Back
             </div>}
-            <div className="u-minWidth--full u-minHeight--full u-marginTop--20">
+            <div className="u-minWidth--full u-minHeight--full u-marginTop--20 u-overflow--auto">
               <p className="u-fontSize--header u-color--tuna u-fontWeight--bold">
                 Preflight checks
               </p>
@@ -172,14 +204,15 @@ class PreflightResultPage extends Component {
                   <Loader size="60" />
                 </div>
               )}
-              {hasData && (
+              {preflightJSON?.errors && this.renderErrors(preflightJSON?.errors) }
+              {hasData && !preflightJSON.errors ? (
                 <div className="flex-column">
                   <PreflightRenderer
                     className="u-marginTop--20"
                     results={preflightResultData.result}
                   />
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -268,6 +301,17 @@ export default compose(
           sequence: match.params.sequence
         }
       };
+    }
+  }),
+  graphql(getPreflightCommand, {
+    name: "getPreflightCommand",
+    options: props => {
+      const { match } = props
+      return {
+        variables: {
+          appSlug: match.params.slug
+        }
+      }
     }
   }),
   graphql(getLatestKotsPreflightResult, {

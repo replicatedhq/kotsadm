@@ -468,3 +468,11 @@ export const getGitOpsRepo = gql`
     }
   }
 `;
+
+export const getPreflightCommandRaw = `
+  query getPreflightCommandRaw($appSlug: String) {
+    getPreflightCommand(appSlug: $appSlug)
+  }
+`;
+
+export const getPreflightCommand = gql(getPreflightCommandRaw);
