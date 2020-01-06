@@ -3,6 +3,7 @@ import pg from "pg";
 import { Params } from "../server/params";
 import { PreflightResult } from "./";
 import { ReplicatedError } from "../server/errors";
+import { logger } from "../server/logger";
 
 interface PreflightParams {
   url: string
@@ -129,6 +130,19 @@ export class PreflightStore {
     }
 
     return preflightParams;
+  }
+
+  async getPreflightCommand(appSlug?: string): Promise<string> {
+    const params = await Params.getParams();
+    let url = `${params.apiAdvertiseEndpoint}/api/v1/preflight`;
+    if (appSlug) {
+      url = `${url}/${appSlug}`;
+    }
+    const preflightCommand = `
+curl https://krew.sh/preflight | bash
+kubectl preflight ${url}
+    `;
+    return preflightCommand;
   }
 
 

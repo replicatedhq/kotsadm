@@ -839,7 +839,7 @@ class AppVersionHistory extends Component {
                           <p className="u-fontSize--normal u-color--dustyGray">Source: <span className="u-fontWeight--bold u-color--tuna">{version.source}</span></p>
                           <div className="u-fontSize--small u-marginTop--10 u-color--dustyGray">{this.renderSourceAndDiff(version)}</div>
                         </div>
-                        <div className="flex flex1 u-fontSize--normal u-color--dustyGray u-marginTop--15">Status: <span className="u-marginLeft--5">{gitopsEnabled ? this.renderViewPreflights(version) : this.renderVersionStatus(version)}</span></div>
+                        <div className="flex flex1 u-fontSize--normal u-color--dustyGray u-marginTop--15">Status: <span className="u-marginLeft--5">{!gitopsEnabled ? this.renderViewPreflights(version) : this.renderVersionStatus(version)}</span></div>
                       </div>
                       <div className="flex-column flex1 alignItems--flexEnd">
                         <div>
