@@ -188,7 +188,7 @@ class PreflightResultPage extends Component {
         <div className="flex1 flex u-overflow--auto">
           <div className="PreflightChecks--wrapper flex flex-column u-paddingTop--30 u-overflow--hidden">
             {this.props.history.location.pathname.includes("version-history") &&
-            <div className="u-fontWeight--bold u-color--astral u-cursor--pointer" onClick={() => this.props.history.goBack()}>
+            <div className="u-fontWeight--bold u-color--royalBlue u-cursor--pointer" onClick={() => this.props.history.goBack()}>
               <span className="icon clickable backArrow-icon u-marginRight--10" style={{ verticalAlign: "0" }} />
                 Back
             </div>}
@@ -217,7 +217,7 @@ class PreflightResultPage extends Component {
           </div>
         </div>
 
-        {hasData ? (
+        {preflightJSON.errors ? null : hasData ? (
           <div className="flex-auto flex justifyContent--flexEnd">
             <button
               type="button"

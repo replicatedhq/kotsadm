@@ -815,7 +815,7 @@ class AppVersionHistory extends Component {
                   {versionHistory.length > 1 && this.renderDiffBtn()}
                 </div>
                 {/* Downstream version history */}
-                {versionHistory.length && versionHistory.map((version) => {
+                {versionHistory.length > 1 ? versionHistory.map((version) => {
                   const isChecked = !!checkedReleasesToDiff.find(diffRelease => diffRelease.parentSequence === version.parentSequence);
                   return (
                     <div 
@@ -849,7 +849,11 @@ class AppVersionHistory extends Component {
                       </div>
                     </div>
                   );
-                })}
+                }) : 
+                  <div className="flex-column flex1 alignItems--center justifyContent--center">
+                    <p className="u-fontSize--large u-fontWeight--bold u-color--tuna">No versions have been deployed.</p>
+                  </div>
+                }
 
                 {/* Diff overlay */}
                 {showDiffOverlay &&
