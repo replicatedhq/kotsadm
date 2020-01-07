@@ -258,6 +258,19 @@ export default compose(
       };
     }
   }),
+  graphql(getPreflightCommand, {
+    name: "getPreflightCommand",
+    options: props => {
+      const { match } = props
+      return {
+        variables: {
+          appSlug: match.params.slug,
+          clusterSlug: match.params.downstreamSlug,
+          sequence: match.params.sequence,
+        }
+      }
+    }
+  }),
   graphql(getLatestKotsPreflightResult, {
     skip: props => {
       const { match } = props;
