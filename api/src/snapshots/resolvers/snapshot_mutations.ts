@@ -35,14 +35,56 @@ export function SnapshotMutations(stores: Stores) {
 
     async snapshotProviderS3Compatible(root: any, args: any, context: Context): Promise<void> {
       const { bucket, prefix, region, endpoint, accessKeyID, accessKeySecret } = args;
+      const config: SnapshotStore = {
+        bucket,
+        path: prefix,
+        provider: SnapshotProvider.S3Compatible,
+        s3Compatible: {
+          region,
+          endpoint,
+          accessKeyID,
+          accessKeySecret,
+        },
+      };
+      const client = new VeleroClient("velero"); // TODO velero namespace
+
+      return client.saveSnapshotStore(config);
     },
 
     async snapshotProviderAzure(root: any, args: any, context: Context): Promise<void> {
       const { bucket, prefix, tenantID, resourceGroup,  storageAccount, subscriptionID, clientID, clientSecret, cloudName } = args;
+      const config: SnapshotStore = {
+        bucket,
+        path: prefix,
+        provider: SnapshotProvider.Azure,
+        azure: {
+          resourceGroup,
+          storageAccount,
+          subscriptionID,
+          clientID,
+          tenantID,
+          clientSecret,
+          cloudName,
+        },
+      };
+      const client = new VeleroClient("velero"); // TODO velero namespace
+
+      return client.saveSnapshotStore(config);
     },
 
     async snapshotProviderGoogle(root: any, args: any, context: Context): Promise<void> {
       const { bucket, prefix, serviceAccount } = args;
+      const config: SnapshotStore = {
+        bucket,
+        path: prefix,
+        provider: SnapshotProvider.Google,
+        google: {
+          serviceAccount
+        },
+      };
+      const client = new VeleroClient("velero"); // TODO velero namespace
+
+      return client.saveSnapshotStore(config);
     },
 
     async manualSnapshot(root: any, args: any, context: Context): Promise<void> {

@@ -57,6 +57,8 @@ class AppSnapshotSettings extends Component {
     s3KeyId: "",
     s3KeySecret: "",
 
+    azureBucket: "",
+    azurePath: "",
     azureSubscriptionId: "",
     azureTenantId: "",
     azureClientId: "",
@@ -68,8 +70,12 @@ class AppSnapshotSettings extends Component {
       label: "Public",
     },
 
+    gcsBucket: "",
+    gcsPath: "",
     gcsServiceAccount: "",
 
+    s3CompatibleBucket: "",
+    s3CompatiblePath: "",
     s3CompatibleKeyId: "",
     s3CompatibleKeySecret: "",
     s3CompatibleEndpoint: "",
@@ -99,6 +105,8 @@ class AppSnapshotSettings extends Component {
       return this.setState({
         determiningDestination: false,
         selectedDestination: find(DESTINATIONS, ["value", "azure"]),
+        azureBucket: store.bucket,
+        azurePath: store.path,
         azureSubscriptionId: store.azure.subscriptionID,
         azureTenantId: store.azure.tenantID,
         azureClientId: store.azure.clientID,
@@ -113,6 +121,8 @@ class AppSnapshotSettings extends Component {
       return this.setState({
         determiningDestination: false,
         selectedDestination: find(DESTINATIONS, ["value", "google"]),
+        gcsBucket: store.bucket,
+        gcsPath: store.path,
         gcsServiceAccount: store.google.serviceAccount
       });
     }
@@ -121,6 +131,8 @@ class AppSnapshotSettings extends Component {
       return this.setState({
         determiningDestination: false,
         selectedDestination: find(DESTINATIONS, ["value", "s3compatible"]),
+        s3CompatibleBucket: store.bucket,
+        s3CompatiblePath: store.path,
         s3CompatibleKeyId: store.s3Compatible.accessKeyID,
         s3CompatibleKeySecret: store.s3Compatible.accessKeySecret,
         s3CompatibleEndpoint: store.s3Compatible.endpoint,
@@ -170,6 +182,7 @@ class AppSnapshotSettings extends Component {
       break;
     case "s3compatible":
       this.snapshotProviderS3Compatible();
+      break;
     }
   }
 
@@ -193,8 +206,8 @@ class AppSnapshotSettings extends Component {
 
   snapshotProviderAzure = () => {
     this.props.snapshotProviderAzure(
-      this.state.s3bucket,
-      this.state.s3Path,
+      this.state.azureBucket,
+      this.state.azurePath,
       this.state.azureTenantId,
       this.state.azureResourceGroupName,
       this.state.azureStorageAccountId,
@@ -215,8 +228,8 @@ class AppSnapshotSettings extends Component {
 
   snapshotProviderGoogle = () => {
     this.props.snapshotProviderGoogle(
-      this.state.s3Bucket,
-      this.state.s3Path,
+      this.state.gcsBucket,
+      this.state.gcsPath,
       this.state.gcsServiceAccount
     ).catch(err => {
         console.log(err);
@@ -231,8 +244,8 @@ class AppSnapshotSettings extends Component {
 
   snapshotProviderS3Compatible = () => {
     this.props.snapshotProviderS3Compatible(
-      this.state.s3bucket,
-      this.state.s3Path,
+      this.state.s3CompatibleBucket,
+      this.state.s3CompatiblePath,
       this.state.s3CompatibleRegion,
       this.state.s3CompatibleEndpoint,
       this.state.s3CompatibleKeyId,
@@ -328,6 +341,16 @@ class AppSnapshotSettings extends Component {
       case "azure":
         return (
           <div>
+            <div className="flex1 u-paddingRight--5">
+              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Bucket</p>
+              <input type="text" className="Input" placeholder="Bucket name" value={this.state.azureBucket} onChange={(e) => { this.handleFormChange("azureBucket", e) }}/>
+            </div>
+            <div className="flex u-marginBottom--30">
+              <div className="flex1 u-paddingRight--5">
+                <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Path</p>
+                <input type="text" className="Input" placeholder="/path/to/destination" value={this.state.azurePath} onChange={(e) => { this.handleFormChange("azurePath", e) }}/>
+              </div>
+            </div>
             <div className="flex u-marginBottom--30">
               <div className="flex1 u-paddingRight--5">
                 <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Subscription ID</p>
@@ -380,25 +403,37 @@ class AppSnapshotSettings extends Component {
 
       case "google":
         return (
-          <div className="flex u-marginBottom--30">
-            <div className="flex1">
-              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Service Account</p>
-              <div className="gcs-editor">
-                <MonacoEditor
-                  ref={(editor) => { this.monacoEditor = editor }}
-                  language="json"
-                  value={this.state.gcsServiceAccount}
-                  height="420"
-                  width="100%"
-                  onChange={this.onGcsEditorChange}
-                  options={{
-                    contextmenu: false,
-                    minimap: {
-                      enabled: false
-                    },
-                    scrollBeyondLastLine: false,
-                  }}
-                />
+          <div>
+            <div className="flex1 u-paddingRight--5">
+              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Bucket</p>
+              <input type="text" className="Input" placeholder="Bucket name" value={this.state.gcsBucket} onChange={(e) => { this.handleFormChange("gcsBucket", e) }}/>
+            </div>
+            <div className="flex u-marginBottom--30">
+              <div className="flex1 u-paddingRight--5">
+                <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Path</p>
+                <input type="text" className="Input" placeholder="/path/to/destination" value={this.state.gcsPath} onChange={(e) => { this.handleFormChange("gcsPath", e) }}/>
+              </div>
+            </div>
+            <div className="flex u-marginBottom--30">
+              <div className="flex1">
+                <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Service Account</p>
+                <div className="gcs-editor">
+                  <MonacoEditor
+                    ref={(editor) => { this.monacoEditor = editor }}
+                    language="json"
+                    value={this.state.gcsServiceAccount}
+                    height="420"
+                    width="100%"
+                    onChange={this.onGcsEditorChange}
+                    options={{
+                      contextmenu: false,
+                      minimap: {
+                        enabled: false
+                      },
+                      scrollBeyondLastLine: false,
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -407,6 +442,16 @@ class AppSnapshotSettings extends Component {
       case "s3compatible":
         return (
           <div>
+            <div className="flex1 u-paddingRight--5">
+              <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Bucket</p>
+              <input type="text" className="Input" placeholder="Bucket name" value={this.state.s3CompatibleBucket} onChange={(e) => { this.handleFormChange("s3CompatibleBucket", e) }}/>
+            </div>
+            <div className="flex u-marginBottom--30">
+              <div className="flex1 u-paddingRight--5">
+                <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Path</p>
+                <input type="text" className="Input" placeholder="/path/to/destination" value={this.state.s3CompatiblePath} onChange={(e) => { this.handleFormChange("s3CompatiblePath", e) }}/>
+              </div>
+            </div>
             <div className="flex u-marginBottom--30">
               <div className="flex1 u-paddingRight--5">
                 <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Access Key ID</p>

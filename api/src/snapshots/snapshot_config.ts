@@ -20,7 +20,7 @@ export enum SnapshotProvider {
   S3AWS = "aws",
   S3Compatible = "s3compatible",
   Azure = "azure",
-  Google = "google",
+  Google = "gcp",
 }
 
 export interface SnapshotStoreS3AWS {
