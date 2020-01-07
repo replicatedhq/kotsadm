@@ -470,7 +470,7 @@ export const getGitOpsRepo = gql`
 `;
 
 export const getPreflightCommandRaw = `
-  query getPreflightCommandRaw($appSlug: String, $clusterSlug: String, $sequence: String) {
+  query getPreflightCommand($appSlug: String, $clusterSlug: String, $sequence: String) {
     getPreflightCommand(appSlug: $appSlug, clusterSlug: $clusterSlug, sequence: $sequence)
   }
 `;

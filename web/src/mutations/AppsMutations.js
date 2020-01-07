@@ -162,3 +162,10 @@ mutation ignorePreflightPermissionErrors($appSlug: String, $clusterSlug: String,
 }
 `;
 export const ignorePreflightPermissionErrors = gql(ignorePreflightPermissionErrorsRaw);
+
+export const retryPreflightsRaw = `
+mutation retryPreflights($appSlug: String, $clusterSlug: String, $sequence: Int) {
+  retryPreflights(appSlug: $appSlug, clusterSlug: $clusterSlug, sequence: $sequence)
+}
+`;
+export const retryPreflights = gql(retryPreflightsRaw);
