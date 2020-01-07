@@ -16,46 +16,26 @@ import { VeleroClient } from "./veleroClient";
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {
     async snapshotConfig(root: any, args: any, context: Context): Promise<SnapshotConfig> {
-      return {
-        autoEnabled: true,
-        autoSchedule: {
-          userSelected: "weekly",
-          schedule: "0 0 12 ? * MON *",
-        },
-        ttl: {
-          inputValue: "2",
-          inputTimeUnit: "weeks",
-          converted: "336h",
-        },
-        store: {
-          provider: SnapshotProvider.S3AWS,
-          bucket: "",
-          path: "",
-          s3AWS: {
-            region: "us-west-1",
-            accessKeyID: "",
-            accessKeySecret: "",
+      try {
+        const velero = new VeleroClient("velero"); // TODO namespace
+          const store = await velero.readSnapshotStore();
+
+        return {
+          autoEnabled: true,
+          autoSchedule: {
+            userSelected: "weekly",
+            schedule: "0 0 12 ? * MON *",
           },
-          azure: {
-            tenantID: "",
-            resourceGroup: "",
-            storageAccount: "",
-            subscriptionID: "",
-            clientID: "",
-            clientSecret: "",
-            cloudName: AzureCloudName.Public,
+          ttl: {
+            inputValue: "2",
+            inputTimeUnit: "weeks",
+            converted: "336h",
           },
-          s3Compatible: {
-            endpoint: "/s3-comp-endpoint",
-            region: "us-west-1",
-            accessKeyID: "23543423543245",
-            accessKeySecret: "adsf2sdfg3245642sdfsf",
-          },
-          google: {
-            serviceAccount: `{ "key": "value" }`
-          }
-        },
-      };
+          store,
+        };
+      } catch (e) {
+        throw e;
+      }
     },
 
     async listSnapshots(root: any, args: any, context: Context): Promise<Array<Snapshot>> {

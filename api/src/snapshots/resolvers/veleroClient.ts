@@ -32,8 +32,14 @@ import {
 import { Backup, Phase } from "../velero";
 import { sleep } from "../../util/utilities";
 import { parseBackupLogs, ParsedBackupLogs } from "./parseBackupLogs";
+import { AzureCloudName } from "../snapshot_config";
+import { base64Decode } from '../../util/utilities';
 
 export const backupStorageLocationName = "kotsadm-velero-backend";
+const awsSecretName = "aws-credentials";
+const googleSecretName = "google-credentials";
+const azureSecretName = "azure-credentials";
+const redacted = "--- REDACTED ---";
 
 interface VolumeSummary {
   count: number,
@@ -84,6 +90,9 @@ export class VeleroClient {
       throw new ReplicatedError(`RBAC misconfigured for ${method} velero.io/v1 ${path} in namespace ${this.ns}`);
     case 404:
       throw new ReplicatedError("Velero is not installed in this cluster");
+    case 422:
+      console.log(response.body);
+      break
     }
 
     throw new Error(`${method} ${url}: ${response.statusCode}`);
@@ -277,6 +286,71 @@ export class VeleroClient {
     throw new Error(`Timed out waiting for DownloadRequest for ${kind}/${name} logs`);
   }
 
+  async readSnapshotStore(): Promise<SnapshotStore> {
+    const corev1 = this.kc.makeApiClient(CoreV1Api);
+    try {
+      const bsl = await this.request("GET", `backupstoragelocations/${backupStorageLocationName}`); 
+
+      const store: SnapshotStore = {
+        provider: bsl.spec.provider,
+        bucket: bsl.spec.objectStorage.bucket,
+        path: bsl.spec.objectStorage.prefix,
+      };
+
+      switch (store.provider) {
+      case SnapshotProvider.S3AWS:
+        const {accessKeyID, accessKeySecret} = await readAWSCredentialsSecret(corev1, this.ns);
+
+        store.s3AWS = {
+          region: bsl.spec.config.region,
+          accessKeyID,
+        };
+        if (accessKeySecret) {
+          store.s3AWS.accessKeySecret = redacted;
+        }
+        break;
+
+      case SnapshotProvider.S3Compatible:
+        const s3Creds = await readAWSCredentialsSecret(corev1, this.ns);
+
+        store.s3Compatible = {
+          region: bsl.spec.config.region,
+          endpoint: bsl.spec.config.endpoint,
+          accessKeyID: s3Creds.accessKeyID,
+        };
+        if (s3Creds.accessKeySecret) {
+          store.s3Compatible.accessKeySecret = redacted;
+        }
+        break;
+
+      case SnapshotProvider.Azure:
+        const creds = await readAzureCredentialsSecret(corev1, this.ns);
+
+        store.azure = {
+          resourceGroup: bsl.spec.config.resourceGroup,
+          storageAccount: bsl.spec.config.storageAccount,
+          subscriptionID: bsl.spec.config.subscriptionId,
+          tenantID: creds.tenantID || "",
+          clientID: creds.clientID || "",
+          clientSecret: creds.clientSecret ? redacted : "",
+          cloudName: creds.cloudName || AzureCloudName.Public,
+        };
+        break;
+
+      case SnapshotProvider.Google:
+        const serviceAccount = await readGoogleCredentialsSecret(corev1, this.ns);
+
+        store.google = {
+          serviceAccount: serviceAccount ? redacted : "",
+        };
+      }
+
+      return store;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   async saveSnapshotStore(store: SnapshotStore): Promise<void> {
     const backupStorageLocation = {
       apiVersion: "velero.io/v1",
@@ -294,6 +368,7 @@ export class VeleroClient {
         config: {},
       },
     };
+    const corev1 = this.kc.makeApiClient(CoreV1Api);
     let credentialsSecret: V1Secret;
 
     switch (store.provider) {
@@ -304,7 +379,7 @@ export class VeleroClient {
       backupStorageLocation.spec.config = {
         region: store.s3AWS!.region,
       };
-      credentialsSecret = awsCredentialsSecret(this.ns, store.s3AWS!);
+      credentialsSecret = await awsCredentialsSecret(corev1, this.ns, store.s3AWS!);
       break;
 
     case SnapshotProvider.S3Compatible:
@@ -315,7 +390,7 @@ export class VeleroClient {
         region: store.s3Compatible!.region,
         endpoint: store.s3Compatible!.endpoint,
       };
-      credentialsSecret = awsCredentialsSecret(this.ns, store.s3Compatible!);
+      credentialsSecret = await awsCredentialsSecret(corev1, this.ns, store.s3Compatible!);
       break;
 
     case SnapshotProvider.Azure:
@@ -327,7 +402,7 @@ export class VeleroClient {
         storageAccount: store.azure!.storageAccount,
         subscriptionId: store.azure!.subscriptionID,
       };
-      credentialsSecret = azureCredentialsSecret(this.ns, store.azure!);
+      credentialsSecret = await azureCredentialsSecret(corev1, this.ns, store.azure!);
       break;
 
     case SnapshotProvider.Google:
@@ -335,7 +410,7 @@ export class VeleroClient {
         throw new ReplicatedError("google store configuration is required");
       }
       backupStorageLocation.spec.config = {};
-      credentialsSecret = googleCredentialsSecret(this.ns, store.google!);
+      credentialsSecret = await googleCredentialsSecret(corev1, this.ns, store.google!);
       break;
 
     default:
@@ -356,7 +431,6 @@ export class VeleroClient {
       }
     }
 
-    const corev1 = this.kc.makeApiClient(CoreV1Api);
     try {
       const { response } = await corev1.readNamespacedSecret(credentialsSecret.metadata!.name!, this.ns);
       if (response.statusCode === 200) {
@@ -422,7 +496,13 @@ function getValidName(label: string): string {
   return label.slice(0, DNS1035LabelMaxLength - 6) + sha.slice(0, 6);
 }
 
-function azureCredentialsSecret(namespace: string, azure: SnapshotStoreAzure): V1Secret {
+async function azureCredentialsSecret(corev1: CoreV1Api, namespace: string, azure: SnapshotStoreAzure): Promise<V1Secret> {
+  let clientSecret = azure.clientSecret;
+  if (clientSecret === redacted) {
+    const creds = await readAzureCredentialsSecret(corev1, namespace);
+    clientSecret = creds.clientSecret || "";
+  }
+
   return {
     apiVersion: "v1",
     kind: "Secret",
@@ -433,39 +513,141 @@ function azureCredentialsSecret(namespace: string, azure: SnapshotStoreAzure): V
       cloud: `AZURE_SUBSCRIPTION_ID=${azure.subscriptionID}
 AZURE_TENANT_ID=${azure.tenantID}
 AZURE_CLIENT_ID=${azure.clientID}
-AZURE_CLIENT_SECRET=${azure.clientSecret}
+AZURE_CLIENT_SECRET=${clientSecret}
 AZURE_RESOURCE_GROUP=${azure.resourceGroup}
 AZURE_CLOUD_NAME=${azure.cloudName}`,
     },
   };
 }
 
-function awsCredentialsSecret(namespace: string, aws: SnapshotStoreS3AWS): V1Secret {
+interface azureCreds {
+  tenantID?: string,
+  clientID?: string,
+  clientSecret?: string,
+  resourceGroup?: string,
+  cloudName?: AzureCloudName,
+}
+async function readAzureCredentialsSecret(corev1: CoreV1Api, namespace: string): Promise<azureCreds> {
+  try {
+    const creds: azureCreds = {};
+
+    const { response, body: secret } = await corev1.readNamespacedSecret(azureSecretName, namespace);
+    if (response.statusCode !== 200 || !secret.data!.cloud) {
+      return creds;
+    }
+    const cloud = base64Decode(secret.data!.cloud);
+
+    const tenantID = cloud.match(/AZURE_TENANT_ID=([^\n]+)/);
+    const clientID = cloud.match(/AZURE_CLIENT_ID=([^\n]+)/);
+    const clientSecret = cloud.match(/AZURE_CLIENT_SECRET=([^\n]+)/);
+    const resourceGroup = cloud.match(/AZURE_RESOURCE_GROUP=([^\n]+)/);
+    const cloudName = cloud.match(/AZURE_CLOUD_NAME=([^\n]+)/);
+
+    if (tenantID) {
+      creds.tenantID = tenantID[1];
+    }
+    if (clientID) {
+      creds.clientID = clientID[1];
+    }
+    if (clientSecret) {
+      creds.clientSecret = clientSecret[1];
+    }
+    if (resourceGroup) {
+      creds.resourceGroup = resourceGroup[1];
+    }
+    if (cloudName) {
+      creds.cloudName = cloudName[1] as AzureCloudName;
+    }
+
+    return creds;
+  } catch (e) {
+    throw e;
+  }
+}
+
+async function awsCredentialsSecret(corev1: CoreV1Api, namespace: string, aws: SnapshotStoreS3AWS): Promise<V1Secret> {
+  let accessKeySecret = aws.accessKeySecret;
+  if (accessKeySecret === redacted) {
+    ({ accessKeySecret } = await readAWSCredentialsSecret(corev1, namespace));
+  }
+
   return {
     apiVersion: "v1",
     kind: "Secret",
     metadata: {
-      name: "aws-credentials",
+      name: awsSecretName,
       namespace,
     },
     stringData: {
       cloud: `[default]
 aws_access_key_id=${aws.accessKeyID}
-aws_secret_access_key=${aws.accessKeySecret}`,
+aws_secret_access_key=${accessKeySecret}`,
     },
   };
 }
 
-function googleCredentialsSecret(namespace: string, google: SnapshotStoreGoogle): V1Secret {
+interface awsCreds {
+  accessKeyID?: string,
+  accessKeySecret?: string,
+}
+async function readAWSCredentialsSecret(corev1: CoreV1Api, namespace: string): Promise<awsCreds> {
+  try {
+    const creds: awsCreds = {};
+
+    const  { response, body: secret } = await corev1.readNamespacedSecret(awsSecretName, namespace);
+    if (response.statusCode !== 200 || !secret.data!.cloud) {
+      return {};
+    }
+    const cloud = base64Decode(secret.data!.cloud);
+
+    const keyID = cloud.match(/aws_access_key_id=([^\n]+)/);
+    const keySecret = cloud.match(/aws_secret_access_key=([^\n]+)/);
+    if (keyID) {
+      creds.accessKeyID = keyID[1];
+    }
+    if (keySecret) {
+      creds.accessKeySecret = keySecret[1];
+    }
+
+    return creds;
+  } catch (e) {
+    throw e;
+  }
+}
+
+async function googleCredentialsSecret(corev1: CoreV1Api, namespace: string, google: SnapshotStoreGoogle): Promise<V1Secret> {
+  let serviceAccount = google.serviceAccount;
+  if (serviceAccount === redacted) {
+    const sa = await readGoogleCredentialsSecret(corev1, namespace);
+    if (sa) {
+      serviceAccount = sa;
+    } else {
+      serviceAccount = "";
+    }
+  }
+
   return {
     apiVersion: "v1",
     kind: "Secret",
     metadata: {
-      name: "google-credentials",
+      name: googleSecretName,
       namespace,
     },
     stringData: {
-      cloud: google.serviceAccount,
+      cloud: serviceAccount,
     },
-  };
+  }
+}
+
+async function readGoogleCredentialsSecret(corev1: CoreV1Api, namespace: string): Promise<string|void> {
+  try {
+    const { response, body: secret } = await corev1.readNamespacedSecret(googleSecretName, namespace);
+    if (response.statusCode !== 200 || !secret.data!.cloud) {
+      return;
+    }
+
+    return base64Decode(secret.data!.cloud);
+  } catch(e) {
+    throw e;
+  }
 }
