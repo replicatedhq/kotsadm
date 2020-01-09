@@ -25,11 +25,13 @@ export function getPreflightResultState(preflightResults): string {
 
   const results = preflightResults.results;
   let resultState = "pass";
-  for (const check of results) {
-    if (check.isWarn) {
-      resultState = "warn";
-    } else if (check.isFail) {
-      return "fail";
+  if (results) {
+    for (const check of results) {
+      if (check.isWarn) {
+        resultState = "warn";
+      } else if (check.isFail) {
+        return "fail";
+      }
     }
   }
   return resultState;
