@@ -369,7 +369,7 @@ export class VeleroClient {
       },
     };
     const corev1 = this.kc.makeApiClient(CoreV1Api);
-    let credentialsSecret: V1Secret;
+    let credentialsSecret: V1Secret|null;
 
     switch (store.provider) {
     case SnapshotProvider.S3AWS:
@@ -429,6 +429,10 @@ export class VeleroClient {
         console.log(e);
         return;
       }
+    }
+
+    if (!credentialsSecret) {
+      return;
     }
 
     try {
@@ -565,10 +569,18 @@ async function readAzureCredentialsSecret(corev1: CoreV1Api, namespace: string):
   }
 }
 
-async function awsCredentialsSecret(corev1: CoreV1Api, namespace: string, aws: SnapshotStoreS3AWS): Promise<V1Secret> {
+async function awsCredentialsSecret(corev1: CoreV1Api, namespace: string, aws: SnapshotStoreS3AWS): Promise<V1Secret|null> {
   let accessKeySecret = aws.accessKeySecret;
   if (accessKeySecret === redacted) {
     ({ accessKeySecret } = await readAWSCredentialsSecret(corev1, namespace));
+  }
+
+  if (!accessKeySecret && !aws.accessKeyID) {
+    const { response } = await corev1.deleteNamespacedSecret(awsSecretName, namespace);
+    if (response.statusCode !== 200 && response.statusCode !== 404) {
+      throw new ReplicatedError(`Failed to delete secret ${awsSecretName} from namespace ${namespace}. Velero will continue using the credentials in the secret if it exists rather than EC2 instance profiles`);
+    }
+    return null;
   }
 
   return {
@@ -591,28 +603,24 @@ interface awsCreds {
   accessKeySecret?: string,
 }
 async function readAWSCredentialsSecret(corev1: CoreV1Api, namespace: string): Promise<awsCreds> {
-  try {
-    const creds: awsCreds = {};
+  const creds: awsCreds = {};
 
-    const  { response, body: secret } = await corev1.readNamespacedSecret(awsSecretName, namespace);
-    if (response.statusCode !== 200 || !secret.data!.cloud) {
-      return {};
-    }
-    const cloud = base64Decode(secret.data!.cloud);
-
-    const keyID = cloud.match(/aws_access_key_id=([^\n]+)/);
-    const keySecret = cloud.match(/aws_secret_access_key=([^\n]+)/);
-    if (keyID) {
-      creds.accessKeyID = keyID[1];
-    }
-    if (keySecret) {
-      creds.accessKeySecret = keySecret[1];
-    }
-
-    return creds;
-  } catch (e) {
-    throw e;
+  const  { response, body: secret } = await corev1.readNamespacedSecret(awsSecretName, namespace);
+  if (response.statusCode !== 200 || !secret.data!.cloud) {
+    return {};
   }
+  const cloud = base64Decode(secret.data!.cloud);
+
+  const keyID = cloud.match(/aws_access_key_id=([^\n]+)/);
+  const keySecret = cloud.match(/aws_secret_access_key=([^\n]+)/);
+  if (keyID) {
+    creds.accessKeyID = keyID[1];
+  }
+  if (keySecret) {
+    creds.accessKeySecret = keySecret[1];
+  }
+
+  return creds;
 }
 
 async function googleCredentialsSecret(corev1: CoreV1Api, namespace: string, google: SnapshotStoreGoogle): Promise<V1Secret> {
