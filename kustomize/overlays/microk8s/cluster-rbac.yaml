@@ -65,6 +65,7 @@ rules:
   - podvolumebackups
   - downloadrequests
   - backupstoragelocations
+  - deletebackuprequests
   verbs:
   - create
   - list

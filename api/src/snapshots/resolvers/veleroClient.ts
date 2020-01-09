@@ -464,15 +464,24 @@ export class VeleroClient {
   }
 
   async listBackends(): Promise<Array<string>> {
-    try {
-      const body = await this.request("GET", "backupstoragelocations");
+    const body = await this.request("GET", "backupstoragelocations");
 
-      return _.map(body.items, (item: any) => {
-        return item.metadata.name;
-      });
-    } catch(e) {
-      throw e;
-    }
+    return _.map(body.items, (item: any) => {
+      return item.metadata.name;
+    });
+  }
+
+  async deleteSnapshot(backupName: string): Promise<void> {
+    const dbr = {
+      apiVersion: "velero.io/v1",
+      kind: "DeleteBackupRequest",
+      metadata: {
+        name: `${backupName}-${Date.now()}`,
+        namespace: this.ns,
+      },
+      spec: { backupName },
+    };
+    await this.request("POST", "deletebackuprequests", dbr);
   }
 }
 
