@@ -893,3 +893,10 @@ export function getK8sNamespace(): string {
   }
   return "default";
 }
+
+export function getKotsadmNamespace(): string {
+  if (process.env["POD_NAMESPACE"]) {
+    return String(process.env["POD_NAMESPACE"]);
+  }
+  return "default";
+}

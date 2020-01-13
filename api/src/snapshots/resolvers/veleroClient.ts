@@ -89,7 +89,7 @@ export class VeleroClient {
     case 403:
       throw new ReplicatedError(`RBAC misconfigured for ${method} velero.io/v1 ${path} in namespace ${this.ns}`);
     case 404:
-      throw new ReplicatedError("Velero is not installed in this cluster");
+      throw new ReplicatedError("Not found: a requested resource may not exist or Velero may not be installed in this cluster");
     case 422:
       console.log(response.body);
       break

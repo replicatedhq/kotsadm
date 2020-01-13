@@ -59,3 +59,5 @@ spec:
       - name: is_airgap
         type: boolean
         default: "false"
+      - name: snapshot_ttl
+        type: text

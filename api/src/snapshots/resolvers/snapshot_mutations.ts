@@ -1,5 +1,6 @@
 import * as _ from "lodash";
 import * as yaml from "js-yaml";
+import * as cronstrue from "cronstrue";
 import { Context } from "../../context";
 import { Stores } from "../../schema/stores";
 import { Params } from "../../server/params";
@@ -8,12 +9,79 @@ import { backupStorageLocationName, VeleroClient } from "./veleroClient";
 import { ReplicatedError } from "../../server/errors";
 import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, SnapshotTrigger } from "../snapshot";
 import { SnapshotStore, SnapshotProvider } from "../snapshot_config";
+import { schedule } from "../schedule";
 import { getK8sNamespace, kotsRenderFile } from "../../kots_app/kots_ffi";
+import {
+  BatchV1beta1Api,
+  V1beta1CronJob } from "@kubernetes/client-node";
+import { logger } from "../../server/logger";
+
+// must match kots
+const kotsadmLabelKey = "app.kubernetes.io/name"; // TODO duplicated
 
 export function SnapshotMutations(stores: Stores) {
   return {
     async saveSnapshotConfig(root: any, args: any, context: Context): Promise<void> {
-      // ttl and schedule
+      try {
+        context.requireSingleTenantSession();
+
+        const {
+          appId,
+          inputValue: retentionQuantity,
+          inputTimeUnit: retentionUnit,
+          userSelected: scheduleSelected,
+          schedule: scheduleExpression,
+          autoEnabled,
+        } = args;
+
+        const app = await stores.kotsAppStore.getApp(appId);
+
+        const ttlN = parseInt(retentionQuantity);
+        if (_.isNaN(ttlN) || ttlN < 1) {
+          throw new ReplicatedError(`Invalid snapshot retention: ${retentionQuantity} ${retentionUnit}`);
+        }
+
+        switch (retentionUnit) {
+        case "seconds":
+        case "minutes":
+        case "hours":
+        case "weeks":
+        case "months":
+        case "years":
+          break;
+        default:
+          throw new ReplicatedError(`Invalid snapshot retention: ${retentionQuantity} ${retentionUnit}`);
+        }
+
+        try {
+          cronstrue.toString(scheduleExpression);
+        } catch(e) {
+          throw new ReplicatedError(`Invalid snapshot schedule: ${scheduleExpression}`);
+        }
+        if (scheduleExpression.split(" ").length > 5) {
+          throw new ReplicatedError("Snapshot schedule expression does not support seconds or years");
+        }
+
+        switch (scheduleSelected) {
+        case "hourly":
+        case "daily":
+        case "weekly":
+        case "custom":
+          break;
+        default:
+          throw new ReplicatedError(`Invalid schedule selection: ${scheduleSelected}`);
+        }
+
+        const retention = `${ttlN} ${retentionUnit}`;
+        if (app.snapshotTTL !== retention) {
+          await stores.kotsAppStore.updateAppSnapshotTTL(appId, retention);
+        }
+
+        await schedule(app.id, app.slug, scheduleExpression);
+      } catch (e) {
+        logger.error(e);
+        throw e;
+      }
     },
 
     async snapshotProviderAWS(root: any, args: any, context: Context): Promise<void> {
@@ -148,7 +216,7 @@ export function SnapshotMutations(stores: Stores) {
       if (_.includes(namespaces, ownNS)) {
         backup.spec.labelSelector = {
           matchExpressions: [{
-            key: "app.kubernetes.io/name",
+            key: kotsadmLabelKey,
             operator: "NotIn",
             values: ["kotsadm"],
           }],

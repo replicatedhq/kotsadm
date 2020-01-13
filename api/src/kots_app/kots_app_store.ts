@@ -1300,7 +1300,7 @@ order by adv.sequence desc`;
   }
 
   async getApp(id: string): Promise<KotsApp> {
-    const q = `select id, name, license, upstream_uri, icon_uri, created_at, updated_at, slug, current_sequence, last_update_check_at, is_airgap from app where id = $1`;
+    const q = `select id, name, license, upstream_uri, icon_uri, created_at, updated_at, slug, current_sequence, last_update_check_at, is_airgap, snapshot_ttl from app where id = $1`;
     const v = [id];
 
     const result = await this.pool.query(q, v);
@@ -1336,6 +1336,7 @@ order by adv.sequence desc`;
     // has not been created yet
     kotsApp.hasPreflight = !!rr.rows[0] && !!rr.rows[0].preflight_spec;
     kotsApp.isConfigurable = !!rr.rows[0] && !!rr.rows[0].config_spec;
+    kotsApp.snapshotTTL = row.snapshot_ttl;
 
     return kotsApp;
   }
@@ -1511,6 +1512,12 @@ order by adv.sequence desc`;
       await pg.query("rollback");
       pg.release();
     }
+  }
+
+  async updateAppSnapshotTTL(appId: string, snapshotTTL: string): Promise<void> {
+    const q = `update app set snapshot_ttl = $1 where id = $2`;
+    const v = [snapshotTTL, appId];
+    await this.pool.query(q, v);
   }
 
   async addKotsPreflight(appId: string, clusterId: string, sequence: number, preflightResult: string): Promise<void> {

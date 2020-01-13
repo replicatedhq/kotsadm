@@ -4,6 +4,7 @@ import { graphql, compose, withApollo } from "react-apollo";
 import { Link, withRouter } from "react-router-dom"
 import { getCronFrequency, getReadableCronDescriptor } from "../../utilities/utilities";
 import { snapshotConfig } from "../../queries/SnapshotQueries";
+import { saveSnapshotConfig } from "../../mutations/SnapshotMutations";
 import find from "lodash/find";
 import "../../scss/components/shared/SnapshotForm.scss";
 
@@ -141,6 +142,30 @@ class AppSnapshotSchedule extends Component {
     }
   }
 
+  onSubmit = (e) => {
+    e.preventDefault();
+    this.saveSnapshotConfig();
+  }
+
+  saveSnapshotConfig = () => {
+    this.props.saveSnapshotConfig(
+      this.props.app.id,
+      this.state.retentionInput,
+      this.state.selectedRetentionUnit.value,
+      this.state.selectedSchedule,
+      this.state.frequency,
+      this.state.autoEnabled,
+    ).catch(err => {
+      console.log(err);
+      err.graphQLErrors.map(({ msg }) => {
+        this.setState({
+          message: msg,
+          messageType: "error"
+        });
+      });
+    });
+  }
+
   render() {
     const { app } = this.props;
     const { hasValidCron } = this.state;
@@ -233,6 +258,9 @@ class AppSnapshotSchedule extends Component {
                   </div>
                 </div>
               </div>
+              <div>
+                <button className="btn primary blue" onClick={this.onSubmit}>Update schedule</button>
+              </div>
             </div>
           </form>
         </div>
@@ -253,5 +281,10 @@ export default compose(
         fetchPolicy: "no-cache"
       }
     }
+  }),
+  graphql(saveSnapshotConfig, {
+    props: ({ mutate }) => ({
+      saveSnapshotConfig: (appId, inputValue, inputTimeUnit, userSelected, schedule, autoEnabled) => mutate({ variables: { appId, inputValue, inputTimeUnit, userSelected, schedule, autoEnabled } })
+    })
   })
 )(AppSnapshotSchedule);

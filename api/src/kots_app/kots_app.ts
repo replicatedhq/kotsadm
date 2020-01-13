@@ -37,6 +37,7 @@ export class KotsApp {
   isAirgap: boolean;
   hasPreflight: boolean;
   isConfigurable: boolean;
+  snapshotTTL?: string;
 
   // Version Methods
   public async getCurrentAppVersion(stores: Stores): Promise<KotsVersion | undefined> {
