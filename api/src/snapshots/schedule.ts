@@ -19,6 +19,15 @@ function snapshotScheduleName(appSlug: string) {
 const kotsadmLabelKey = "app.kubernetes.io/name";
 const kotsadmLabelValue = "kotsadm";
 
+export async function deleteSchedule(appSlug: string): Promise<void> {
+  const name = snapshotScheduleName(appSlug);
+  const ownNS = getKotsadmNamespace();
+  const kc = new KubeConfig();
+  const batchv1 = kc.makeApiClient(BatchV1beta1Api);
+
+  await batchv1.deleteNamespacedCronJob(ownNS, name);
+}
+
 export async function schedule(appId: string, appSlug: string, schedule: string): Promise<void> {
   const kc = new KubeConfig();
   kc.loadFromDefault();
@@ -32,6 +41,7 @@ export async function schedule(appId: string, appSlug: string, schedule: string)
   const spec: V1beta1CronJobSpec = {
     concurrencyPolicy: "Forbid",
     schedule: schedule,
+    startingDeadlineSeconds: 30,
     jobTemplate: {
       metadata: { labels },
       spec: {
@@ -44,7 +54,7 @@ export async function schedule(appId: string, appSlug: string, schedule: string)
               command: [
                 "/bin/bash", 
                 "-c",
-                "curl https://api.replicated.com/market/v1/echo/ip",
+                `curl -v --fail http://kotsadm-api:3000/api/v1/kots/${appSlug}/snapshot`,
               ],
             }],
             restartPolicy: "OnFailure",

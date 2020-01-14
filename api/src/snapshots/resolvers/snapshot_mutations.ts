@@ -45,6 +45,7 @@ export function SnapshotMutations(stores: Stores) {
         case "seconds":
         case "minutes":
         case "hours":
+        case "days":
         case "weeks":
         case "months":
         case "years":
