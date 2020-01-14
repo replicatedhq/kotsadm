@@ -9,7 +9,7 @@ import { backupStorageLocationName, VeleroClient } from "./veleroClient";
 import { ReplicatedError } from "../../server/errors";
 import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, SnapshotTrigger } from "../snapshot";
 import { SnapshotStore, SnapshotProvider } from "../snapshot_config";
-import { schedule } from "../schedule";
+import { deleteSchedule, schedule } from "../schedule";
 import { getK8sNamespace, kotsRenderFile } from "../../kots_app/kots_ffi";
 import {
   BatchV1beta1Api,
@@ -54,31 +54,35 @@ export function SnapshotMutations(stores: Stores) {
           throw new ReplicatedError(`Invalid snapshot retention: ${retentionQuantity} ${retentionUnit}`);
         }
 
-        try {
-          cronstrue.toString(scheduleExpression);
-        } catch(e) {
-          throw new ReplicatedError(`Invalid snapshot schedule: ${scheduleExpression}`);
-        }
-        if (scheduleExpression.split(" ").length > 5) {
-          throw new ReplicatedError("Snapshot schedule expression does not support seconds or years");
-        }
-
-        switch (scheduleSelected) {
-        case "hourly":
-        case "daily":
-        case "weekly":
-        case "custom":
-          break;
-        default:
-          throw new ReplicatedError(`Invalid schedule selection: ${scheduleSelected}`);
-        }
-
         const retention = `${ttlN} ${retentionUnit}`;
         if (app.snapshotTTL !== retention) {
           await stores.kotsAppStore.updateAppSnapshotTTL(appId, retention);
         }
 
-        await schedule(app.id, app.slug, scheduleExpression);
+        if (autoEnabled) {
+          try {
+            cronstrue.toString(scheduleExpression);
+          } catch(e) {
+            throw new ReplicatedError(`Invalid snapshot schedule: ${scheduleExpression}`);
+          }
+          if (scheduleExpression.split(" ").length > 5) {
+            throw new ReplicatedError("Snapshot schedule expression does not support seconds or years");
+          }
+
+          switch (scheduleSelected) {
+          case "hourly":
+          case "daily":
+          case "weekly":
+          case "custom":
+            break;
+          default:
+            throw new ReplicatedError(`Invalid schedule selection: ${scheduleSelected}`);
+          }
+
+          await schedule(app.slug, scheduleExpression, scheduleSelected);
+        } else {
+          await deleteSchedule(app.slug);
+        }
       } catch (e) {
         logger.error(e);
         throw e;

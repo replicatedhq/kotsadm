@@ -15,6 +15,7 @@ function snapshotScheduleName(appSlug: string) {
   return `velero-${appSlug}`;
 }
 
+const scheduleSelectionKey = "kots.io/snapshot-schedule-selection";
 // must match kots
 const kotsadmLabelKey = "app.kubernetes.io/name";
 const kotsadmLabelValue = "kotsadm";
@@ -23,12 +24,20 @@ export async function deleteSchedule(appSlug: string): Promise<void> {
   const name = snapshotScheduleName(appSlug);
   const ownNS = getKotsadmNamespace();
   const kc = new KubeConfig();
+  kc.loadFromDefault();
   const batchv1 = kc.makeApiClient(BatchV1beta1Api);
 
-  await batchv1.deleteNamespacedCronJob(ownNS, name);
+  try {
+    await batchv1.deleteNamespacedCronJob(name, ownNS);
+  } catch (e) {
+    if (e.response && e.response.statusCode === 404) {
+      return;
+    }
+    throw e;
+  }
 }
 
-export async function schedule(appId: string, appSlug: string, schedule: string): Promise<void> {
+export async function schedule(appSlug: string, schedule: string, selection: string): Promise<void> {
   const kc = new KubeConfig();
   kc.loadFromDefault();
   const batchv1 = kc.makeApiClient(BatchV1beta1Api);
@@ -54,7 +63,7 @@ export async function schedule(appId: string, appSlug: string, schedule: string)
               command: [
                 "/bin/bash", 
                 "-c",
-                `curl -v --fail http://kotsadm-api:3000/api/v1/kots/${appSlug}/snapshot`,
+                `curl -v --fail -X POST http://kotsadm-api:3000/api/v1/kots/${appSlug}/snapshot`,
               ],
             }],
             restartPolicy: "OnFailure",
@@ -67,6 +76,8 @@ export async function schedule(appId: string, appSlug: string, schedule: string)
   try {
     let { body: cronJob } = await batchv1.readNamespacedCronJob(cronJobName, ownNS);
     cronJob.spec = spec;
+    cronJob.metadata!.annotations = cronJob.metadata!.annotations || {};
+    cronJob.metadata!.annotations[scheduleSelectionKey] = selection;
 
     await batchv1.replaceNamespacedCronJob(cronJobName, ownNS, cronJob);
     return;
@@ -90,6 +101,9 @@ export async function schedule(appId: string, appSlug: string, schedule: string)
       name: cronJobName,
       namespace: ownNS,
       labels,
+      annotations: {
+        [scheduleSelectionKey]: selection,
+      },
     },
     spec,
   };
@@ -127,4 +141,32 @@ async function getOwnImage(appsv1: AppsV1Api, ownNS: string): Promise<string> {
   }
 
   throw  new ReplicatedError(`Failed to lookup image from kotsadm-api deployment in namespace ${ownNS}`);
+}
+
+export interface scheduleSettings {
+  schedule: string;
+  selection: string;
+}
+
+export async function readSchedule(appSlug): Promise<scheduleSettings|null> {
+  const kc = new KubeConfig();
+  kc.loadFromDefault();
+  const batchv1 = kc.makeApiClient(BatchV1beta1Api);
+  const cronJobName = snapshotScheduleName(appSlug);
+  const ownNS = getKotsadmNamespace();
+
+  try {
+    const { response, body: cronJob } = await batchv1.readNamespacedCronJob(cronJobName, ownNS);
+
+    return {
+      schedule: cronJob!.spec!.schedule,
+      selection: (cronJob.metadata!.annotations && cronJob.metadata!.annotations[scheduleSelectionKey]) || "custom",
+    };
+  } catch (e) {
+    if (e.response && e.response.statusCode === 404) {
+      return null;
+    }
+    throw e;
+  }
+  return null;
 }

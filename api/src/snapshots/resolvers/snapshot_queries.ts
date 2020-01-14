@@ -12,30 +12,25 @@ import {
 import { Phase } from "../velero";
 import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_config";
 import { VeleroClient } from "./veleroClient";
+import { readSchedule } from "../schedule";
 
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {
     async snapshotConfig(root: any, args: any, context: Context): Promise<SnapshotConfig> {
-      try {
-        const velero = new VeleroClient("velero"); // TODO namespace
-        const store = await velero.readSnapshotStore();
+      const velero = new VeleroClient("velero"); // TODO namespace
+      const store = await velero.readSnapshotStore();
+      const schedule = await readSchedule(args.slug);
 
-        return {
-          autoEnabled: true,
-          autoSchedule: {
-            userSelected: "weekly",
-            schedule: "0 0 12 ? * MON *",
-          },
-          ttl: {
-            inputValue: "2",
-            inputTimeUnit: "weeks",
-            converted: "336h",
-          },
-          store,
-        };
-      } catch (e) {
-        throw e;
-      }
+      return {
+        autoEnabled: !!schedule,
+        autoSchedule: schedule ? { userSelected: schedule.selection, schedule: schedule.schedule } : { userSelected: "weekly", schedule: "0 0 * * MON" },
+        ttl: {
+          inputValue: "2",
+          inputTimeUnit: "weeks",
+          converted: "336h",
+        },
+        store,
+      };
     },
 
     async listSnapshots(root: any, args: any, context: Context): Promise<Array<Snapshot>> {

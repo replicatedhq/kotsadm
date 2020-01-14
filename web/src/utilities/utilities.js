@@ -75,11 +75,11 @@ export function sortAnalyzers(bundleInsight) {
 export function getCronFrequency(schedule) {
   switch (schedule) {
     case "hourly":
-      return "0 0 0/1 1/1 * ? *";
+      return "0 * * * *"
     case "daily":
-      return "0 0 12 1/1 * ? *";
+      return "0 0 1 * *";
     default:
-      return "0 0 12 ? * MON *";
+      return "0 0 * * MON";
   }
 }
 
