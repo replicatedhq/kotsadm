@@ -87,7 +87,7 @@ class AppSnapshotSettings extends Component {
     if (!snapshotSettings.snapshotConfig) return;
     const { store } = snapshotSettings.snapshotConfig;
 
-    if (store.s3AWS) {
+    if (store?.s3AWS) {
       const useIam = !!store.s3AWS.accessKeyID.length || !!store.s3AWS.accessKeySecret.length;
       return this.setState({
         determiningDestination: false,
@@ -101,7 +101,7 @@ class AppSnapshotSettings extends Component {
       });
     }
 
-    if (store.azure) {
+    if (store?.azure) {
       return this.setState({
         determiningDestination: false,
         selectedDestination: find(DESTINATIONS, ["value", "azure"]),
@@ -117,7 +117,7 @@ class AppSnapshotSettings extends Component {
       });
     }
 
-    if (store.google) {
+    if (store?.google) {
       return this.setState({
         determiningDestination: false,
         selectedDestination: find(DESTINATIONS, ["value", "google"]),
@@ -127,7 +127,7 @@ class AppSnapshotSettings extends Component {
       });
     }
 
-    if (store.s3Compatible) {
+    if (store?.s3Compatible) {
       return this.setState({
         determiningDestination: false,
         selectedDestination: find(DESTINATIONS, ["value", "s3compatible"]),

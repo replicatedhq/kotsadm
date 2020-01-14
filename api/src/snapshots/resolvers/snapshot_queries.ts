@@ -18,7 +18,7 @@ export function SnapshotQueries(stores: Stores, params: Params) {
     async snapshotConfig(root: any, args: any, context: Context): Promise<SnapshotConfig> {
       try {
         const velero = new VeleroClient("velero"); // TODO namespace
-          const store = await velero.readSnapshotStore();
+        const store = await velero.readSnapshotStore();
 
         return {
           autoEnabled: true,

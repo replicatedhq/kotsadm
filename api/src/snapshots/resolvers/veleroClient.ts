@@ -286,29 +286,35 @@ export class VeleroClient {
     throw new Error(`Timed out waiting for DownloadRequest for ${kind}/${name} logs`);
   }
 
-  async readSnapshotStore(): Promise<SnapshotStore> {
+  async readSnapshotStore(): Promise<SnapshotStore|null> {
     const corev1 = this.kc.makeApiClient(CoreV1Api);
-    try {
-      const bsl = await this.request("GET", `backupstoragelocations/${backupStorageLocationName}`); 
+    const bsls = await this.request("GET", `backupstoragelocations`); 
+    const bsl: any = _.find(bsls.items, (bsl) => {
+      return bsl.metadata.name === backupStorageLocationName;
+    });
 
-      const store: SnapshotStore = {
-        provider: bsl.spec.provider,
-        bucket: bsl.spec.objectStorage.bucket,
-        path: bsl.spec.objectStorage.prefix,
+    if (!bsl) {
+      return null;
+    }
+
+    const store: SnapshotStore = {
+      provider: bsl.spec.provider,
+      bucket: bsl.spec.objectStorage.bucket,
+      path: bsl.spec.objectStorage.prefix,
+    };
+
+    switch (store.provider) {
+    case SnapshotProvider.S3AWS:
+      const {accessKeyID, accessKeySecret} = await readAWSCredentialsSecret(corev1, this.ns);
+
+      store.s3AWS = {
+        region: bsl.spec.config.region,
+        accessKeyID,
       };
-
-      switch (store.provider) {
-      case SnapshotProvider.S3AWS:
-        const {accessKeyID, accessKeySecret} = await readAWSCredentialsSecret(corev1, this.ns);
-
-        store.s3AWS = {
-          region: bsl.spec.config.region,
-          accessKeyID,
-        };
-        if (accessKeySecret) {
-          store.s3AWS.accessKeySecret = redacted;
-        }
-        break;
+      if (accessKeySecret) {
+        store.s3AWS.accessKeySecret = redacted;
+      }
+      break;
 
       case SnapshotProvider.S3Compatible:
         const s3Creds = await readAWSCredentialsSecret(corev1, this.ns);
@@ -343,12 +349,9 @@ export class VeleroClient {
         store.google = {
           serviceAccount: serviceAccount ? redacted : "",
         };
-      }
-
-      return store;
-    } catch (e) {
-      throw e;
     }
+
+    return store;
   }
 
   async saveSnapshotStore(store: SnapshotStore): Promise<void> {
