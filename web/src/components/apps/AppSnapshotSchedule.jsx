@@ -53,7 +53,7 @@ const RETENTION_UNITS = [
     label: "Months",
   },
   {
-    value: "year",
+    value: "years",
     label: "Years",
   }
 ];
@@ -117,7 +117,7 @@ class AppSnapshotSchedule extends Component {
 
   handleScheduleChange = (selectedSchedule) => {
     this.setState({
-      selectedSchedule: selectedSchedule.value,
+      selectedSchedule: selectedSchedule,
       frequency: selectedSchedule.value === "custom" ? this.state.frequency : getCronFrequency(selectedSchedule.value),
     }, () => {
       this.getReadableCronExpression();
@@ -151,7 +151,7 @@ class AppSnapshotSchedule extends Component {
       this.props.app.id,
       this.state.retentionInput,
       this.state.selectedRetentionUnit.value,
-      this.state.selectedSchedule,
+      this.state.selectedSchedule.value,
       this.state.frequency,
       this.state.autoEnabled,
     ).catch(err => {
@@ -220,7 +220,7 @@ class AppSnapshotSchedule extends Component {
                         isOptionSelected={(option) => { option.value === selectedSchedule }}
                       />
                     </div>
-                    {this.state.selectedSchedule === "custom" &&
+                    {this.state.selectedSchedule.value === "custom" &&
                       <div className="flex1 u-paddingLeft--5">
                         <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Cron expression</p>
                         <input type="text" className="Input" placeholder="0 0 * * MON" value={this.state.frequency} onChange={(e) => { this.handleFormChange("frequency", e) }}/>

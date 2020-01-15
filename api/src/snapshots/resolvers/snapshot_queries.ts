@@ -13,6 +13,7 @@ import { Phase } from "../velero";
 import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_config";
 import { VeleroClient } from "./veleroClient";
 import { readSchedule } from "../schedule";
+import { convertTTL } from "../backup";
 
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {
@@ -20,15 +21,28 @@ export function SnapshotQueries(stores: Stores, params: Params) {
       const velero = new VeleroClient("velero"); // TODO namespace
       const store = await velero.readSnapshotStore();
       const schedule = await readSchedule(args.slug);
+      const appId = await stores.kotsAppStore.getIdFromSlug(args.slug);
+      const app = await stores.kotsAppStore.getApp(appId);
+      const converted = convertTTL(app.snapshotTTL || "");
+
+      let ttl = {
+        inputValue: "1",
+        inputTimeUnit: "month",
+        converted: "720h",
+      };
+      if (app.snapshotTTL) {
+        const [inputValue, inputTimeUnit ] = app.snapshotTTL.split(" ");
+        ttl = {
+          inputValue,
+          inputTimeUnit,
+          converted: convertTTL(app.snapshotTTL),
+        };
+      }
 
       return {
         autoEnabled: !!schedule,
         autoSchedule: schedule ? { userSelected: schedule.selection, schedule: schedule.schedule } : { userSelected: "weekly", schedule: "0 0 * * MON" },
-        ttl: {
-          inputValue: "2",
-          inputTimeUnit: "weeks",
-          converted: "336h",
-        },
+        ttl,
         store,
       };
     },

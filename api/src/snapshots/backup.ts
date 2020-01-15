@@ -65,7 +65,7 @@ export async function backup(stores: Stores, appId: string, scheduled: boolean) 
     spec: {
       hooks: spec.hooks,
       includedNamespaces: namespaces,
-      ttl: spec.ttl,
+      ttl: convertTTL(app.snapshotTTL || ""),
       storageLocation: backend,
     }
   };
@@ -81,4 +81,34 @@ export async function backup(stores: Stores, appId: string, scheduled: boolean) 
   }
 
   await velero.createBackup(backup);
+}
+
+export function convertTTL(ttl: string): string {
+  const defaultTTL = "720h";
+  const [quant, unit] = ttl.split(" ");
+  const n = parseInt(quant);
+  if (_.isNaN(n)) {
+    console.log(`Ignoring invalid snapshot TTL: ${ttl}`);
+    return defaultTTL;
+  }
+  switch (unit) {
+  case "seoncds":
+    return `${n}s`;
+  case "minutes":
+    return `${n}m`;
+  case "hours":
+    return `${n}h`;
+  case "days":
+    return `${n * 24}h`;
+  case "weeks":
+    return `${n * 168}h`;
+  case "months":
+    return `${n * 720}h`;
+  case "years":
+    return `${n * 8766}h`;
+  default:
+    console.log(`Ignoring invalid snapshot TTL: ${ttl}`);
+  }
+
+  return defaultTTL;
 }
