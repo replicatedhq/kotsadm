@@ -67,6 +67,10 @@ $cell-width: 140px;
   &.is-expired {
     background-color: #F8F8F8;
   }
+
+  &.is-deleting {
+    background-color: #F8F8F8;
+  }
 }
 
 .NodeRow--items p {

@@ -61,6 +61,15 @@ body a {
   &.success::before {
     background-color: #44bb66;
   }
+  &.failed::before {
+    background-color: #BC4752;
+  }
+  &.in-progress::before {
+    background-color: #F7B500;
+  }
+  &.reclaimed::before {
+    background-color: #4999AD;
+  }
 }
 
 code {

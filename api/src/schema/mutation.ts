@@ -44,7 +44,7 @@ type Mutation {
   snapshotProviderGoogle(bucket: String!, prefix: String, serviceAccount: String!): Boolean
   manualSnapshot(appId: String!): Boolean
   restoreSnapshot: Boolean
-  deleteSnapshot: Boolean
+  deleteSnapshot(snapshotName: String!): Boolean
 }
 `;
 

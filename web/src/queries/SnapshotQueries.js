@@ -79,6 +79,8 @@ export const snapshotDetailRaw = `
   query snapshotDetail($slug: String!, $id: String!) {
     snapshotDetail(slug: $slug, id: $id) {
       name
+      status
+      volumeBytes
       namespaces
       hooks {
         hookName

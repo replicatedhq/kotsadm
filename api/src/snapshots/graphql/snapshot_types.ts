@@ -88,6 +88,8 @@ const Snapshot = `
 const SnapshotDetail = `
   type SnapshotDetail {
     name: String
+    status: String
+    volumeBytes: Int
     namespaces: [String]
     hooks: [SnapshotHook]
     volumes: [SnapshotVolume]
