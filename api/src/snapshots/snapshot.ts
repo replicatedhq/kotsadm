@@ -19,9 +19,9 @@ export interface Snapshot {
   trigger: SnapshotTrigger|undefined;
   appSlug: string|undefined;
   appVersion: string|undefined;
-  started: string;
-  finished: string;
-  expires: string;
+  started?: string;
+  finished?: string;
+  expires?: string;
   volumeCount: number;
   volumeSuccessCount: number;
   volumeBytes: number;
