@@ -12,30 +12,39 @@ import {
 import { Phase } from "../velero";
 import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_config";
 import { VeleroClient } from "./veleroClient";
+import { readSchedule } from "../schedule";
+import { convertTTL } from "../backup";
 
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {
     async snapshotConfig(root: any, args: any, context: Context): Promise<SnapshotConfig> {
-      try {
-        const velero = new VeleroClient("velero"); // TODO namespace
-        const store = await velero.readSnapshotStore();
+      const velero = new VeleroClient("velero"); // TODO namespace
+      const store = await velero.readSnapshotStore();
+      const schedule = await readSchedule(args.slug);
+      const appId = await stores.kotsAppStore.getIdFromSlug(args.slug);
+      const app = await stores.kotsAppStore.getApp(appId);
+      const converted = convertTTL(app.snapshotTTL || "");
 
-        return {
-          autoEnabled: true,
-          autoSchedule: {
-            userSelected: "weekly",
-            schedule: "0 0 12 ? * MON *",
-          },
-          ttl: {
-            inputValue: "2",
-            inputTimeUnit: "weeks",
-            converted: "336h",
-          },
-          store,
+      let ttl = {
+        inputValue: "1",
+        inputTimeUnit: "month",
+        converted: "720h",
+      };
+      if (app.snapshotTTL) {
+        const [inputValue, inputTimeUnit ] = app.snapshotTTL.split(" ");
+        ttl = {
+          inputValue,
+          inputTimeUnit,
+          converted: convertTTL(app.snapshotTTL),
         };
-      } catch (e) {
-        throw e;
       }
+
+      return {
+        autoEnabled: !!schedule,
+        autoSchedule: schedule ? { userSelected: schedule.selection, schedule: schedule.schedule } : { userSelected: "weekly", schedule: "0 0 * * MON" },
+        ttl,
+        store,
+      };
     },
 
     async listSnapshots(root: any, args: any, context: Context): Promise<Array<Snapshot>> {

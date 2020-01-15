@@ -12,7 +12,7 @@ export const listSnapshotsRaw = `
       expires
       volumeCount
       volumeSuccessCount
-      volumeBytes
+      volumeSizeHuman
     }
   }
 `;

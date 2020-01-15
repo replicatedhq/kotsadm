@@ -1,6 +1,6 @@
 export interface SnapshotConfig {
   autoEnabled: boolean;
-  autoSchedule: SnapshotSchedule;
+  autoSchedule: SnapshotSchedule | null;
   ttl: SnapshotTTl;
   store: SnapshotStore|null;
 }

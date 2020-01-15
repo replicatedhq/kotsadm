@@ -53,7 +53,7 @@ const RETENTION_UNITS = [
     label: "Months",
   },
   {
-    value: "year",
+    value: "years",
     label: "Years",
   }
 ];
@@ -75,14 +75,14 @@ class AppSnapshotSchedule extends Component {
         retentionInput: snapshotConfig.snapshotConfig.ttl.inputValue,
         selectedRetentionUnit: find(RETENTION_UNITS, ["value", snapshotConfig.snapshotConfig.ttl.inputTimeUnit]),
         selectedSchedule: find(SCHEDULES, ["value", snapshotConfig.snapshotConfig.autoSchedule.userSelected]),
-        frequency: snapshotConfig.snapshotConfig.autoSchedule.schedule
+        frequency: snapshotConfig.snapshotConfig.autoSchedule.schedule,
       }, () => this.getReadableCronExpression());
     } else {
       this.setState({
         retentionInput: "4",
         selectedRetentionUnit: find(RETENTION_UNITS, ["value", "weeks"]),
         selectedSchedule: find(SCHEDULES, ["value", "weekly"]),
-        frequency: "0 0 12 ? * MON *"
+        frequency: "0 0 * * MON",
       }, () => this.getReadableCronExpression())
     }
   }
@@ -116,10 +116,9 @@ class AppSnapshotSchedule extends Component {
   }
 
   handleScheduleChange = (selectedSchedule) => {
-    const frequency = getCronFrequency(selectedSchedule.value);
     this.setState({
-      selectedSchedule: selectedSchedule.value,
-      frequency
+      selectedSchedule: selectedSchedule,
+      frequency: selectedSchedule.value === "custom" ? this.state.frequency : getCronFrequency(selectedSchedule.value),
     }, () => {
       this.getReadableCronExpression();
     });
@@ -152,7 +151,7 @@ class AppSnapshotSchedule extends Component {
       this.props.app.id,
       this.state.retentionInput,
       this.state.selectedRetentionUnit.value,
-      this.state.selectedSchedule,
+      this.state.selectedSchedule.value,
       this.state.frequency,
       this.state.autoEnabled,
     ).catch(err => {
@@ -221,10 +220,10 @@ class AppSnapshotSchedule extends Component {
                         isOptionSelected={(option) => { option.value === selectedSchedule }}
                       />
                     </div>
-                    {this.state.selectedSchedule === "custom" &&
+                    {this.state.selectedSchedule.value === "custom" &&
                       <div className="flex1 u-paddingLeft--5">
                         <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--10">Cron expression</p>
-                        <input type="text" className="Input" placeholder="0 0 12 ? * MON *" value={this.state.frequency} onChange={(e) => { this.handleFormChange("frequency", e) }}/>
+                        <input type="text" className="Input" placeholder="0 0 * * MON" value={this.state.frequency} onChange={(e) => { this.handleFormChange("frequency", e) }}/>
                       </div>
                     }
                   </div>

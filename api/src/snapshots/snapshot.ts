@@ -25,6 +25,7 @@ export interface Snapshot {
   volumeCount: number;
   volumeSuccessCount: number;
   volumeBytes: number;
+  volumeSizeHuman: string;
 }
 
 export interface SnapshotDetail extends Snapshot {

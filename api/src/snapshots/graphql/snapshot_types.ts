@@ -81,7 +81,7 @@ const Snapshot = `
     expires: String
     volumeCount: Int
     volumeSuccessCount: Int
-    volumeBytes: Int
+    volumeSizeHuman: String
   }
 `
 
