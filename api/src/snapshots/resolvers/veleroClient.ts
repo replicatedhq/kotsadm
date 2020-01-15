@@ -2,6 +2,7 @@ import crypto from "crypto";
 import zlib from "zlib";
 import { parse } from "logfmt";
 import * as _ from "lodash";
+import prettyBytes from "pretty-bytes";
 import {
   CoreV1Api,
   KubeConfig,
@@ -158,6 +159,7 @@ export class VeleroClient {
       expires: backup.status!.expiration,
       volumeCount,
       volumeSuccessCount,
+      volumeSizeHuman: prettyBytes(volumeBytes),
       volumeBytes,
     };
   }
