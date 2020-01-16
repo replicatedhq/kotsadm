@@ -503,6 +503,8 @@ export class VeleroClient {
 
   async restore(backupName: string): Promise<void> {
     const restore = {
+      apiVersion: "velero.io/v1",
+      kind: "Restore",
       metadata: {
         name: `${backupName}-${Date.now()}`,
         namespace: "velero",
@@ -512,7 +514,7 @@ export class VeleroClient {
       },
     };
 
-    this.request("POST", "restores", restore);
+    await this.request("POST", "restores", restore);
   }
 }
 

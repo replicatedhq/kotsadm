@@ -169,7 +169,7 @@ export function SnapshotMutations(stores: Stores) {
     async restoreSnapshot(root: any, args: any, context: Context): Promise<void> {
       const velero = new VeleroClient("velero");
 
-      await velero.restore(args.backupName);
+      await velero.restore(args.snapshotName);
     },
 
     async deleteSnapshot(root: any, args: any, context: Context): Promise<void> {

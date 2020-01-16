@@ -13,6 +13,10 @@ class ActiveDownstreamVersionRow extends React.Component {
     this.props.toggleConfirmDeleteModal(snapshot);
   }
 
+  handleRestoreClick = snapshot => {
+    this.props.restoreSnapshot(snapshot);
+  }
+
   render() {
     const { appSlug, snapshot } = this.props;
     const isExpired = dayjs(new Date()).isSameOrAfter(snapshot.expires);
@@ -37,13 +41,13 @@ class ActiveDownstreamVersionRow extends React.Component {
           <div className="flex flex-auto alignItems--center u-marginTop--5">
             <div className="flex flex1 alignItems--center">
               <p className="u-fontSize--normal u-color--doveGray u-fontWeight--bold u-lineHeight--normal u-marginRight--20"><span className="u-fontWeight--normal u-color--dustyGray">Volumes included:</span> {snapshot.volumeSuccessCount}/{snapshot.volumeCount}</p>
-              <p className="u-fontSize--normal u-color--doveGray u-fontWeight--bold u-lineHeight--normal u-marginRight--20"><span className="u-fontWeight--normal u-color--dustyGray">Backup size:</span> {formatByteSize(snapshot.volumeBytes)}</p>
+              <p className="u-fontSize--normal u-color--doveGray u-fontWeight--bold u-lineHeight--normal u-marginRight--20"><span className="u-fontWeight--normal u-color--dustyGray">Backup size:</span> {snapshot.volumeSizeHuman}</p>
             </div>
           </div>
         </div>
         {!isExpired &&
           <div className="flex-auto">
-            <span className="u-fontSize--normal u-fontWeight--medium u-color--royalBlue u-textDecoration--underlineOnHover u-marginRight--20">Restore</span>
+            <span className="u-fontSize--normal u-fontWeight--medium u-color--royalBlue u-textDecoration--underlineOnHover u-marginRight--20" onClick={() => this.handleRestoreClick(snapshot)}>Restore</span>
             <span className="u-fontSize--normal u-fontWeight--medium u-color--chestnut u-textDecoration--underlineOnHover" onClick={() => this.handleDeleteClick(snapshot)}>Delete</span>
           </div>
         }

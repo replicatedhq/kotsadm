@@ -7,7 +7,7 @@ import ScheduleSnapshotForm from "../shared/ScheduleSnapshotForm";
 import Loader from "../shared/Loader";
 import Modal from "react-modal";
 import { listSnapshots } from "../../queries/SnapshotQueries";
-import { manualSnapshot, deleteSnapshot } from "../../mutations/SnapshotMutations";
+import { manualSnapshot, deleteSnapshot, restoreSnapshot } from "../../mutations/SnapshotMutations";
 import "../../scss/components/snapshots/AppSnapshots.scss";
 import { Utilities } from "../../utilities/utilities";
 
@@ -56,6 +56,14 @@ class AppSnapshots extends Component {
         });
       });
   };
+
+  restoreSnapshot = snapshot => {
+    this.props.restoreSnapshot(snapshot.name)
+      .catch(err => {
+        // TODO
+        console.log(err);
+      });
+  }
 
   startManualSnapshot = () => {
     const { app } = this.props;
@@ -157,6 +165,7 @@ class AppSnapshots extends Component {
               snapshot={snapshot}
               appSlug={app.slug}
               toggleConfirmDeleteModal={this.toggleConfirmDeleteModal}
+              restoreSnapshot={this.restoreSnapshot}
             />
           ))
           }
@@ -258,6 +267,11 @@ export default compose(
   graphql(deleteSnapshot, {
     props: ({ mutate }) => ({
       deleteSnapshot: (snapshotName) => mutate({ variables: { snapshotName } })
+    })
+  }),
+  graphql(restoreSnapshot, {
+    props: ({ mutate }) => ({
+      restoreSnapshot: (snapshotName) => mutate({ variables: { snapshotName } })
     })
   })
 )(AppSnapshots);

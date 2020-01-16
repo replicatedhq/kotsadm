@@ -41,7 +41,7 @@ class AppSnapshotDetail extends Component {
         <div className="flex justifyContent--spaceBetween alignItems--center u-paddingBottom--30 u-borderBottom--gray">
           <div className="flex-column u-lineHeight--normal">
             <p className="u-fontSize--larger u-fontWeight--bold u-color--tuna u-marginBottom--5">[{snapshotDetail?.snapshotDetail.name}]</p>
-            <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray">Total size: <span className="u-fontWeight--bold u-color--doveGray">[{formatByteSize(snapshotDetail?.snapshotDetail.volumeBytes)}]</span></p>
+            <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray">Total size: <span className="u-fontWeight--bold u-color--doveGray">[{snapshotDetail?.snapshotDetail.volumeSizeHuman}]</span></p>
           </div>
           <div className="flex-column u-lineHeight--normal u-textAlign--right">
             <p className="u-fontSize--normal u-fontWeight--normal u-marginBottom--5">Status: <span className={`status-indicator ${snapshotDetail?.snapshotDetail.status.toLowerCase()} u-marginLeft--5`}>[{snapshotDetail?.snapshotDetail.status}]</span></p>

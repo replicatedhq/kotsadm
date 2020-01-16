@@ -66,6 +66,7 @@ rules:
   - downloadrequests
   - backupstoragelocations
   - deletebackuprequests
+  - restores
   verbs:
   - create
   - list

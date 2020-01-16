@@ -49,8 +49,8 @@ export const saveSnapshotConfigRaw = `
 export const saveSnapshotConfig = gql(saveSnapshotConfigRaw);
 
 export const restoreSnapshotRaw = `
-  mutation restoreSnapshot($backupName: String!) {
-    restoreSnapshot(backupName: $backupName)
+  mutation restoreSnapshot($snapshotName: String!) {
+    restoreSnapshot(snapshotName: $snapshotName)
   }
 `;
 export const restoreSnapshot = gql(restoreSnapshotRaw);
