@@ -17,7 +17,11 @@ import {
   V1beta1CronJob } from "@kubernetes/client-node";
 import { logger } from "../../server/logger";
 import { backup } from "../backup";
+import { sleep } from "../../util/utilities";
 
+const appIDKey = "kots.io/app-id";
+const sequenceKey = "kots.io/sequence";
+const clusterIDKey = "kots.io/cluster-id";
 // must match kots
 const kotsadmLabelKey = "app.kubernetes.io/name"; // TODO duplicated
 
@@ -169,9 +173,52 @@ export function SnapshotMutations(stores: Stores) {
 
     async restoreSnapshot(root: any, args: any, context: Context): Promise<RestoreDetail> {
       const restoreName = `${args.snapshotName}-${Date.now()}`;
-      const velero = new VeleroClient("velero");
+      const velero = new VeleroClient("velero"); // TODO velero namespace
 
+      // ensure the backup exists with required annotations
+      const backup = await velero.readBackup(args.snapshotName);
+      if (!backup.metadata.annotations) {
+        throw new ReplicatedError(`Backup is missing appID, cluster ID and version annotations`);
+      }
+      const appId = backup.metadata.annotations[appIDKey];
+      if (!appId) {
+        throw new ReplicatedError(`Backup is missing app ID annotation`);
+      }
+      const clusterId = backup.metadata.annotations[clusterIDKey];
+      if (!clusterId) {
+        throw new ReplicatedError(`Backup is missing cluster ID annotation`);
+      }
+      const sequenceString = backup.metadata.annotations[sequenceKey];
+      if (!sequenceString) {
+        throw new ReplicatedError(`Backup is missing version annotation`);
+      }
+      const sequence = parseInt(sequenceString);
+      if (_.isNaN(sequence)) {
+        throw new ReplicatedError(`Failed to parse sequence from Backup: ${sequenceString}`);
+      }
+      logger.info(`Restore found Backup ${args.snapshotName} for app ${appId} sequence ${sequence} on cluster ${clusterId}`);
+ 
+      // ensure the backup's kots app version exists in the db
+      const pastVersions = await stores.kotsAppStore.listPastVersions(appId, clusterId);
+      const version = _.find(pastVersions, (version) => {
+        return version.sequence === sequence;
+      });
+      if (!version) {
+        throw new ReplicatedError(`Cannot restore version ${sequence} since it has never been installed in this cluster`);
+      }
+      logger.info(`Restore confirmed version ${sequence} was previously installed`);
+
+      // undeploy the current kots app version
+      logger.info(`Restore removing current app version.`);
+      // TODO socket server stop deployment loop and do undeploy
+      console.log("undeploy not implemented: manually delete with kubectl");
+      // await stores.kotsAppStore.undeployVersion(appId, sequence, clusterId);
+      await sleep(30); // TODO
+      logger.info(`Restore successfully removed current app version.`);
+
+      // create the Restore resource
       await velero.restore(args.snapshotName);
+      logger.info(`Created Restore object ${restoreName}`);
 
       return { name: restoreName, phase: Phase.New, volumes: [], errors: [], warnings: [] };
     },

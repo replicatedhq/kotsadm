@@ -89,12 +89,16 @@ export class VeleroClient {
       console.log(response.body);
       break
     case 403:
-      throw new ReplicatedError(`RBAC misconfigured for ${method} velero.io/v1 ${path} in namespace ${this.ns}`);
+      throw new ReplicatedError(`Permission denied: RBAC may be misconfigured for ${method} velero.io/v1 ${path} in namespace ${this.ns}`);
     case 404:
       throw new ReplicatedError("Not found: a requested resource may not exist or Velero may not be installed in this cluster");
     case 422:
       console.log(response.body);
       break
+    }
+
+    if (response.body && response.body.message) {
+      throw new ReplicatedError(response.body.message);
     }
 
     throw new Error(`${method} ${url}: ${response.statusCode}`);
@@ -192,6 +196,10 @@ export class VeleroClient {
     const body = await this.request("POST", "backups", backup);
 
     return body;
+  }
+
+  async readBackup(name: string): Promise<Backup> {
+    return await this.request("GET", `backups/${name}`);
   }
 
   async getSnapshotDetail(name: string): Promise<SnapshotDetail> {
