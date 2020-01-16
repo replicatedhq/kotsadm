@@ -57,7 +57,7 @@ class AppSnapshotDetail extends Component {
                 <div className="flex flex1" key={volume.name}>
                   <div className="flex1">
                     <p>{volume.name}</p>
-                    <p>Size: {formatByteSize(volume.doneBytes)}/{formatByteSize(volume.sizeBytes)}</p>
+                    <p>Size: {volume.doneBytesHuman}/{volume.sizeBytesHuman}</p>
                   </div>
                   <div className="flex-column flex1 allignItems--center justifyContent--flexEnd">
                     <div>

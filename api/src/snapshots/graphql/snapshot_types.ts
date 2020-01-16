@@ -106,8 +106,8 @@ const SnapshotError = `
 const SnapshotVolume = `
   type SnapshotVolume {
     name: String
-    sizeBytes: Int
-    doneBytes: Int
+    sizeBytesHuman: String
+    doneBytesHuman: String
     started: String
     finished: String
   }
@@ -147,8 +147,8 @@ const RestoreVolume = `
     podName: String
     podNamespace: String
     podVolumeName: String
-    sizeBytes: Int
-    doneBytes: Int
+    sizeBytesHuman: String
+    doneBytesHuman: String
     started: String
     finished: String
   }

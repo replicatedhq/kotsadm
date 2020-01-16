@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import zlib from "zlib";
+import querystring from "querystring";
 import { parse } from "logfmt";
 import * as _ from "lodash";
 import prettyBytes from "pretty-bytes";
@@ -169,8 +170,10 @@ export class VeleroClient {
     let success = 0;
     let bytes = 0;
 
-    const selector = `velero.io/backup-name=${getValidName(backupName)}`;
-    const body = await this.request("GET", `podvolumebackups?lableSelector=${selector}`);
+    const q  = {
+      labelSelector: `velero.io/backup-name=${getValidName(backupName)}`,
+    };
+    const body = await this.request("GET", `podvolumebackups?${querystring.stringify(q)}`);
 
     _.each(body.items, (pvb) => {
       count++;
@@ -196,21 +199,30 @@ export class VeleroClient {
     const backup = await this.request("GET", path);
     const snapshot = await this.snapshotFromBackup(backup);
 
-    const selector = `velero.io/backup-name=${getValidName(name)}`;
-    const volumeList = await this.request("GET", `podvolumebackups?labelSelector=${selector}`);
+    const q = {
+      labelSelector: `velero.io/backup-name=${getValidName(name)}`,
+    };
+    const volumeList = await this.request("GET", `podvolumebackups?${querystring.stringify(q)}`);
     const volumes: Array<SnapshotVolume> = [];
 
     _.each(volumeList.items, (pvb) => {
-      volumes.push({
+      const sv: SnapshotVolume = {
         name: pvb.metadata.name,
-        sizeBytes: pvb.status.progress.totalBytes,
-        doneBytes: pvb.status.progress.bytesDone,
-        started: pvb.status.startTimestamp,
-        finished: pvb.status.completionTimestamp,
-      });
+      };
+      if (pvb.status) {
+        sv.started = pvb.status.startTimestamp;
+        sv.finished = pvb.status.completionTimestamp;
+        if (pvb.status.progress && pvb.status.progress.totalBytes) {
+          sv.sizeBytesHuman = prettyBytes(pvb.status.progress.totalBytes);
+        }
+        if (pvb.status.progress && pvb.status.progress.bytesDone) {
+          sv.doneBytesHuman = prettyBytes(pvb.status.progress.bytesDone);
+        }
+      }
+      volumes.push(sv);
     });
 
-    let logs
+    let logs;
     if (snapshot.status === Phase.Completed || snapshot.status === Phase.PartiallyFailed || snapshot.status === Phase.Failed) {
       try {
         logs = await this.getBackupLogs(name);
@@ -219,7 +231,7 @@ export class VeleroClient {
       }
     }
 
-    const errors: Array<SnapshotError> = logs ? logs.error : [];
+    const errors: Array<SnapshotError> = logs ? logs.errors : [];
 
     _.each(backup.status.validationErrors, (message: string) => {
       errors.push({

@@ -102,8 +102,8 @@ export const snapshotDetailRaw = `
       }
       volumes {
         name
-        sizeBytes
-        doneBytes
+        sizeBytesHuman
+        doneBytesHuman
         started
         finished
       }

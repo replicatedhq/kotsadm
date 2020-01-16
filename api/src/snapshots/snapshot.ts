@@ -44,10 +44,10 @@ export interface SnapshotError {
 
 export interface SnapshotVolume {
   name: string;
-  sizeBytes: number;
-  doneBytes: number;
-  started: string;
-  finished: string;
+  sizeBytesHuman?: string;
+  doneBytesHuman?: string;
+  started?: string;
+  finished?: string;
 }
 
 export enum SnapshotHookPhase {
@@ -84,8 +84,8 @@ export interface RestoreVolume {
   podName: string;
   podNamespace: string;
   podVolumeName: string;
-  sizeBytes: number;
-  doneBytes: number;
+  sizeBytesHuman: string;
+  doneBytesHuman: string;
   started: string;
   finished?: string;
 }
