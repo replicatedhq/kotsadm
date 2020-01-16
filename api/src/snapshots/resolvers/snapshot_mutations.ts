@@ -7,7 +7,8 @@ import { Params } from "../../server/params";
 import { Backup } from "../velero";
 import { backupStorageLocationName, VeleroClient } from "./veleroClient";
 import { ReplicatedError } from "../../server/errors";
-import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, SnapshotTrigger } from "../snapshot";
+import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, RestoreDetail, SnapshotTrigger } from "../snapshot";
+import { Phase } from "../velero";
 import { SnapshotStore, SnapshotProvider } from "../snapshot_config";
 import { deleteSchedule, schedule } from "../schedule";
 import { getK8sNamespace, kotsRenderFile } from "../../kots_app/kots_ffi";
@@ -166,10 +167,13 @@ export function SnapshotMutations(stores: Stores) {
       await backup(stores, args.appId, scheduled);
     },
 
-    async restoreSnapshot(root: any, args: any, context: Context): Promise<void> {
+    async restoreSnapshot(root: any, args: any, context: Context): Promise<RestoreDetail> {
+      const restoreName = `${args.snapshotName}-${Date.now()}`;
       const velero = new VeleroClient("velero");
 
       await velero.restore(args.snapshotName);
+
+      return { name: restoreName, phase: Phase.New, volumes: [], errors: [], warnings: [] };
     },
 
     async deleteSnapshot(root: any, args: any, context: Context): Promise<void> {
