@@ -1,27 +1,55 @@
 import React, { Component } from "react";
 import { graphql, compose, withApollo } from "react-apollo";
 import { Link, withRouter } from "react-router-dom";
+import MonacoEditor from "react-monaco-editor";
+import Modal from "react-modal";
 import filter from "lodash/filter";
 import Loader from "../shared/Loader";
 import { snapshotDetail } from "../../queries/SnapshotQueries";
 
 class AppSnapshotDetail extends Component {
   state = {
+    showOutputForPreScripts: false,
+    preScriptOutput: "",
+    selectedTab: "stdout"
   };
 
-  preSnapshotScripts() {
+  preSnapshotScripts = () => {
     return filter(this.props.snapshotDetail?.snapshotDetail?.hooks, (hook) => {
       return hook.phase === "pre";
     });
   }
 
-  postSnapshotScripts() {
+  postSnapshotScripts = () => {
     return filter(this.props.snapshotDetail?.snapshotDetail?.hooks, (hook) => {
       return hook.phase === "post";
     });
   }
 
+  toggleOutputForPreScripts = output => {
+    if (this.state.toggleOutputForPreScripts) {
+      this.setState({ showOutputForPreScripts: false, preScriptOutput: "" });
+    } else {
+      this.setState({ showOutputForPreScripts: true, preScriptOutput: output });
+    }
+  }
+
+  renderOutputTabs = () => {
+    const { selectedTab } = this.state;
+    const tabs = ["stdout", "stderr"];
+    return (
+      <div className="flex action-tab-bar u-marginTop--10">
+        {tabs.map(tab => (
+          <div className={`tab-item blue ${tab === selectedTab && "is-active"}`} key={tab} onClick={() => this.setState({ selectedTab: tab })}>
+            {tab}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   render() {
+    const { showOutputForPreScripts, selectedTab, preScriptOutput } = this.state;
     const { app, snapshotDetail } = this.props;
 
     if (snapshotDetail?.loading) {
@@ -59,18 +87,20 @@ class AppSnapshotDetail extends Component {
         <div className="flex flex-auto u-marginBottom--30">
           <div className="flex-column flex1 u-marginRight--20">
             <div className="dashboard-card-wrapper flex1">
-              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Volumes</p>
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-borderBottom--gray">Volumes</p>
               {snapshotDetail?.snapshotDetail?.volumes?.map((volume) => (
-                <div className="flex flex1" key={volume.name}>
-                  <div className="flex1">
-                    <p>{volume.name}</p>
-                    <p>Size: {volume.doneBytesHuman}/{volume.sizeBytesHuman}</p>
+                <div className="flex flex1 u-borderBottom--gray" key={volume.name}>
+                  <div className="flex1 u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">
+                    <p className="flex1 u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold">{volume.name}</p>
+                    <p className="u-fontSize--normal u-color--doveGray u-fontWeight--bold u-lineHeight--normal u-marginRight--20">Size:
+                    <span className="u-fontWeight--normal u-color--dustyGray"> {volume.doneBytesHuman}/{volume.sizeBytesHuman} </span>
+                    </p>
                   </div>
-                  <div className="flex-column flex1 allignItems--center justifyContent--flexEnd">
+                  {/* <div className="flex-column flex1 allignItems--center justifyContent--flexEnd">
                     <div>
-                      <span className={`status-indicator success`}>[Successful]</span>
+                      <span className={`status-indicator ${snapshotDetail?.snapshotDetail.status.toLowerCase()}`}>[{snapshotDetail?.snapshotDetail.name}]</span>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               ))
               }
@@ -78,13 +108,15 @@ class AppSnapshotDetail extends Component {
           </div>
           <div className="flex-column flex1 u-marginLeft--20">
             <div className="dashboard-card-wrapper flex1">
-              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Pre-snapshot scripts</p>
-              <ul>
-                {this.preSnapshotScripts().map((hook, i) => (
-                  // stdout and stderr may have newlines. errors and warnings arrays are also available on hook object.
-                  <li key={i}>Namespace: {hook.namespace} Pod: {hook.podName}, Container: {hook.containerName}, Hook Name: {hook.hookName}, Command: {hook.command}, Stdout: {hook.stdout}, Stderr: {hook.Stderr}, Started: {hook.started}, Finished: {hook.finished}</li>
-                ))}
-              </ul>
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-borderBottom--gray">Pre-snapshot scripts</p>
+              {this.preSnapshotScripts().map((hook, i) => (
+                <div className="flex flex1 u-borderBottom--gray" key={`${hook.hookName}-${i}`}>
+                  <div className="flex1 u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">
+                    <p className="flex1 u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold">{hook.hookName}</p>
+                    <span className="replicated-link u-fontSize--small" onClick={() => this.toggleOutputForPreScripts(hook)}> View output </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -92,11 +124,11 @@ class AppSnapshotDetail extends Component {
         <div className="flex flex-auto u-marginBottom--30">
           <div className="flex-column flex1 u-marginRight--20">
             <div className="dashboard-card-wrapper flex1">
-              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Namespaces</p>
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-borderBottom--gray">Namespaces</p>
               {snapshotDetail?.snapshotDetail?.namespaces?.map((namespace) => (
                 <div className="flex flex1 u-borderBottom--gray" key={namespace}>
-                  <div className="flex1 u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--20">
-                    <p>{namespace}</p>
+                  <div className="flex1">
+                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">{namespace}</p>
                   </div>
                 </div>
               ))
@@ -109,6 +141,48 @@ class AppSnapshotDetail extends Component {
             </div>
           </div>
         </div>
+
+        {showOutputForPreScripts && preScriptOutput &&
+          <Modal
+            isOpen={showOutputForPreScripts}
+            onRequestClose={() => this.toggleOutputForPreScripts()}
+            shouldReturnFocusAfterClose={false}
+            contentLabel="View logs"
+            ariaHideApp={false}
+            className="Modal logs-modal"
+          >
+            <div className="Modal-body flex flex1 flex-column">
+              {!selectedTab ?
+                <div className="flex-column flex1 alignItems--center justifyContent--center">
+                  <Loader size="60" />
+                </div>
+                :
+                <div className="flex-column flex1">
+                  {this.renderOutputTabs()}
+                  <div className="flex-column flex1 u-border--gray monaco-editor-wrapper">
+                    <MonacoEditor
+                      language="json"
+                      value={preScriptOutput[selectedTab]}
+                      height="100%"
+                      width="100%"
+                      options={{
+                        readOnly: true,
+                        contextmenu: false,
+                        minimap: {
+                          enabled: false
+                        },
+                        scrollBeyondLastLine: false,
+                      }}
+                    />
+                  </div>
+                </div>
+              }
+              <div className="u-marginTop--20 flex">
+                <button type="button" className="btn primary blue" onClick={() => this.toggleOutputForPreScripts()}>Ok, got it!</button>
+              </div>
+            </div>
+          </Modal>
+        }
 
       </div>
     );

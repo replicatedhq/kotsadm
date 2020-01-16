@@ -58,7 +58,7 @@ body a {
     left: 0;
   }
 
-  &.success::before {
+  &.completed::before {
     background-color: #44bb66;
   }
   &.failed::before {

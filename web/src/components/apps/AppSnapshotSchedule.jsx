@@ -65,6 +65,7 @@ class AppSnapshotSchedule extends Component {
     selectedSchedule: {},
     selectedRetentionUnit: {},
     frequency: "",
+    updatingSchedule: false,
   };
 
   setFields = () => {
@@ -141,25 +142,25 @@ class AppSnapshotSchedule extends Component {
     }
   }
 
-  onSubmit = (e) => {
-    e.preventDefault();
-    this.saveSnapshotConfig();
-  }
-
   saveSnapshotConfig = () => {
+    this.setState({ updatingSchedule: true });
     this.props.saveSnapshotConfig(
       this.props.app.id,
       this.state.retentionInput,
-      this.state.selectedRetentionUnit.value,
-      this.state.selectedSchedule.value,
+      this.state.selectedRetentionUnit?.value,
+      this.state.selectedSchedule?.value,
       this.state.frequency,
       this.state.autoEnabled,
-    ).catch(err => {
+    ).then(() => {
+      this.setState({ updatingSchedule: false });
+    })
+    .catch(err => {
       console.log(err);
       err.graphQLErrors.map(({ msg }) => {
         this.setState({
           message: msg,
-          messageType: "error"
+          messageType: "error",
+          updatingSchedule: false 
         });
       });
     });
@@ -167,12 +168,12 @@ class AppSnapshotSchedule extends Component {
 
   render() {
     const { app } = this.props;
-    const { hasValidCron } = this.state;
+    const { hasValidCron, updatingSchedule } = this.state;
     const selectedRetentionUnit = RETENTION_UNITS.find((ru) => {
-      return ru.value === this.state.selectedRetentionUnit.value;
+      return ru.value === this.state.selectedRetentionUnit?.value;
     });
     const selectedSchedule = SCHEDULES.find((schedule) => {
-      return schedule.value === this.state.selectedSchedule.value;
+      return schedule.value === this.state.selectedSchedule?.value;
     });
     return (
       <div className="container flex-column flex1 u-overflow--auto u-paddingTop--30 u-paddingBottom--20 alignItems--center">
@@ -258,7 +259,7 @@ class AppSnapshotSchedule extends Component {
                 </div>
               </div>
               <div>
-                <button className="btn primary blue" onClick={this.onSubmit}>Update schedule</button>
+                <button className="btn primary blue" disabled={updatingSchedule} onClick={() => this.saveSnapshotConfig()}>{updatingSchedule ? "Updating schedule" : "Update schedule"}</button>
               </div>
             </div>
           </form>

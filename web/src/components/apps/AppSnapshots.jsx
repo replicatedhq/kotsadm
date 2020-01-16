@@ -18,7 +18,10 @@ class AppSnapshots extends Component {
     deleteSnapshotModal: false,
     startingSnapshot: false,
     snapshotToDelete: "",
-    deletingSnapshot: false
+    deletingSnapshot: false,
+    restoreSnapshotModal: false,
+    restoringSnapshot: false,
+    snapshotToRestore: ""
   };
 
   toggleScheduleSnapshotModal = () => {
@@ -30,6 +33,14 @@ class AppSnapshots extends Component {
       this.setState({ deleteSnapshotModal: false, snapshotToDelete: "" });
     } else {
       this.setState({ deleteSnapshotModal: true, snapshotToDelete: snapshot });
+    }
+  };
+
+  toggleRestoreModal = snapshot => {
+    if (this.state.restoreSnapshotModal) {
+      this.setState({ restoreSnapshotModal: false, snapshotToRestore: "" });
+    } else {
+      this.setState({ restoreSnapshotModal: true, snapshotToRestore: snapshot });
     }
   };
 
@@ -57,11 +68,26 @@ class AppSnapshots extends Component {
       });
   };
 
-  restoreSnapshot = snapshot => {
-    this.props.restoreSnapshot(snapshot.name)
-      .catch(err => {
-        // TODO
-        console.log(err);
+  handleRestoreSnapshot = snapshot => {
+    this.setState({ restoringSnapshot: true });
+    this.props
+    .restoreSnapshot(snapshot.name)
+    .then(() => {
+      this.setState({
+        restoringSnapshot: false,
+        restoreSnapshotModal: false,
+        snapshotToRestore: ""
+      });
+      this.props.snapshot.refetch();
+    })
+      .catch(() => {
+        this.setState({
+          restoringSnapshot: false,
+          restoreErr: {
+            error: true,
+            message: "Something went wrong, please try again."
+          }
+        })
       });
   }
 
@@ -71,6 +97,7 @@ class AppSnapshots extends Component {
     this.props.manualSnapshot(app.id)
     .then(() => {
       this.setState({ startingSnapshot: false });
+      this.props.snapshots.refetch();
     })
     .catch(err => {
       console.log(err);
@@ -98,7 +125,10 @@ class AppSnapshots extends Component {
       startingSnapshot,
       deleteSnapshotModal,
       snapshotToDelete,
-      deletingSnapshot
+      deletingSnapshot,
+      restoreSnapshotModal,
+      restoringSnapshot,
+      snapshotToRestore
     } = this.state;
     const { app, snapshots } = this.props;
     const appTitle = app.name;
@@ -165,7 +195,7 @@ class AppSnapshots extends Component {
               snapshot={snapshot}
               appSlug={app.slug}
               toggleConfirmDeleteModal={this.toggleConfirmDeleteModal}
-              restoreSnapshot={this.restoreSnapshot}
+              toggleRestoreModal={this.toggleRestoreModal}
             />
           ))
           }
@@ -235,6 +265,60 @@ class AppSnapshots extends Component {
                     disabled={deletingSnapshot}
                   >
                     {deletingSnapshot ? "Deleting snapshot" : "Delete snapshot"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Modal>
+        }
+        {restoreSnapshotModal &&
+          <Modal
+            isOpen={restoreSnapshotModal}
+            shouldReturnFocusAfterClose={false}
+            onRequestClose={() => {
+              this.toggleRestoreModal({});
+            }}
+            ariaHideApp={false}
+            contentLabel="Modal"
+            className="Modal LargeSize"
+          >
+            <div className="Modal-body">
+              <div className="flex flex-column">
+                <p className="u-fontSize--largest u-fontWeight--bold u-color--tuna u-lineHeight--normal u-marginBottom--more">
+                  Restore from snapshot
+              </p>
+                <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray u-lineHeight--normal">
+                 Are you sure you want to restore {appTitle} to the following version?
+              </p>
+                <div className="flex flex1 justifyContent--spaceBetween u-marginTop--20">
+                  <div className="flex flex-column">
+                    <p className="u-fontSize--normal u-fontWeight--bold u-color--tuna u-lineHeight--normal">{snapshotToRestore?.name}</p>
+                    <p className="u-fontSize--normal u-color--doveGray u-fontWeight--bold u-lineHeight--normal u-marginRight--20"><span className="u-fontWeight--normal u-color--dustyGray">Captured on:</span> {Utilities.dateFormat(snapshotToRestore?.started, "MMM D, YYYY h:mm A")}</p>
+                  </div>
+                  <div className="flex alignItems--center">
+                    <span className={`status-indicator ${snapshotToRestore?.status.toLowerCase()}`}>{snapshotToRestore?.status}</span>
+                  </div>
+                </div>
+                <div className="flex flex1 u-marginTop--20">
+                  <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray u-lineHeight--normal"> Restoring to this version will remove all of the data in the {appTitle} namespace and will replace it with the data from the restored version. During the restoration your application will not be available and you will not be able to use the admin console. This action cannot be reversed.</p>
+                </div>
+                <div className="flex justifyContent--flexStart u-marginTop--20">
+                  <button
+                    className="btn secondary blue u-marginRight--10"
+                    onClick={() => {
+                      this.toggleRestoreModal({});
+                    }}
+                  >
+                    Cancel
+                </button>
+                  <button
+                    className="btn primary blue"
+                    onClick={() => {
+                      this.handleRestoreSnapshot(snapshotToRestore)
+                    }}
+                    disabled={restoringSnapshot}
+                  >
+                    {restoringSnapshot ? "Restoring from snapshot" : "Restore from snapshot"}
                   </button>
                 </div>
               </div>

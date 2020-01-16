@@ -50,13 +50,13 @@ class AppSnapshotSettings extends Component {
   state = {
     determiningDestination: true,
     selectedDestination: {},
+    updatingSettings: false,
     s3bucket: "",
     s3Region: "",
     s3Path: "",
     useIam: false,
     s3KeyId: "",
     s3KeySecret: "",
-
     azureBucket: "",
     azurePath: "",
     azureSubscriptionId: "",
@@ -187,24 +187,30 @@ class AppSnapshotSettings extends Component {
   }
 
   snapshotProviderAWS = () => {
+    this.setState({ updatingSettings: true });
     this.props.snapshotProviderAWS(
       this.state.s3bucket,
       this.state.s3Path,
       this.state.s3Region,
       this.state.useIam && this.state.s3KeyId,
       this.state.useIam && this.state.s3KeySecret,
-    ).catch(err => {
+    ).then(() => {
+      this.setState({ updatingSettings: false });
+    })
+    .catch(err => {
         console.log(err);
         err.graphQLErrors.map(({ msg }) => {
           this.setState({
             message: msg,
-            messageType: "error"
+            messageType: "error",
+            updatingSettings: false
           });
         });
       });
   }
 
   snapshotProviderAzure = () => {
+    this.setState({ updatingSettings: true });
     this.props.snapshotProviderAzure(
       this.state.azureBucket,
       this.state.azurePath,
@@ -215,34 +221,44 @@ class AppSnapshotSettings extends Component {
       this.state.azureClientId,
       this.state.azureClientSecret,
       this.state.selectedAzureCloudName.value,
-    ).catch(err => {
+    ).then(() => {
+      this.setState({ updatingSettings: false });
+    })
+    .catch(err => {
         console.log(err);
         err.graphQLErrors.map(({ msg }) => {
           this.setState({
             message: msg,
-            messageType: "error"
+            messageType: "error",
+            updatingSettings: false
           });
         });
       });
   }
 
   snapshotProviderGoogle = () => {
+    this.setState({ updatingSettings: true });
     this.props.snapshotProviderGoogle(
       this.state.gcsBucket,
       this.state.gcsPath,
       this.state.gcsServiceAccount
-    ).catch(err => {
+    ).then(() => {
+      this.setState({ updatingSettings: false })
+    })
+    .catch(err => {
         console.log(err);
         err.graphQLErrors.map(({ msg }) => {
           this.setState({
             message: msg,
-            messageType: "error"
+            messageType: "error",
+            updatingSettings: false
           });
         });
       });
   }
 
   snapshotProviderS3Compatible = () => {
+    this.setState({ updatingSettings: true });
     this.props.snapshotProviderS3Compatible(
       this.state.s3CompatibleBucket,
       this.state.s3CompatiblePath,
@@ -250,12 +266,16 @@ class AppSnapshotSettings extends Component {
       this.state.s3CompatibleEndpoint,
       this.state.s3CompatibleKeyId,
       this.state.s3CompatibleKeySecret,
-    ).catch(err => {
+    ).then(() => {
+      this.setState({ updatingSettings: false });
+    })
+    .catch(err => {
         console.log(err);
         err.graphQLErrors.map(({ msg }) => {
           this.setState({
             message: msg,
-            messageType: "error"
+            messageType: "error",
+            updatingSettings: false
           });
         });
       });
@@ -495,6 +515,7 @@ class AppSnapshotSettings extends Component {
   }
 
   render() {
+    const { updatingSettings } = this.state;
     const { app } = this.props;
     const selectedDestination = DESTINATIONS.find((d) => {
       return d.value === this.state.selectedDestination.value;
@@ -537,7 +558,7 @@ class AppSnapshotSettings extends Component {
                     <Link to={`/app/${app?.slug}/snapshots`} className="btn secondary">Cancel</Link>
                   </div>
                   <div>
-                    <button className="btn primary blue" onClick={this.onSubmit}>Update settings</button>
+                    <button className="btn primary blue" disabled={updatingSettings} onClick={this.onSubmit}>{updatingSettings ? "Updating" : "Update settings"}</button>
                   </div>
                 </div>
               </div>
