@@ -89,7 +89,7 @@ class Dashboard extends Component {
     if (this.props.getAppLicense !== lastProps.getAppLicense && this.props.getAppLicense) {
       if (this.props.getAppLicense?.getAppLicense === null) {
         this.setState({ appLicense: {} });
-      } else {  
+      } else {
         const { getAppLicense } = this.props.getAppLicense;
         if (getAppLicense) {
           this.setState({ appLicense: getAppLicense });
@@ -222,7 +222,7 @@ class Dashboard extends Component {
 
     return (
       <div className="dashboard-card graph flex-column flex1 flex u-marginTop--20" key={chart.title}>
-        <XYPlot width={460} height={180} onMouseLeave={() => this.setState({ crosshairValues: []})}>
+        <XYPlot width={460} height={180} onMouseLeave={() => this.setState({ crosshairValues: [] })}>
           <VerticalGridLines />
           <HorizontalGridLines />
           <XAxis tickFormat={v => `${moment.unix(v).format("H:mm")}`} style={axisStyle} />
@@ -230,10 +230,10 @@ class Dashboard extends Component {
           {series}
           {this.state.crosshairValues?.length > 0 && this.state.activeChart === chart &&
             <Crosshair values={this.state.crosshairValues}>
-              <div className="flex flex-column" style={{ background: "black", width:"250px" }}>
-                  <p className="u-fontWeight--bold u-textAlign--center"> {moment.unix(this.state.crosshairValues[0].x).format("LLL")} </p>
-                <br/>
-                {this.state.crosshairValues.map((c ,i)=> {
+              <div className="flex flex-column" style={{ background: "black", width: "250px" }}>
+                <p className="u-fontWeight--bold u-textAlign--center"> {moment.unix(this.state.crosshairValues[0].x).format("LLL")} </p>
+                <br />
+                {this.state.crosshairValues.map((c, i) => {
                   return (
                     <div className="flex-auto flex flexWrap--wrap u-padding--5" key={i}>
                       <div className="flex flex1">
@@ -287,7 +287,6 @@ class Dashboard extends Component {
       );
     }
 
-
     return (
       <div className="flex-column flex1 u-position--relative u-overflow--auto u-padding--20">
         <Helmet>
@@ -332,18 +331,37 @@ class Dashboard extends Component {
                 onUploadNewVersion={() => this.onUploadNewVersion()}
                 redirectToDiff={() => this.redirectToDiff(currentVersion?.sequence, latestPendingVersion.sequence)}
               />
-              <DashboardCard
-                cardName="License"
-                cardIcon={size(appLicense) > 0 ? "licenseIcon" : "grayedLicenseIcon"}
-                license={true}
-                url={this.props.match.url}
-                appLicense={appLicense}
-              />
+              {app.allowSnapshots ?
+                <div className="small-dashboard-wrapper flex-column flex">
+                  <DashboardCard
+                    cardName="Snapshots"
+                    cardIcon="snapshotIcon"
+                    url={this.props.match.url}
+                    isSnapshotAllowed={app.allowSnapshots}
+                  />
+                  <DashboardCard
+                    cardName="License"
+                    cardIcon={size(appLicense) > 0 ? "licenseIcon" : "grayedLicenseIcon"}
+                    license={true}
+                    isSnapshotAllowed={app.allowSnapshots}
+                    url={this.props.match.url}
+                    appLicense={appLicense}
+                  />
+                </div>
+                :
+                <DashboardCard
+                  cardName="License"
+                  cardIcon={size(appLicense) > 0 ? "licenseIcon" : "grayedLicenseIcon"}
+                  license={true}
+                  url={this.props.match.url}
+                  appLicense={appLicense}
+                />
+              }
             </div>
             <div className="u-marginTop--30 flex flex1">
               {this.props.getKotsAppDashboard?.getKotsAppDashboard?.prometheusAddress ?
                 <div>
-                  <div className="flex flex1 justifyContent--flexEnd"> 
+                  <div className="flex flex1 justifyContent--flexEnd">
                     <span className="card-link" onClick={this.toggleConfigureGraphs}> Configure Prometheus Address </span>
                   </div>
                   <div className="flex-auto flex flexWrap--wrap u-width--full">
