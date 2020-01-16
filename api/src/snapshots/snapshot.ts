@@ -2,6 +2,9 @@ import { Phase } from "./velero";
 
 export const snapshotTriggerKey = "kots.io/snapshot-trigger";
 export const kotsAppSlugKey = "kots.io/app-slug";
+export const kotsAppIdKey = "kots.io/app-id";
+export const kotsClusterIdKey = "kots.io/cluster-id";
+export const kotsadmLabelKey = "app.kubernetes.io/name"; // must match kots and kurl
 export const kotsAppSequenceKey = "kots.io/app-sequence";
 export const snapshotVolumeCountKey = "kots.io/snapshot-volume-count";
 export const snapshotVolumeSuccessCountKey = "kots.io/snapshot-volume-success-count";

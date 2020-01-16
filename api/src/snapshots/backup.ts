@@ -5,10 +5,15 @@ import { ReplicatedError } from "../server/errors";
 import { getK8sNamespace, kotsRenderFile } from "../kots_app/kots_ffi";
 import { Backup } from "./velero";
 import { backupStorageLocationName, VeleroClient } from "./resolvers/veleroClient";
-import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, SnapshotTrigger } from "./snapshot";
-
-// must match kots
-const kotsadmLabelKey = "app.kubernetes.io/name"; // TODO duplicated
+import {
+  kotsAppIdKey,
+  kotsAppSlugKey,
+  kotsAppSequenceKey,
+  kotsClusterIdKey,
+  kotsadmLabelKey,
+  snapshotTriggerKey,
+  SnapshotTrigger
+} from "./snapshot";
 
 export async function backup(stores: Stores, appId: string, scheduled: boolean) {
   const app = await stores.kotsAppStore.getApp(appId);
@@ -16,6 +21,11 @@ export async function backup(stores: Stores, appId: string, scheduled: boolean) 
   if (!kotsVersion) {
     throw new ReplicatedError("App does not have a current version");
   }
+  const clusters = await stores.clusterStore.listClustersForKotsApp(app.id);
+  if (clusters.length !== 1) {
+    throw new ReplicatedError("Must have exactly 1 cluster for backup");
+  }
+  const clusterId = clusters[0].id;
 
   let name = `manual-${Date.now()}`;
   if (scheduled) {
@@ -57,9 +67,11 @@ export async function backup(stores: Stores, appId: string, scheduled: boolean) 
     metadata: {
       name,
       annotations: {
-        [snapshotTriggerKey]: SnapshotTrigger.Manual,
+        [snapshotTriggerKey]: scheduled ? SnapshotTrigger.Schedule : SnapshotTrigger.Manual,
         [kotsAppSlugKey]: app.slug,
+        [kotsAppIdKey]: app.id,
         [kotsAppSequenceKey]: kotsVersion.sequence.toString(),
+        [kotsClusterIdKey]: clusterId,
       }
     },
     spec: {

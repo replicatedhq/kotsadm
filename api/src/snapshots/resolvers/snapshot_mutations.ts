@@ -7,7 +7,16 @@ import { Params } from "../../server/params";
 import { Backup } from "../velero";
 import { backupStorageLocationName, VeleroClient } from "./veleroClient";
 import { ReplicatedError } from "../../server/errors";
-import { kotsAppSlugKey, kotsAppSequenceKey, snapshotTriggerKey, RestoreDetail, SnapshotTrigger } from "../snapshot";
+import {
+  kotsAppSlugKey,
+  kotsAppIdKey,
+  kotsClusterIdKey,
+  kotsAppSequenceKey,
+  kotsadmLabelKey,
+  snapshotTriggerKey,
+  RestoreDetail,
+  SnapshotTrigger
+} from "../snapshot";
 import { Phase } from "../velero";
 import { SnapshotStore, SnapshotProvider } from "../snapshot_config";
 import { deleteSchedule, schedule } from "../schedule";
@@ -18,12 +27,6 @@ import {
 import { logger } from "../../server/logger";
 import { backup } from "../backup";
 import { sleep } from "../../util/utilities";
-
-const appIDKey = "kots.io/app-id";
-const sequenceKey = "kots.io/sequence";
-const clusterIDKey = "kots.io/cluster-id";
-// must match kots
-const kotsadmLabelKey = "app.kubernetes.io/name"; // TODO duplicated
 
 export function SnapshotMutations(stores: Stores) {
   return {
@@ -180,15 +183,15 @@ export function SnapshotMutations(stores: Stores) {
       if (!backup.metadata.annotations) {
         throw new ReplicatedError(`Backup is missing appID, cluster ID and version annotations`);
       }
-      const appId = backup.metadata.annotations[appIDKey];
+      const appId = backup.metadata.annotations[kotsAppIdKey];
       if (!appId) {
         throw new ReplicatedError(`Backup is missing app ID annotation`);
       }
-      const clusterId = backup.metadata.annotations[clusterIDKey];
+      const clusterId = backup.metadata.annotations[kotsClusterIdKey];
       if (!clusterId) {
         throw new ReplicatedError(`Backup is missing cluster ID annotation`);
       }
-      const sequenceString = backup.metadata.annotations[sequenceKey];
+      const sequenceString = backup.metadata.annotations[kotsAppSequenceKey];
       if (!sequenceString) {
         throw new ReplicatedError(`Backup is missing version annotation`);
       }
