@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import { graphql, compose, withApollo } from "react-apollo";
 import { Link, withRouter } from "react-router-dom";
 import filter from "lodash/filter";
-import { formatByteSize } from "../../utilities/utilities";
 import { snapshotDetail } from "../../queries/SnapshotQueries";
 
 class AppSnapshotDetail extends Component {

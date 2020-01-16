@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Utilities, formatByteSize } from "../../utilities/utilities";
+import { Utilities } from "../../utilities/utilities";
 import dayjs from "dayjs";
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 dayjs.extend(isSameOrAfter)

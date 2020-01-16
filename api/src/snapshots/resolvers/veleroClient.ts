@@ -500,6 +500,20 @@ export class VeleroClient {
     };
     await this.request("POST", "deletebackuprequests", dbr);
   }
+
+  async restore(backupName: string): Promise<void> {
+    const restore = {
+      metadata: {
+        name: `${backupName}-${Date.now()}`,
+        namespace: "velero",
+      },
+      spec: {
+        backupName,
+      },
+    };
+
+    this.request("POST", "restores", restore);
+  }
 }
 
 function maybeParseInt(s: string|undefined): number|undefined {
