@@ -108,6 +108,7 @@ export const snapshotDetailRaw = `
         doneBytesHuman
         started
         finished
+        phase
       }
       errors {
         title

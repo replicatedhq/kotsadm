@@ -48,6 +48,7 @@ export interface SnapshotVolume {
   doneBytesHuman?: string;
   started?: string;
   finished?: string;
+  phase?: Phase;
 }
 
 export enum SnapshotHookPhase {

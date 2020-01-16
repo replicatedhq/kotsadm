@@ -112,6 +112,7 @@ const SnapshotVolume = `
     doneBytesHuman: String
     started: String
     finished: String
+    phase: String
   }
 `;
 

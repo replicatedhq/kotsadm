@@ -212,11 +212,11 @@ export class VeleroClient {
       if (pvb.status) {
         sv.started = pvb.status.startTimestamp;
         sv.finished = pvb.status.completionTimestamp;
-        if (pvb.status.progress && pvb.status.progress.totalBytes) {
-          sv.sizeBytesHuman = prettyBytes(pvb.status.progress.totalBytes);
-        }
-        if (pvb.status.progress && pvb.status.progress.bytesDone) {
-          sv.doneBytesHuman = prettyBytes(pvb.status.progress.bytesDone);
+        sv.phase = pvb.status.phase;
+        if (pvb.status.progress) {
+          // progress object is empty if volume size was 0
+          sv.sizeBytesHuman = pvb.status.progress.totalBytes ? prettyBytes(pvb.status.progress.totalBytes) : "0 B";
+          sv.doneBytesHuman = pvb.status.progress.bytesDone ? prettyBytes(pvb.status.progress.bytesDone): "0 B";
         }
       }
       volumes.push(sv);
