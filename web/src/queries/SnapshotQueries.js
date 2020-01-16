@@ -80,7 +80,7 @@ export const snapshotDetailRaw = `
     snapshotDetail(slug: $slug, id: $id) {
       name
       status
-      volumeBytes
+      volumeSizeHuman
       namespaces
       hooks {
         hookName

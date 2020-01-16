@@ -207,7 +207,7 @@ export default class DashboardCard extends React.Component {
                 size(appLicense) > 0 ?
                   <Link to={`${url}/license`} className="card-link"> View license details </Link>
                   : isSnapshotAllowed ?
-                  <Link to={`${url}/license`} className="card-link"> Enable </Link>
+                  <Link to={`${url}/snapshots`} className="card-link"> View snapshot details </Link>
                   : null
             }
             <div className="u-marginTop--15">

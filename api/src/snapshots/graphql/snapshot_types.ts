@@ -89,7 +89,7 @@ const SnapshotDetail = `
   type SnapshotDetail {
     name: String
     status: String
-    volumeBytes: Int
+    volumeSizeHuman: String
     namespaces: [String]
     hooks: [SnapshotHook]
     volumes: [SnapshotVolume]

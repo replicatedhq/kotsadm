@@ -11,7 +11,9 @@ class AppSnapshotDetail extends Component {
   state = {
     showOutputForPreScripts: false,
     preScriptOutput: "",
-    selectedTab: "stdout"
+    selectedTab: "stdout",
+    showAllVolumes: false,
+    showAllPreSnapshotScripts: false
   };
 
   preSnapshotScripts = () => {
@@ -24,6 +26,14 @@ class AppSnapshotDetail extends Component {
     return filter(this.props.snapshotDetail?.snapshotDetail?.hooks, (hook) => {
       return hook.phase === "post";
     });
+  }
+
+  toggleShowAllPreScripts = () => {
+    this.setState({ showAllPreSnapshotScripts: !this.state.showAllPreSnapshotScripts });
+  }
+
+  toggleShowAllVolumes = () => {
+    this.setState({ showAllVolumes: !this.state.showAllVolumes });
   }
 
   toggleOutputForPreScripts = output => {
@@ -49,7 +59,7 @@ class AppSnapshotDetail extends Component {
   }
 
   render() {
-    const { showOutputForPreScripts, selectedTab, preScriptOutput } = this.state;
+    const { showOutputForPreScripts, selectedTab, preScriptOutput, showAllVolumes, showAllPreSnapshotScripts } = this.state;
     const { app, snapshotDetail } = this.props;
 
     if (snapshotDetail?.loading) {
@@ -88,7 +98,7 @@ class AppSnapshotDetail extends Component {
           <div className="flex-column flex1 u-marginRight--20">
             <div className="dashboard-card-wrapper flex1">
               <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-borderBottom--gray">Volumes</p>
-              {snapshotDetail?.snapshotDetail?.volumes?.map((volume) => (
+              {snapshotDetail?.snapshotDetail?.volumes?.slice(0, 3).map((volume) => (
                 <div className="flex flex1 u-borderBottom--gray" key={volume.name}>
                   <div className="flex1 u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">
                     <p className="flex1 u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold">{volume.name}</p>
@@ -96,27 +106,31 @@ class AppSnapshotDetail extends Component {
                     <span className="u-fontWeight--normal u-color--dustyGray"> {volume.doneBytesHuman}/{volume.sizeBytesHuman} </span>
                     </p>
                   </div>
-                  {/* <div className="flex-column flex1 allignItems--center justifyContent--flexEnd">
-                    <div>
-                      <span className={`status-indicator ${snapshotDetail?.snapshotDetail.status.toLowerCase()}`}>[{snapshotDetail?.snapshotDetail.name}]</span>
-                    </div>
-                  </div> */}
                 </div>
-              ))
+              ))}
+              {snapshotDetail?.snapshotDetail?.volumes?.length > 3 &&
+                <div className="flex flex1 justifyContent--center">
+                  <span className="replicated-link u-fontSize--normal u-paddingTop--20" onClick={() => this.toggleShowAllVolumes()}>Show all {snapshotDetail?.snapshotDetail?.volumes?.length} volumes</span>
+                </div>
               }
             </div>
           </div>
           <div className="flex-column flex1 u-marginLeft--20">
             <div className="dashboard-card-wrapper flex1">
               <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-borderBottom--gray">Pre-snapshot scripts</p>
-              {this.preSnapshotScripts().map((hook, i) => (
+              {this.preSnapshotScripts().slice(0, 3).map((hook, i) => (
                 <div className="flex flex1 u-borderBottom--gray" key={`${hook.hookName}-${i}`}>
-                  <div className="flex1 u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">
+                  <div className="flex1 u-paddingBottom--15 u-paddingTop--15 u-paddingLeft--10">
                     <p className="flex1 u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold">{hook.hookName}</p>
                     <span className="replicated-link u-fontSize--small" onClick={() => this.toggleOutputForPreScripts(hook)}> View output </span>
                   </div>
                 </div>
               ))}
+              {this.preSnapshotScripts().length > 3 &&
+                <div className="flex flex1 justifyContent--center">
+                  <span className="replicated-link u-fontSize--normal u-paddingTop--20" onClick={() => this.toggleShowAllPreScripts()}>Show all {this.preSnapshotScripts().length} scripts</span>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -131,8 +145,7 @@ class AppSnapshotDetail extends Component {
                     <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">{namespace}</p>
                   </div>
                 </div>
-              ))
-              }
+              ))}
             </div>
           </div>
           <div className="flex-column flex1 u-marginLeft--20">
@@ -179,6 +192,58 @@ class AppSnapshotDetail extends Component {
               }
               <div className="u-marginTop--20 flex">
                 <button type="button" className="btn primary blue" onClick={() => this.toggleOutputForPreScripts()}>Ok, got it!</button>
+              </div>
+            </div>
+          </Modal>
+        }
+        {showAllVolumes &&
+          <Modal
+            isOpen={showAllVolumes}
+            onRequestClose={this.toggleShowAllVolumes}
+            shouldReturnFocusAfterClose={false}
+            contentLabel="Show more"
+            ariaHideApp={false}
+            className="MediumSize Modal"
+          >
+            <div className="Modal-body flex-column flex1">
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-borderBottom--gray">Volumes</p>
+              {snapshotDetail?.snapshotDetail?.volumes?.map((volume) => (
+                <div className="flex flex1 u-borderBottom--gray" key={volume.name}>
+                  <div className="flex1 u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">
+                    <p className="flex1 u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold">{volume.name}</p>
+                    <p className="u-fontSize--normal u-color--doveGray u-fontWeight--bold u-lineHeight--normal u-marginRight--20">Size:
+                    <span className="u-fontWeight--normal u-color--dustyGray"> {volume.doneBytesHuman}/{volume.sizeBytesHuman} </span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <div className="u-marginTop--10 flex">
+                <button onClick={() => this.toggleShowAllVolumes()} className="btn primary blue">Ok, got it!</button>
+              </div>
+            </div>
+          </Modal>
+        }
+        {showAllPreSnapshotScripts &&
+          <Modal
+            isOpen={showAllPreSnapshotScripts}
+            onRequestClose={this.toggleShowAllPreScripts}
+            shouldReturnFocusAfterClose={false}
+            contentLabel="Show more"
+            ariaHideApp={false}
+            className="MediumSize Modal"
+          >
+            <div className="Modal-body flex-column flex1">
+              <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-borderBottom--gray">Pre-snapshot scripts</p>
+              {this.preSnapshotScripts().map((hook, i) => (
+                <div className="flex flex1 u-borderBottom--gray" key={`${hook.hookName}-${i}`}>
+                  <div className="flex1 u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">
+                    <p className="flex1 u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold">{hook.hookName}</p>
+                    <span className="replicated-link u-fontSize--small" onClick={() => this.toggleOutputForPreScripts(hook)}> View output </span>
+                  </div>
+                </div>
+              ))}
+              <div className="u-marginTop--10 flex">
+                <button onClick={() => this.toggleShowAllPreScripts()} className="btn primary blue">Ok, got it!</button>
               </div>
             </div>
           </Modal>
