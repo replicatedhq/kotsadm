@@ -174,8 +174,7 @@ export function SnapshotMutations(stores: Stores) {
 
     async deleteSnapshot(root: any, args: any, context: Context): Promise<void> {
       const velero = new VeleroClient("velero"); // TODO namespace
-
-      velero.deleteSnapshot(args.name);
+      velero.deleteSnapshot(args.snapshotName);
     },
   };
 }

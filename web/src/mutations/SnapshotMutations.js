@@ -7,6 +7,12 @@ export const manualSnapshotRaw = `
 `;
 export const manualSnapshot = gql(manualSnapshotRaw);
 
+export const deleteSnapshot = gql`
+  mutation deleteSnapshot($snapshotName: String!) {
+    deleteSnapshot(snapshotName: $snapshotName)
+  }
+`;
+
 export const snapshotProviderAWSRaw = `
   mutation snapshotProviderAWS($bucket: String!, $prefix: String, $region: String!, $accessKeyID: String, $accessKeySecret: String) {
     snapshotProviderAWS(bucket: $bucket, prefix: $prefix, region: $region, accessKeyID: $accessKeyID, accessKeySecret: $accessKeySecret)
