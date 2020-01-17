@@ -2,7 +2,7 @@ import React from "react";
 import Modal from "react-modal";
 
 export default function ShowAllModal(props) {
-  const { displayShowAllModal, toggleShowAllModal, dataToShow } = props;
+  const { displayShowAllModal, toggleShowAllModal, dataToShow, name } = props;
 
   return (
     <Modal
@@ -14,7 +14,7 @@ export default function ShowAllModal(props) {
       className="MediumSize Modal"
     >
       <div className="Modal-body flex-column flex1">
-        <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-borderBottom--gray">Volumes</p>
+        <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-borderBottom--gray">{name}</p>
         {dataToShow}
         <div className="u-marginTop--10 flex">
           <button onClick={() => toggleShowAllModal()} className="btn primary blue">Ok, got it!</button>

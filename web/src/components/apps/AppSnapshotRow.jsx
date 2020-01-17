@@ -26,7 +26,7 @@ class AppShanpshotRow extends React.Component {
       <div className={`flex flex-auto ActiveDownstreamVersionRow--wrapper alignItems--center ${snapshot.status === "Deleting" && "is-deleting"} ${isExpired && "is-expired"}`}>
         <div className="flex-column flex1">
           <div className="flex flex-auto alignItems--center u-fontWeight--bold u-color--tuna">
-            <p className={`u-fontSize--largest ${isExpired ? "u-color--dustyGray" : "u-color--tuna"} u-lineHeight--normal u-fontWeight--bold u-marginRight--10`}>{snapshot.name}</p>
+            <p className={`u-fontSize--largest ${isExpired || snapshot.status === "Deleting" ? "u-color--dustyGray" : "u-color--tuna"} u-lineHeight--normal u-fontWeight--bold u-marginRight--10`}>{snapshot.name}</p>
             {!isExpired && snapshot.status !== "Deleting" && <Link className="replicated-link u-marginLeft--5 u-fontSize--small" to={`/app/${appSlug}/snapshots/${snapshot.name}`}>View</Link>}
           </div>
           <div className="flex flex-auto alignItems--center u-marginTop--5">

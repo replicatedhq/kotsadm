@@ -4,6 +4,8 @@ import { Link, withRouter } from "react-router-dom";
 import MonacoEditor from "react-monaco-editor";
 import Modal from "react-modal";
 import filter from "lodash/filter";
+import ReactApexChart from "react-apexcharts";
+import moment from "moment";
 import Loader from "../shared/Loader";
 import { snapshotDetail } from "../../queries/SnapshotQueries";
 import ShowAllModal from "../modals/ShowAllModal";
@@ -14,7 +16,47 @@ class AppSnapshotDetail extends Component {
     preScriptOutput: "",
     selectedTab: "stdout",
     showAllVolumes: false,
-    showAllPreSnapshotScripts: false
+    showAllPreSnapshotScripts: false,
+    showAllWarnings: false,
+
+    options: {
+      chart: {
+        height: 100,
+        type: "rangeBar"
+      },
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          distributed: true,
+          dataLabels: {
+            hideOverflowingLabels: false
+          }
+        }
+      },
+      xaxis: {
+        type: "datetime",
+        labels: {
+          formatter: (value) => {
+            return moment(value).format("h:mm:ss");
+          }
+        }
+      },
+      yaxis: {
+        show: false
+      },
+      grid: {
+        xaxis: {
+          lines: {
+            show: true
+          }
+        },
+        yaxis: {
+          lines: {
+            show: false
+          }
+        },
+      },
+    }
   };
 
   preSnapshotScripts = () => {
@@ -47,6 +89,10 @@ class AppSnapshotDetail extends Component {
 
   toggleShowAllNamespaces = () => {
     this.setState({ showAllNamespaces: !this.state.showAllNamespaces });
+  }
+
+  toggleShowAllWarnings = () => {
+    this.setState({ showAllWarnings: !this.state.showAllWarnings });
   }
 
   renderOutputTabs = () => {
@@ -85,9 +131,12 @@ class AppSnapshotDetail extends Component {
     return (
       this.preSnapshotScripts().map((hook, i) => (
         <div className="flex flex1 u-borderBottom--gray" key={`${hook.hookName}-${i}`}>
-          <div className="flex1 u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">
+          <div className="flex1 u-paddingBottom--15 u-paddingTop--15 u-paddingLeft--10">
             <p className="flex1 u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold">{hook.hookName}</p>
-            <span className="replicated-link u-fontSize--small" onClick={() => this.toggleOutputForPreScripts(hook)}> View output </span>
+            <div className="flex flex1 u-marginTop--5 alignItems--center">
+              <span className="u-fontWeight--normal u-color--dustyGray u-marginRight--10"> {hook.command} </span>
+              <span className="replicated-link u-fontSize--small" onClick={() => this.toggleOutputForPreScripts(hook)}> View output </span>
+            </div>
           </div>
         </div>
       ))
@@ -106,8 +155,51 @@ class AppSnapshotDetail extends Component {
     );
   }
 
+  rennderShowAllWarnings = (warnings) => {
+    return (
+      warnings.map((warning) => (
+        <div className="flex flex1 u-borderBottom--gray" key={warning}>
+          <div className="flex1">
+            <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">{warning.title}</p>
+          </div>
+        </div>
+      ))
+    );
+  }
+
+  calculateVolumeTimeInterval = (volumes) => {
+    const startedTimes = volumes.map((volume) => moment(volume.started).format("MMM D, YYYY h:mm A"));
+    const finishedTimes = volumes.map((volume) => moment(volume.finished).format("MMM D, YYYY h:mm A"));
+    const minStarted = startedTimes.reduce((a, b) => { return a <= b ? a : b; });
+    const maxFinished = finishedTimes.reduce((a, b) => { return a <= b ? b : a; });
+
+    const diffHours = moment(maxFinished).diff(moment(minStarted), "hours")
+    const diffMinutes = moment(maxFinished).diff(moment(minStarted), "minutes");
+
+    return {
+      "minStarted": minStarted,
+      "maxFinished": maxFinished,
+      "maxHourDifference": diffHours,
+      "maxMinDifference": diffMinutes
+    }
+  }
+
+  getSeriesData = (volumes) => {
+    const colors = ["#32C5FF", "#44BB66", "#6236FF", "#F7B500", "#4999AD"];
+    const series = [{ data: null }]
+    const data = volumes.map((volume, i) => {
+      return {
+        x: volume.name,
+        y: [new Date(volume.started).getTime(), new Date(volume.finished).getTime()],
+        fillColor: colors[i]
+      }
+    });
+    series[0].data = data;
+    return series;
+  }
+
   render() {
-    const { showOutputForPreScripts, selectedTab, preScriptOutput, showAllVolumes, showAllPreSnapshotScripts, showAllNamespaces } = this.state;
+    const { showOutputForPreScripts, selectedTab, preScriptOutput, showAllVolumes, showAllPreSnapshotScripts, showAllNamespaces, showAllWarnings } = this.state;
     const { app, snapshotDetail } = this.props;
 
     if (snapshotDetail?.loading) {
@@ -116,6 +208,8 @@ class AppSnapshotDetail extends Component {
           <Loader size="60" />
         </div>)
     }
+
+    const series = this.getSeriesData(this.props.snapshotDetail?.snapshotDetail?.volumes);
 
     return (
       <div className="container flex-column flex1 u-overflow--auto u-paddingTop--30 u-paddingBottom--20">
@@ -127,18 +221,36 @@ class AppSnapshotDetail extends Component {
         <div className="flex justifyContent--spaceBetween alignItems--center u-paddingBottom--30 u-borderBottom--gray">
           <div className="flex-column u-lineHeight--normal">
             <p className="u-fontSize--larger u-fontWeight--bold u-color--tuna u-marginBottom--5">[{snapshotDetail?.snapshotDetail.name}]</p>
-            <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray">Total size: <span className="u-fontWeight--bold u-color--doveGray">[{snapshotDetail?.snapshotDetail.volumeSizeHuman}]</span></p>
+            <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray">Total size: <span className="u-fontWeight--bold u-color--doveGray">{snapshotDetail?.snapshotDetail.volumeSizeHuman}</span></p>
           </div>
           <div className="flex-column u-lineHeight--normal u-textAlign--right">
-            <p className="u-fontSize--normal u-fontWeight--normal u-marginBottom--5">Status: <span className={`status-indicator ${snapshotDetail?.snapshotDetail.status.toLowerCase()} u-marginLeft--5`}>[{snapshotDetail?.snapshotDetail.status}]</span></p>
-            <div className="u-fontSize--small"><span className="u-marginRight--5">{`[${snapshotDetail?.snapshotDetail.warnings ? snapshotDetail?.snapshotDetail.warnings.length : 0} warnings]`}</span><span className="replicated-link">Download logs</span></div>
+            <p className="u-fontSize--normal u-fontWeight--normal u-marginBottom--5">Status: <span className={`status-indicator ${snapshotDetail?.snapshotDetail.status.toLowerCase()} u-marginLeft--5`}>{snapshotDetail?.snapshotDetail.status}</span></p>
+            <div className="u-fontSize--small"><span className="u-marginRight--5 u-fontWeight--medium u-color--chestnut">{`${snapshotDetail?.snapshotDetail.warnings ? snapshotDetail?.snapshotDetail.errors.length : 0} errors`}</span><span className="replicated-link">Download logs</span></div>
           </div>
         </div>
 
         <div className="flex-column flex-auto u-marginTop--30 u-marginBottom--40">
           <p className="u-fontSize--larger u-fontWeight--bold u-color--tuna u-marginBottom--10">Snapshot timeline</p>
-          <div className="flex1 u-border--gray u-padding--15">
-            Graph is here
+          <div className="flex1" id="chart">
+            <ReactApexChart options={this.state.options} series={series} type="rangeBar" height={100} />
+            <div className="flex flex1">
+              <div className="flex flex1">
+                <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray">
+                  Started: <span className="u-fontWeight--bold u-color--doveGray"> {this.calculateVolumeTimeInterval(snapshotDetail?.snapshotDetail?.volumes).minStarted}</span>
+                </p>
+              </div>
+              <div className="flex flex1 justifyContent--center">
+                <p className="u-fontSize--small u-fontWeight--normal u-color--dustyGray">
+                  Total capture time: <span className="u-fontWeight--bold u-color--doveGray">{`${this.calculateVolumeTimeInterval(snapshotDetail?.snapshotDetail?.volumes).maxHourDifference} hr `}</span>
+                  <span className="u-fontWeight--bold u-color--doveGray">{`${this.calculateVolumeTimeInterval(snapshotDetail?.snapshotDetail?.volumes).maxMinDifference} min `}</span>
+                </p>
+              </div>
+              <div className="flex flex1 justifyContent--flexEnd">
+                <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray">
+                  Finished: <span className="u-fontWeight--bold u-color--doveGray"> {this.calculateVolumeTimeInterval(snapshotDetail?.snapshotDetail?.volumes).maxFinished} </span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -173,7 +285,10 @@ class AppSnapshotDetail extends Component {
                 <div className="flex flex1 u-borderBottom--gray" key={`${hook.hookName}-${i}`}>
                   <div className="flex1 u-paddingBottom--15 u-paddingTop--15 u-paddingLeft--10">
                     <p className="flex1 u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold">{hook.hookName}</p>
-                    <span className="replicated-link u-fontSize--small" onClick={() => this.toggleOutputForPreScripts(hook)}> View output </span>
+                    <div className="flex flex1 u-marginTop--5 alignItems--center">
+                      <span className="u-fontWeight--normal u-color--dustyGray u-marginRight--10"> {hook.command} </span>
+                      <span className="replicated-link u-fontSize--small" onClick={() => this.toggleOutputForPreScripts(hook)}> View output </span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -207,6 +322,18 @@ class AppSnapshotDetail extends Component {
           <div className="flex-column flex1 u-marginLeft--20">
             <div className="dashboard-card-wrapper flex1">
               <p className="u-fontSize--larger u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-marginBottom--10 u-borderBottom--gray">Warnings</p>
+              {snapshotDetail?.snapshotDetail?.warnings?.slice(0, 3).map((warning) => (
+                <div className="flex flex1 u-borderBottom--gray" key={warning}>
+                  <div className="flex1">
+                    <p className="u-fontSize--large u-color--tuna u-fontWeight--bold u-lineHeight--bold u-paddingBottom--10 u-paddingTop--10 u-paddingLeft--10">{warning.title}</p>
+                  </div>
+                </div>
+              ))}
+              {snapshotDetail?.snapshotDetail?.warnings?.length > 3 &&
+                <div className="flex flex1 justifyContent--center">
+                  <span className="replicated-link u-fontSize--normal u-paddingTop--20" onClick={() => this.toggleShowAllWarnings()}>Show all {snapshotDetail?.snapshotDetail?.warnings?.length} warnings</span>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -257,6 +384,7 @@ class AppSnapshotDetail extends Component {
             displayShowAllModal={showAllVolumes}
             toggleShowAllModal={this.toggleShowAllVolumes}
             dataToShow={this.renderShowAllVolumes(snapshotDetail?.snapshotDetail?.volumes)}
+            name="Volumes"
           />
         }
         {showAllPreSnapshotScripts &&
@@ -264,6 +392,7 @@ class AppSnapshotDetail extends Component {
             displayShowAllModal={showAllPreSnapshotScripts}
             toggleShowAllModal={this.toggleShowAllPreScripts}
             dataToShow={this.renderShowAllPrescripts()}
+            name="Pre-snapshot scripts"
           />
         }
         {showAllNamespaces &&
@@ -271,6 +400,15 @@ class AppSnapshotDetail extends Component {
             displayShowAllModal={showAllNamespaces}
             toggleShowAllModal={this.toggleShowAllNamespaces}
             dataToShow={this.renderShowAllNamespaces(snapshotDetail?.snapshotDetail?.namespaces)}
+            name="Namespaces"
+          />
+        }
+        {showAllWarnings &&
+          <ShowAllModal
+            displayShowAllModal={showAllWarnings}
+            toggleShowAllModal={this.toggleShowAllWarnings}
+            dataToShow={this.rennderShowAllWarnings(snapshotDetail?.snapshotDetail?.warnings)}
+            name="Warnings"
           />
         }
       </div>

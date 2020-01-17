@@ -10,9 +10,10 @@ import { listSnapshots } from "../../queries/SnapshotQueries";
 import { manualSnapshot, deleteSnapshot, restoreSnapshot } from "../../mutations/SnapshotMutations";
 import "../../scss/components/snapshots/AppSnapshots.scss";
 import { Utilities } from "../../utilities/utilities";
+import DeleteSnapshotModal from "../modals/DeleteSnapshotModal";
+import RestoreSnapshotModal from "../modals/RestoreSnapshotModal";
 
 class AppSnapshots extends Component {
-
   state = {
     displayScheduleSnapshotModal: false,
     deleteSnapshotModal: false,
@@ -23,6 +24,10 @@ class AppSnapshots extends Component {
     restoringSnapshot: false,
     snapshotToRestore: ""
   };
+
+  componentDidMount() {
+    this.props.snapshots.startPolling(2000);
+  }
 
   toggleScheduleSnapshotModal = () => {
     this.setState({ displayScheduleSnapshotModal: !this.state.displayScheduleSnapshotModal });
@@ -71,15 +76,15 @@ class AppSnapshots extends Component {
   handleRestoreSnapshot = snapshot => {
     this.setState({ restoringSnapshot: true });
     this.props
-    .restoreSnapshot(snapshot.name)
-    .then(() => {
-      this.setState({
-        restoringSnapshot: false,
-        restoreSnapshotModal: false,
-        snapshotToRestore: ""
-      });
-      this.props.snapshot.refetch();
-    })
+      .restoreSnapshot(snapshot.name)
+      .then(() => {
+        this.setState({
+          restoringSnapshot: false,
+          restoreSnapshotModal: false,
+          snapshotToRestore: ""
+        });
+        this.props.snapshot.refetch();
+      })
       .catch(() => {
         this.setState({
           restoringSnapshot: false,
@@ -95,20 +100,20 @@ class AppSnapshots extends Component {
     const { app } = this.props;
     this.setState({ startingSnapshot: true });
     this.props.manualSnapshot(app.id)
-    .then(() => {
-      this.setState({ startingSnapshot: false });
-      this.props.snapshots.refetch();
-    })
-    .catch(err => {
-      console.log(err);
-      this.setState({
-        startingSnapshot: false,
-        startSnapshotErr: {
-          error: true,
-          message: "Something went wrong, please try again."
-        }
+      .then(() => {
+        this.setState({ startingSnapshot: false });
+        this.props.snapshots.refetch();
+      })
+      .catch(err => {
+        console.log(err);
+        this.setState({
+          startingSnapshot: false,
+          startSnapshotErr: {
+            error: true,
+            message: "Something went wrong, please try again."
+          }
+        });
       });
-    });
   }
 
   handleScheduleSubmit = () => {
@@ -221,109 +226,22 @@ class AppSnapshots extends Component {
           </Modal>
         }
         {deleteSnapshotModal &&
-          <Modal
-            isOpen={deleteSnapshotModal}
-            shouldReturnFocusAfterClose={false}
-            onRequestClose={() => {
-              this.toggleConfirmDeleteModal({});
-            }}
-            ariaHideApp={false}
-            contentLabel="Modal"
-            className="Modal DefaultSize"
-          >
-            <div className="Modal-body">
-              <div className="flex flex-column">
-                <p className="u-fontSize--largest u-fontWeight--bold u-color--tuna u-lineHeight--normal u-marginBottom--more">
-                  Delete snapshot
-              </p>
-                <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray u-lineHeight--normal">
-                  Are you sure you want do permanently snapshot? This action cannot be reversed.
-              </p>
-                <div className="flex flex1 justifyContent--spaceBetween u-marginTop--20">
-                  <div className="flex flex-column">
-                    <p className="u-fontSize--normal u-fontWeight--bold u-color--tuna u-lineHeight--normal">{snapshotToDelete?.name}</p>
-                    <p className="u-fontSize--normal u-color--doveGray u-fontWeight--bold u-lineHeight--normal u-marginRight--20"><span className="u-fontWeight--normal u-color--dustyGray">Captured on:</span> {Utilities.dateFormat(snapshotToDelete?.started, "MMM D, YYYY h:mm A")}</p>
-                  </div>
-                  <div className="flex alignItems--center">
-                    <span className={`status-indicator ${snapshotToDelete?.status.toLowerCase()}`}>{snapshotToDelete?.status}</span>
-                  </div>
-                </div>
-                <div className="flex justifyContent--flexStart u-marginTop--20">
-                  <button
-                    className="btn secondary blue u-marginRight--10"
-                    onClick={() => {
-                      this.toggleConfirmDeleteModal({});
-                    }}
-                  >
-                    Cancel
-                </button>
-                  <button
-                    className="btn primary red"
-                    onClick={() => {
-                      this.handleDeleteSnapshot(snapshotToDelete)
-                    }}
-                    disabled={deletingSnapshot}
-                  >
-                    {deletingSnapshot ? "Deleting snapshot" : "Delete snapshot"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Modal>
+          <DeleteSnapshotModal
+            deleteSnapshotModal={deleteSnapshotModal}
+            toggleConfirmDeleteModal={this.toggleConfirmDeleteModal}
+            handleDeleteSnapshot={this.handleDeleteSnapshot}
+            snapshotToDelete={snapshotToDelete}
+            deletingSnapshot={deletingSnapshot}
+          />
         }
         {restoreSnapshotModal &&
-          <Modal
-            isOpen={restoreSnapshotModal}
-            shouldReturnFocusAfterClose={false}
-            onRequestClose={() => {
-              this.toggleRestoreModal({});
-            }}
-            ariaHideApp={false}
-            contentLabel="Modal"
-            className="Modal LargeSize"
-          >
-            <div className="Modal-body">
-              <div className="flex flex-column">
-                <p className="u-fontSize--largest u-fontWeight--bold u-color--tuna u-lineHeight--normal u-marginBottom--more">
-                  Restore from snapshot
-              </p>
-                <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray u-lineHeight--normal">
-                 Are you sure you want to restore {appTitle} to the following version?
-              </p>
-                <div className="flex flex1 justifyContent--spaceBetween u-marginTop--20">
-                  <div className="flex flex-column">
-                    <p className="u-fontSize--normal u-fontWeight--bold u-color--tuna u-lineHeight--normal">{snapshotToRestore?.name}</p>
-                    <p className="u-fontSize--normal u-color--doveGray u-fontWeight--bold u-lineHeight--normal u-marginRight--20"><span className="u-fontWeight--normal u-color--dustyGray">Captured on:</span> {Utilities.dateFormat(snapshotToRestore?.started, "MMM D, YYYY h:mm A")}</p>
-                  </div>
-                  <div className="flex alignItems--center">
-                    <span className={`status-indicator ${snapshotToRestore?.status.toLowerCase()}`}>{snapshotToRestore?.status}</span>
-                  </div>
-                </div>
-                <div className="flex flex1 u-marginTop--20">
-                  <p className="u-fontSize--normal u-fontWeight--normal u-color--dustyGray u-lineHeight--normal"> Restoring to this version will remove all of the data in the {appTitle} namespace and will replace it with the data from the restored version. During the restoration your application will not be available and you will not be able to use the admin console. This action cannot be reversed.</p>
-                </div>
-                <div className="flex justifyContent--flexStart u-marginTop--20">
-                  <button
-                    className="btn secondary blue u-marginRight--10"
-                    onClick={() => {
-                      this.toggleRestoreModal({});
-                    }}
-                  >
-                    Cancel
-                </button>
-                  <button
-                    className="btn primary blue"
-                    onClick={() => {
-                      this.handleRestoreSnapshot(snapshotToRestore)
-                    }}
-                    disabled={restoringSnapshot}
-                  >
-                    {restoringSnapshot ? "Restoring from snapshot" : "Restore from snapshot"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Modal>
+          <RestoreSnapshotModal
+            restoreSnapshotModal={restoreSnapshotModal}
+            toggleRestoreModal={this.toggleRestoreModal}
+            handleRestoreSnapshot={this.handleRestoreSnapshot}
+            snapshotToRestore={snapshotToRestore}
+            restoringSnapshot={restoringSnapshot}
+          />
         }
       </div>
     );

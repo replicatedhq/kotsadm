@@ -64,11 +64,14 @@ body a {
   &.failed::before {
     background-color: #BC4752;
   }
-  &.in-progress::before {
-    background-color: #F7B500;
+  &.inprogress::before {
+    background-color: #326DE6;
   }
   &.reclaimed::before {
     background-color: #4999AD;
+  }
+  &.deleting::before {
+    background-color: #F7B500;
   }
 }
 
