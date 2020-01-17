@@ -202,12 +202,16 @@ export function SnapshotMutations(stores: Stores) {
       logger.info(`Restore found Backup ${args.snapshotName} for app ${appId} sequence ${sequence} on cluster ${clusterId}`);
  
       // ensure the backup's kots app version exists in the db
-      const pastVersions = await stores.kotsAppStore.listPastVersions(appId, clusterId);
-      const version = _.find(pastVersions, (version) => {
-        return version.sequence === sequence;
-      });
-      if (!version) {
-        throw new ReplicatedError(`Cannot restore version ${sequence} since it has never been installed in this cluster`);
+      const currentVersion = await stores.kotsAppStore.getCurrentAppVersion(appId);
+      if (!currentVersion || currentVersion.sequence !== sequence) {
+        const pastVersions = await stores.kotsAppStore.listPastVersions(appId, clusterId);
+        const version = _.find(pastVersions, (version) => {
+          console.log(version);
+          return version.sequence === sequence;
+        });
+        if (!version) {
+          throw new ReplicatedError(`Cannot restore version ${sequence} since it has never been installed in this cluster`);
+        }
       }
       logger.info(`Restore confirmed version ${sequence} was previously installed`);
 
@@ -216,7 +220,17 @@ export function SnapshotMutations(stores: Stores) {
       // TODO socket server stop deployment loop and do undeploy
       console.log("undeploy not implemented: manually delete with kubectl");
       // await stores.kotsAppStore.undeployVersion(appId, sequence, clusterId);
-      await sleep(30); // TODO
+      await sleep(1); // TODO
+      console.log("5");
+      await sleep(1); // TODO
+      console.log("4");
+      await sleep(1); // TODO
+      console.log("3");
+      await sleep(1); // TODO
+      console.log("2");
+      await sleep(1); // TODO
+      console.log("1");
+      await sleep(1); // TODO
       logger.info(`Restore successfully removed current app version.`);
 
       // create the Restore resource

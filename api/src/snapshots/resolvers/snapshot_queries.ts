@@ -64,6 +64,9 @@ export function SnapshotQueries(stores: Stores, params: Params) {
     },
 
     async restoreDetail(root: any, args: any, context: Context): Promise<RestoreDetail> {
+      const { appId } = args;
+      stores.kotsAppStore.getApp(appId);
+
       return {
         name: "azure-4-20191212175928",
         phase: Phase.InProgress,
