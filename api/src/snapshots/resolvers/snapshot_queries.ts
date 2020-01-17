@@ -83,7 +83,7 @@ export function SnapshotQueries(stores: Stores, params: Params) {
       }
 
       const volumes = await velero.listRestoreVolumes(name);
-      const detail = {
+      const detail: RestoreDetail = {
         name,
         phase: restore.status ? restore.status.phase : Phase.New,
         volumes,
@@ -92,8 +92,28 @@ export function SnapshotQueries(stores: Stores, params: Params) {
       };
 
       if (detail.phase === Phase.Completed || detail.phase === Phase.PartiallyFailed || detail.phase === Phase.Failed) {
+        // unset restore in progress
+        await stores.kotsAppStore.updateAppRestoreInProgressName(appId, "");
+
         const results = await velero.getRestoreResults(name);
-        console.log(results);
+
+        _.each(results.warnings.namespaces, (warnings, namespace) => {
+          _.each(warnings, (warning) => {
+            detail.warnings.push({
+              message: warning,
+              namespace,
+            });
+          });
+        });
+
+        _.each(results.errors.namespaces, (errors, namespace) => {
+          _.each(errors, (error) => {
+            detail.errors.push({
+              message: error,
+              namespace,
+            });
+          });
+        });
       }
 
       return detail;

@@ -224,17 +224,7 @@ export function SnapshotMutations(stores: Stores) {
       // TODO socket server stop deployment loop and do undeploy
       console.log("undeploy not implemented: manually delete with kubectl");
       // await stores.kotsAppStore.undeployVersion(appId, sequence, clusterId);
-      await sleep(1); // TODO
-      console.log("5");
-      await sleep(1); // TODO
-      console.log("4");
-      await sleep(1); // TODO
-      console.log("3");
-      await sleep(1); // TODO
-      console.log("2");
-      await sleep(1); // TODO
-      console.log("1");
-      await sleep(1); // TODO
+      await sleep(10); // TODO
       logger.info(`Restore successfully removed current app version.`);
 
       // create the Restore resource

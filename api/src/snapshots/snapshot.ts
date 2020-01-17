@@ -40,7 +40,7 @@ export interface SnapshotDetail extends Snapshot {
 }
 
 export interface SnapshotError {
-  title: string;
+  title?: string;
   message: string;
   namespace?: string;
 }

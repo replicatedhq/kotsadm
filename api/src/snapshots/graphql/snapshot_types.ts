@@ -102,6 +102,7 @@ const SnapshotError = `
   type SnapshotError {
     title: String
     message: String
+    namespace: String
   }
 `;
 

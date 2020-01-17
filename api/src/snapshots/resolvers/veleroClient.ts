@@ -221,7 +221,7 @@ export class VeleroClient {
   }
 
   async readRestore(name: string): Promise<Restore|null> {
-    const response = await this.unhandledRequest("GET", `restore/${name}`);
+    const response = await this.unhandledRequest("GET", `restores/${name}`);
     if (response.statusCode === 200) {
       return response.body;
     }
@@ -371,7 +371,7 @@ export class VeleroClient {
   }
 
   async getDownloadURL(kind, name: string): Promise<string> {
-    const drname = getValidName(`${kind}-${name}-${Date.now()}`);
+    const drname = getValidName(`${kind.toLowerCase()}-${name}-${Date.now()}`);
 
     let downloadrequest = {
       apiVersion: "velero.io/v1",
@@ -381,7 +381,7 @@ export class VeleroClient {
       },
       spec: {
         target: {
-          kind: "BackupLog",
+          kind,
           name,
         },
       }

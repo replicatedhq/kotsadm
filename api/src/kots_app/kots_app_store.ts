@@ -1331,7 +1331,7 @@ order by adv.sequence desc`;
   }
 
   async getApp(id: string): Promise<KotsApp> {
-    const q = `select id, name, license, upstream_uri, icon_uri, created_at, updated_at, slug, current_sequence, last_update_check_at, is_airgap, snapshot_ttl, restore_in_prgress_name from app where id = $1`;
+    const q = `select id, name, license, upstream_uri, icon_uri, created_at, updated_at, slug, current_sequence, last_update_check_at, is_airgap, snapshot_ttl, restore_in_progress_name from app where id = $1`;
     const v = [id];
 
     const result = await this.pool.query(q, v);
