@@ -14,6 +14,7 @@ import { SnapshotConfig, AzureCloudName, SnapshotProvider } from "../snapshot_co
 import { VeleroClient } from "./veleroClient";
 import { readSchedule } from "../schedule";
 import { convertTTL } from "../backup";
+import { ReplicatedError } from "../../server/errors";
 
 export function SnapshotQueries(stores: Stores, params: Params) {
   return {
@@ -65,28 +66,37 @@ export function SnapshotQueries(stores: Stores, params: Params) {
 
     async restoreDetail(root: any, args: any, context: Context): Promise<RestoreDetail> {
       const { appId } = args;
-      stores.kotsAppStore.getApp(appId);
+      const { restoreInProgressName: name } = await stores.kotsAppStore.getApp(appId);
+      if (!name) {
+        throw new ReplicatedError("No restore is in progress");
+      }
+      const velero = new VeleroClient("velero"); // TODO namespace
+      const restore = await velero.readRestore(name);
+      if (!restore) {
+        return {
+          name,
+          phase: Phase.New,
+          volumes: [],
+          errors: [],
+          warnings: [],
+        };
+      }
 
-      return {
-        name: "azure-4-20191212175928",
-        phase: Phase.InProgress,
-        volumes: [{
-          name: "azure-4-20191212175928",
-          phase: Phase.InProgress,
-          podName: "kotsadm-api-855f6f6d48-z497z",
-          podNamespace: "default",
-          podVolumeName: "backups",
-          doneBytesHuman: "300MB",
-          sizeBytesHuman: "1.1GB",
-          started: "2019-12-12T17:59:34Z",
-        }],
+      const volumes = await velero.listRestoreVolumes(name);
+      const detail = {
+        name,
+        phase: restore.status ? restore.status.phase : Phase.New,
+        volumes,
         errors: [],
-        warnings: [{
-          namespace: "default",
-          title: "could not restore",
-          message: `replicasets.apps "kotsadm-web-6c6fb454db" already exists. Warning: the in-cluster version is different than the backed-up version.`,
-        }],
+        warnings: [],
       };
+
+      if (detail.phase === Phase.Completed || detail.phase === Phase.PartiallyFailed || detail.phase === Phase.Failed) {
+        const results = await velero.getRestoreResults(name);
+        console.log(results);
+      }
+
+      return detail;
     },
   };
 }

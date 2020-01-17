@@ -88,8 +88,8 @@ export interface RestoreVolume {
   podName: string;
   podNamespace: string;
   podVolumeName: string;
-  sizeBytesHuman: string;
-  doneBytesHuman: string;
-  started: string;
+  sizeBytesHuman?: string;
+  doneBytesHuman?: string;
+  started? : string;
   finished?: string;
 }

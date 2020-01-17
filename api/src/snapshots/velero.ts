@@ -72,3 +72,21 @@ export enum Phase {
   PartiallyFailed = "PartiallyFailed",
   Failed = "Failed",
 }
+
+export interface Restore {
+  apiVersion: string,
+  kind: string,
+  metdata: V1ObjectMeta,
+  spec: {
+    backupName: string,
+  },
+  status?: RestoreStatus,
+}
+
+export interface RestoreStatus {
+  phase: Phase,
+  warnings?: number,
+  errors?: number,
+  failureReason?: string,
+  validationErrors?: Array<string>,
+}

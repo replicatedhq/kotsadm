@@ -215,6 +215,10 @@ export function SnapshotMutations(stores: Stores) {
       }
       logger.info(`Restore confirmed version ${sequence} was previously installed`);
 
+      // set the restore in progress flag to prevent concurrent deploys
+      // TODO most queries and mutations should be unavailable when this is set
+      await stores.kotsAppStore.updateAppRestoreInProgressName(appId, restoreName);
+
       // undeploy the current kots app version
       logger.info(`Restore removing current app version.`);
       // TODO socket server stop deployment loop and do undeploy

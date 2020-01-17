@@ -38,6 +38,7 @@ export class KotsApp {
   hasPreflight: boolean;
   isConfigurable: boolean;
   snapshotTTL?: string;
+  restoreInProgressName?: string;
 
   // Version Methods
   public async getCurrentAppVersion(stores: Stores): Promise<KotsVersion | undefined> {

@@ -18,6 +18,7 @@ import {
   snapshotVolumeCountKey,
   snapshotVolumeSuccessCountKey,
   snapshotVolumeBytesKey,
+  RestoreVolume,
   Snapshot,
   SnapshotDetail,
   SnapshotError,
@@ -31,7 +32,7 @@ import {
   SnapshotStoreAzure,
   SnapshotStoreS3AWS,
   SnapshotStoreGoogle } from "../";
-import { Backup, Phase } from "../velero";
+import { Backup, Phase, Restore } from "../velero";
 import { sleep } from "../../util/utilities";
 import { parseBackupLogs, ParsedBackupLogs } from "./parseBackupLogs";
 import { AzureCloudName } from "../snapshot_config";
@@ -79,7 +80,7 @@ export class VeleroClient {
     };
     Object.assign(options, req);
 
-    const response = await request(url, options);
+    const response = await this.unhandledRequest(method, path, body);
     switch (response.statusCode) {
     case 200: // fallthrough
     case 201: // fallthrough
@@ -101,7 +102,24 @@ export class VeleroClient {
       throw new ReplicatedError(response.body.message);
     }
 
-    throw new Error(`${method} ${url}: ${response.statusCode}`);
+    throw new Error(response.statusCode);
+  }
+
+  async unhandledRequest(method: string, path: string, body?: any): Promise<any> {
+    let url = `${this.server}/apis/velero.io/v1/namespaces/${this.ns}/${path}`;
+    const req = { url };
+    await this.kc.applyToRequest(req);
+    const options: RequestPromiseOptions = {
+      method,
+      body,
+      simple: false,
+      resolveWithFullResponse: true,
+      json: true,
+    };
+    Object.assign(options, req);
+
+    const response = await request(url, options);
+    return response;
   }
 
   async listSnapshots(): Promise<Array<Snapshot>> {
@@ -202,6 +220,60 @@ export class VeleroClient {
     return await this.request("GET", `backups/${name}`);
   }
 
+  async readRestore(name: string): Promise<Restore|null> {
+    const response = await this.unhandledRequest("GET", `restore/${name}`);
+    if (response.statusCode === 200) {
+      return response.body;
+    }
+    if (response.statusCode == 404) {
+      return null;
+    }
+    if (response.statusCode === 403) {
+      throw new ReplicatedError(`Permission denied reading Restore ${name} from namespace ${this.ns}`);
+    }
+    if (response.body && response.body.message) {
+      throw new ReplicatedError(response.body.message);
+    }
+
+    throw new Error(`Read Restore ${name} from namespace ${this.ns}: ${response.statusCode}`);
+  }
+
+  async listRestoreVolumes(name: string): Promise<Array<RestoreVolume>> {
+    const q = {
+      labelSelector: `velero.io/restore-name=${getValidName(name)}`,
+    };
+    const volumeList = await this.request("GET", `podvolumerestores?${querystring.stringify(q)}`);
+    const volumes: Array<RestoreVolume> = [];
+
+    _.each(volumeList.items, (pvr) => {
+      const rv: RestoreVolume = {
+        name: pvr.metadata.name,
+        phase: Phase.New,
+        podName: pvr.spec.pod.name,
+        podNamespace: pvr.spec.pod.namespace,
+        podVolumeName: pvr.spec.volume,
+      };
+
+      if (pvr.status) {
+        rv.started = pvr.status.startTimestamp;
+        if (pvr.status.completionTimestamp) {
+          rv.finished = pvr.status.completionTimestamp;
+        }
+        if (pvr.status.phase) {
+          rv.phase = pvr.status.phase;
+        }
+        if (pvr.status.progress) {
+          rv.sizeBytesHuman = pvr.status.progress.totalBytes ? prettyBytes(pvr.status.progress.totalBytes) : "0 B";
+          rv.doneBytesHuman = pvr.status.progress.bytesDone ? prettyBytes(pvr.status.progress.bytesDone) : "0 B";
+        }
+      }
+
+      volumes.push(rv);
+    });
+
+    return volumes;
+  }
+
   async getSnapshotDetail(name: string): Promise<SnapshotDetail> {
     const path = `backups/${name}`;
     const backup = await this.request("GET", path);
@@ -259,7 +331,7 @@ export class VeleroClient {
   }
 
   async getBackupLogs(name: string): Promise<ParsedBackupLogs> {
-    const url = await this.getLogsURL("backup", name);
+    const url = await this.getDownloadURL("BackupLog", name);
     const options = {
       method: "GET",
       simple: true,
@@ -278,8 +350,28 @@ export class VeleroClient {
     });
   }
 
-  async getLogsURL(kind, name: string): Promise<string> {
-    const drname = getValidName(`${kind}-logs-${name}-${Date.now()}`);
+  async getRestoreResults(name: string): Promise<any> {
+    const url = await this.getDownloadURL("RestoreResults", name);
+    const options = {
+      method: "GET",
+      simple: true,
+      encoding: null, // get a Buffer for the response
+    };
+    const buffer = await request(url, options);
+
+    return new Promise((resolve, reject) => {
+      zlib.gunzip(buffer, (err, buffer) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(JSON.parse(buffer.toString()));
+      });
+    });
+  }
+
+  async getDownloadURL(kind, name: string): Promise<string> {
+    const drname = getValidName(`${kind}-${name}-${Date.now()}`);
 
     let downloadrequest = {
       apiVersion: "velero.io/v1",
