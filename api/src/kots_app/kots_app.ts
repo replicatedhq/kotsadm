@@ -37,6 +37,8 @@ export class KotsApp {
   isAirgap: boolean;
   hasPreflight: boolean;
   isConfigurable: boolean;
+  snapshotTTL?: string;
+  restoreInProgressName?: string;
 
   // Version Methods
   public async getCurrentAppVersion(stores: Stores): Promise<KotsVersion | undefined> {
@@ -521,6 +523,18 @@ export class KotsApp {
     return false;
   }
 
+  private async isAllowSnapshots(stores: Stores): Promise<boolean> {
+    const parsedKotsAppSpec = await stores.kotsAppStore.getKotsAppSpec(this.id, this.currentSequence!);
+    try {
+      if (parsedKotsAppSpec && parsedKotsAppSpec.allowSnapshots) {
+        return true;
+      }
+    } catch {
+      /* not a valid app spec */
+    }
+    return false;
+  }
+
   private readFile(s: NodeJS.ReadableStream): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       let contents = ``;
@@ -550,6 +564,7 @@ export class KotsApp {
       isConfigurable: () => this.isAppConfigurable(stores), // should be removed in 1.9.0 release
       isGitOpsSupported: () => this.isGitOpsSupported(stores),
       allowRollback: () => this.isAllowRollback(stores),
+      allowSnapshots: () => this.isAllowSnapshots(stores),
       currentVersion: () => this.getCurrentAppVersion(stores),
       downstreams: _.map(downstreams, (downstream) => {
         const kotsSchemaCluster = downstream.toKotsAppSchema(this.id, stores);
