@@ -123,3 +123,28 @@ export const snapshotDetailRaw = `
 `;
 
 export const snapshotDetail = gql(snapshotDetailRaw);
+
+export const restoreDetail = gql`
+query restoreDetail($appId: String!) {
+  restoreDetail(appId: $appId) {
+    name
+    phase
+    volumes {
+      name
+      sizeBytesHuman
+      doneBytesHuman
+      started
+      finished
+      phase
+    }
+    errors {
+      title
+      message
+    }
+    warnings{
+      title
+      message
+    }
+  }
+}
+`

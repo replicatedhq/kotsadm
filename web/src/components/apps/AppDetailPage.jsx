@@ -33,6 +33,7 @@ import AppSnapshots from "./AppSnapshots";
 import AppSnapshotSettings from "./AppSnapshotSettings";
 import AppSnapshotSchedule from "./AppSnapshotSchedule";
 import AppSnapshotDetail from "./AppSnapshotDetail";
+import AppSnapshotRestore from "./AppSnapshotRestore";
 
 import "../../scss/components/watches/WatchDetailPage.scss";
 
@@ -304,6 +305,9 @@ class AppDetailPage extends Component {
                     } />
                     <Route exact path="/app/:slug/snapshots/:id" render={() =>
                       <AppSnapshotDetail app={app} />
+                    } />
+                    <Route exact path="/app/:slug/snapshots/:id/restore" render={() =>
+                      <AppSnapshotRestore app={app} />
                     } />
                     <Route component={NotFound} />
                   </Switch>

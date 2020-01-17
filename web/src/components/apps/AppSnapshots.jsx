@@ -9,7 +9,6 @@ import Modal from "react-modal";
 import { listSnapshots } from "../../queries/SnapshotQueries";
 import { manualSnapshot, deleteSnapshot, restoreSnapshot } from "../../mutations/SnapshotMutations";
 import "../../scss/components/snapshots/AppSnapshots.scss";
-import { Utilities } from "../../utilities/utilities";
 import DeleteSnapshotModal from "../modals/DeleteSnapshotModal";
 import RestoreSnapshotModal from "../modals/RestoreSnapshotModal";
 
@@ -77,13 +76,13 @@ class AppSnapshots extends Component {
     this.setState({ restoringSnapshot: true });
     this.props
       .restoreSnapshot(snapshot.name)
-      .then(() => {
+      .then((res) => {
         this.setState({
           restoringSnapshot: false,
           restoreSnapshotModal: false,
           snapshotToRestore: ""
         });
-        this.props.snapshot.refetch();
+        this.props.history.push(`/app/${this.props.app.slug}/snapshots/${res.data.restoreSnapshot.name}/restore`);
       })
       .catch(() => {
         this.setState({
