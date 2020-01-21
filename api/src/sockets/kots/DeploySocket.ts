@@ -10,6 +10,7 @@ import _ from "lodash";
 import { TroubleshootStore } from "../../troubleshoot";
 import {logger} from "../../server/logger";
 import { VeleroClient } from "../../snapshots/resolvers/veleroClient";
+import { kotsAppSequenceKey, kotsClusterIdKey } from "../../snapshots/snapshot";
 import { Phase } from "../../snapshots/velero";
 
 const DefaultReadyState = [{kind: "EMPTY", name: "EMPTY", namespace: "EMPTY", state: State.Ready}];
@@ -100,7 +101,7 @@ export class KotsDeploySocketService {
     }
   }
 
-  // tslint:disable-next-line cyclomatic-complexity
+  // tslint:disable-next-line max-func-body-length cyclomatic-complexity
   async restoreLoop() {
     if (!this.clusterSocketHistory) {
       return;
@@ -119,8 +120,6 @@ export class KotsDeploySocketService {
           break;
 
         case "completed":
-          logger.info(`Restore successfully removed current app version.`);
-
           let parts = app.restoreInProgressName.split("-");
           parts = parts.slice(0, parts.length-1); // trim restore time to get snapshot name
           const snapshotName = parts.join("-");
@@ -133,6 +132,26 @@ export class KotsDeploySocketService {
               // create the Restore resource
               await velero.restore(snapshotName, app.restoreInProgressName);
               logger.info(`Created Restore object ${app.restoreInProgressName}`);
+            } else {
+              const restorePhase = _.get(restore, "status.phase");
+              if (restorePhase === Phase.Completed) {
+                // Switch operator back to deploy mode on the restored sequence
+                const backup = await velero.readBackup(restore.spec.backupName);
+                if (backup.metadata.annotations) {
+                  const sequenceString = backup.metadata.annotations[kotsAppSequenceKey];
+                  if (sequenceString) {
+                    const sequence = parseInt(sequenceString, 10);
+                    const clusterId = backup.metadata.annotations[kotsClusterIdKey];
+                    if (!_.isNaN(sequence) && clusterId) {
+                      console.log(`Restore setting deploy version to ${sequence}`);
+                      await this.kotsAppStore.deployVersion(app.id, sequence, clusterId);
+                      await this.kotsAppStore.updateAppRestoreReset(app.id);
+                    }
+                  }
+                }
+              } else if (restorePhase === Phase.PartiallyFailed || restorePhase === Phase.Failed) {
+                await this.kotsAppStore.updateAppRestoreReset(app.id);
+              }
             }
           } catch (err) {
             console.log("Velero restore failed");
