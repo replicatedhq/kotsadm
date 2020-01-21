@@ -102,7 +102,6 @@ export class KotsDeploySocketService {
     }
   }
 
-  // tslint:disable-next-line max-func-body-length cyclomatic-complexity
   async restoreLoop() {
     if (!this.clusterSocketHistory) {
       return;
