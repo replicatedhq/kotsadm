@@ -203,10 +203,8 @@ func (c *Client) registerHandlers(socketClient *socket.Client) error {
 				return
 			}
 		}
-		if args.PreviousManifests != "" {
-			if err := c.ensureResourcesPresent(args); err != nil {
-				log.Printf("error deploying: %s", err.Error())
-			}
+		if err := c.ensureResourcesPresent(args); err != nil {
+			log.Printf("error deploying: %s", err.Error())
 		}
 	})
 	if err != nil {
