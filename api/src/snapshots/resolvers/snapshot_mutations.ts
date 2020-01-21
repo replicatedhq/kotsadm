@@ -16,7 +16,6 @@ import { deleteSchedule, schedule } from "../schedule";
 import { logger } from "../../server/logger";
 import { formatTTL, backup } from "../backup";
 import { sleep } from "../../util/utilities";
-import { KotsVersion } from "../../kots_app";
 
 export function SnapshotMutations(stores: Stores) {
   /* tslint:disable:max-func-body-length cyclomatic-complexity */
@@ -182,11 +181,11 @@ export function SnapshotMutations(stores: Stores) {
       logger.info(`Restore found Backup ${args.snapshotName} for app ${appId} sequence ${sequence} on cluster ${clusterId}`);
  
       // ensure the backup's kots app version exists in the db
-      const currentVersion = await stores.kotsAppStore.getCurrentAppVersion(appId);
+      const currentVersion = await stores.kotsAppStore.getCurrentVersion(appId, clusterId);
       if (!currentVersion || currentVersion.sequence !== sequence) {
         const pastVersions = await stores.kotsAppStore.listPastVersions(appId, clusterId);
-        const version = _.find(pastVersions, (version) => {
-          return version.sequence === sequence;
+        const version = _.find(pastVersions, (v) => {
+          return v.sequence === sequence;
         });
         if (!version) {
           throw new ReplicatedError(`Cannot restore version ${sequence} since it has never been installed in this cluster`);
