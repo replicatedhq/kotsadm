@@ -181,17 +181,11 @@ export class KotsDeploySocketService {
     }
 
     const velero = new VeleroClient("velero"); // TODO velero namespace
-
-    try {
-      const restore = await velero.readRestore(app.restoreInProgressName);
-      if (!restore) {
-        await this.startVeleroRestore(velero, app);
-      } else {
-        await this.checkRestoreComplete(velero, restore, app);
-      }
-    } catch (err) {
-      logger.warn("Velero restore failed");
-      logger.warn(err);
+    const restore = await velero.readRestore(app.restoreInProgressName);
+    if (!restore) {
+      await this.startVeleroRestore(velero, app);
+    } else {
+      await this.checkRestoreComplete(velero, restore, app);
     }
   }
 
