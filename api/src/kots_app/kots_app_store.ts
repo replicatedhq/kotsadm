@@ -1566,7 +1566,7 @@ order by adv.sequence desc`;
   }
 
   async updateAppRestoreReset(appId): Promise<void> {
-    const q = `update app set restore_in_progress_name = NULL, restore_undeploy_status = "" where id = $1`;
+    const q = `update app set restore_in_progress_name = NULL, restore_undeploy_status = '' where id = $1`;
     const v = [appId];
     await this.pool.query(q, v);
   }

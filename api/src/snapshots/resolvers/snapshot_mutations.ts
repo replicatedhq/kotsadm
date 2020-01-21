@@ -18,7 +18,7 @@ import { formatTTL, backup } from "../backup";
 import { sleep } from "../../util/utilities";
 
 export function SnapshotMutations(stores: Stores) {
-  /* tslint:disable:max-func-body-length cyclomatic-complexity */
+  // tslint:disable-next-line max-func-body-length cyclomatic-complexity
   return {
     async saveSnapshotConfig(root: any, args: any, context: Context): Promise<void> {
       context.requireSingleTenantSession();

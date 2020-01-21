@@ -10,6 +10,7 @@ import _ from "lodash";
 import { TroubleshootStore } from "../../troubleshoot";
 import {logger} from "../../server/logger";
 import { VeleroClient } from "../../snapshots/resolvers/veleroClient";
+import { Phase } from "../../snapshots/velero";
 
 const DefaultReadyState = [{kind: "EMPTY", name: "EMPTY", namespace: "EMPTY", state: State.Ready}];
 
@@ -99,7 +100,7 @@ export class KotsDeploySocketService {
     }
   }
 
-  /* tslint:disable:cyclomatic-complexity */
+  // tslint:disable-next-line cyclomatic-complexity
   async restoreLoop() {
     if (!this.clusterSocketHistory) {
       return;
@@ -127,9 +128,12 @@ export class KotsDeploySocketService {
           const velero = new VeleroClient("velero"); // TODO velero namespace
 
           try {
-            // create the Restore resource
-            await velero.restore(snapshotName, app.restoreInProgressName);
-            logger.info(`Created Restore object ${app.restoreInProgressName}`);
+            const restore = await velero.readRestore(app.restoreInProgressName);
+            if (!restore) {
+              // create the Restore resource
+              await velero.restore(snapshotName, app.restoreInProgressName);
+              logger.info(`Created Restore object ${app.restoreInProgressName}`);
+            }
           } catch (err) {
             console.log("Velero restore failed");
             console.log(err);
