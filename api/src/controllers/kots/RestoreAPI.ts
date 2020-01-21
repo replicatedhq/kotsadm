@@ -30,7 +30,6 @@ export class RestoreAPI {
 
     const status = body.is_error ? "failed" : "completed";
     console.log(`Restore API set RestoreUndeployStatus = ${status} for app ${body.app_id}`);
-    // NOTE: are we sure this should be set on the app?
     await (request.app.locals.stores.kotsAppStore as KotsAppStore).updateAppRestoreUndeployStatus(body.app_id, status);
 
     return {};
