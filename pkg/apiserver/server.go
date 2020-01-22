@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
+	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/replicatedhq/kotsadm/pkg/handlers"
 )
@@ -44,7 +45,7 @@ func Start() {
 	r.Path("/license/v1/license").Methods("GET").HandlerFunc(handlers.NodeProxy(upstream))
 
 	// Implemented handlers
-	r.HandleFunc("/api/v1/login", handlers.Login)
+	r.Handle("/api/v1/login", gorillahandlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(handlers.Login)))
 	r.HandleFunc("/api/v1/logout", handlers.NotImplemented)
 	r.Path("/api/v1/metadata").Methods("OPTIONS", "GET").HandlerFunc(handlers.Metadata)
 
