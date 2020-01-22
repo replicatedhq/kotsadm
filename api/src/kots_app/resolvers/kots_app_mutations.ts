@@ -79,18 +79,18 @@ export function KotsMutations(stores: Stores) {
         liveness.start();
 
         updatesAvailable = await kotsAppCheckForUpdates(app, cursor);
-      } catch(err) {
+      } catch (err) {
         liveness.stop();
         await stores.kotsAppStore.setUpdateDownloadStatus(String(err), "failed");
         throw err;
       }
 
-      let downloadUpdates = async function() {
+      let downloadUpdates = async function () {
         try {
           await kotsAppDownloadUpdates(updatesAvailable, app, stores);
 
           await stores.kotsAppStore.clearUpdateDownloadStatus();
-        } catch(err) {
+        } catch (err) {
           await stores.kotsAppStore.setUpdateDownloadStatus(String(err), "failed");
           throw err;
         } finally {
@@ -176,7 +176,7 @@ export function KotsMutations(stores: Stores) {
         const clusters = await stores.clusterStore.listAllUsersClusters();
         let downstream;
         for (const cluster of clusters) {
-          if (cluster.title === process.env["AUTO_CREATE_CLUSTER_NAME"]) {
+          if (cluster.title === "this-cluster") {
             downstream = cluster;
           }
         }
@@ -194,7 +194,7 @@ export function KotsMutations(stores: Stores) {
             needsRegistry = false;
           }
 
-        } catch {
+        } catch (err) {
           /* no need to handle, rbac problem or not a path we can read registry */
         }
 
@@ -205,7 +205,7 @@ export function KotsMutations(stores: Stores) {
           slug: kotsApp.slug,
           isConfigurable: kotsApp.isConfigurable
         }
-      } catch(err) {
+      } catch (err) {
         await stores.kotsAppStore.updateFailedInstallState(parsedLicense.spec.appSlug);
         throw new ReplicatedError(err.message);
       }
@@ -238,7 +238,7 @@ export function KotsMutations(stores: Stores) {
       }, 1000);
       liveness.start();
 
-      const updateFunc = async function(): Promise<void> {
+      const updateFunc = async function (): Promise<void> {
         try {
           if (downstreams.length > 0) {
             const tmpDir = tmp.dirSync();
@@ -247,7 +247,7 @@ export function KotsMutations(stores: Stores) {
               const app = await stores.kotsAppStore.getApp(appId);
 
               const inputArchive = path.join(tmpDir.name, "input.tar.gz");
-              fs.writeFileSync(inputArchive, await app.getArchive(""+(app.currentSequence!)));
+              fs.writeFileSync(inputArchive, await app.getArchive("" + (app.currentSequence!)));
 
               const registryInfo: KotsAppRegistryDetails = {
                 registryHostname: hostname,
@@ -296,7 +296,7 @@ export function KotsMutations(stores: Stores) {
         const kotsApp = await kotsFinalizeApp(app, downstream.title, stores);
         await stores.kotsAppStore.setKotsAppInstallState(appId, "installed");
         return kotsApp;
-      } catch(err) {
+      } catch (err) {
         throw new ReplicatedError(err.message);
       }
     },
