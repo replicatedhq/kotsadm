@@ -84,7 +84,7 @@ const listClustersInteraction = new Pact.GraphQLInteraction()
             "shipOpsRef": {
               "token": Matchers.like("g7yoarinjpaft3si5z1h5de1uam443bb")
             },
-            "totalApplicationCount": Matchers.like(0)
+            "totalApplicationCount": 0
           }
         ]
       }

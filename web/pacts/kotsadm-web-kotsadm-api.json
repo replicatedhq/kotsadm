@@ -91,9 +91,6 @@
           },
           "$.body.data.listClusters[2].shipOpsRef.token": {
             "match": "type"
-          },
-          "$.body.data.listClusters[2].totalApplicationCount": {
-            "match": "type"
           }
         }
       }
@@ -399,7 +396,16 @@
           }
         },
         "matchingRules": {
+          "$.body.data.getKotsDownstreamHistory[0].createdOn": {
+            "match": "type"
+          },
+          "$.body.data.getKotsDownstreamHistory[0].deployedAt": {
+            "match": "type"
+          },
           "$.body.data.getKotsDownstreamHistory[0].preflightResult": {
+            "match": "type"
+          },
+          "$.body.data.getKotsDownstreamHistory[0].preflightResultCreatedAt": {
             "match": "type"
           }
         }
@@ -448,6 +454,14 @@
                 "preflightResultCreatedAt": null
               }
             ]
+          }
+        },
+        "matchingRules": {
+          "$.body.data.getKotsDownstreamHistory[0].createdOn": {
+            "match": "type"
+          },
+          "$.body.data.getKotsDownstreamHistory[0].deployedAt": {
+            "match": "type"
           }
         }
       }
@@ -508,10 +522,28 @@
           }
         },
         "matchingRules": {
+          "$.body.data.getKotsDownstreamHistory[0].createdOn": {
+            "match": "type"
+          },
+          "$.body.data.getKotsDownstreamHistory[0].deployedAt": {
+            "match": "type"
+          },
           "$.body.data.getKotsDownstreamHistory[0].preflightResult": {
             "match": "type"
           },
+          "$.body.data.getKotsDownstreamHistory[0].preflightResultCreatedAt": {
+            "match": "type"
+          },
+          "$.body.data.getKotsDownstreamHistory[1].createdOn": {
+            "match": "type"
+          },
+          "$.body.data.getKotsDownstreamHistory[1].deployedAt": {
+            "match": "type"
+          },
           "$.body.data.getKotsDownstreamHistory[1].preflightResult": {
+            "match": "type"
+          },
+          "$.body.data.getKotsDownstreamHistory[1].preflightResultCreatedAt": {
             "match": "type"
           }
         }
