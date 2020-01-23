@@ -16,6 +16,8 @@ import { ReplicatedError } from "../../server/errors";
 
 const DefaultReadyState = [{kind: "EMPTY", name: "EMPTY", namespace: "EMPTY", state: State.Ready}];
 
+const oneMinuteInMilliseconds = 1 * 60 * 1000;
+
 interface ClusterSocketHistory {
   clusterId: string;
   socketId: string;
@@ -34,6 +36,7 @@ export class KotsDeploySocketService {
   troubleshootStore: TroubleshootStore;
   clusterSocketHistory: ClusterSocketHistory[];
   params: Params;
+  lastUndeployTime: number = 0;
 
   constructor(@IO private io: SocketIO.Server) {
     getPostgresPool()
@@ -132,7 +135,12 @@ export class KotsDeploySocketService {
   
     switch (app.restoreUndeployStatus) {
     case UndeployStatus.InProcess:
-      // undeploy in process, continue loop
+      // retry undeploy every minute since socket.io is not bi-directional
+      const lastUndeployInterval = new Date().getTime() - this.lastUndeployTime;
+      if (lastUndeployInterval >= oneMinuteInMilliseconds) {
+        await this.undeployApp(app, cluster);
+        this.lastUndeployTime = new Date().getTime();
+      }
       break;
   
     case UndeployStatus.Completed:
@@ -147,6 +155,7 @@ export class KotsDeploySocketService {
     default:
       // start undeploy
       await this.undeployApp(app, cluster);
+      this.lastUndeployTime = new Date().getTime();
     }
   }
   
