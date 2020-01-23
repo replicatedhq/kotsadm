@@ -4,6 +4,8 @@ import Dropzone from "react-dropzone";
 import yaml from "js-yaml";
 import classNames from "classnames";
 import size from "lodash/size";
+import Modal from "react-modal";
+import { Link } from "react-router-dom";
 
 import {
   getLicenseExpiryDate,
@@ -26,7 +28,8 @@ class AppLicense extends Component {
       appLicense: null,
       loading: false,
       message: "",
-      messageType: "info"
+      messageType: "info",
+      showNextStepModal: false
     }
   }
 
@@ -99,6 +102,7 @@ class AppLicense extends Component {
           appLicense: latestLicense,
           message,
           messageType: "info",
+          showNextStepModal: latestLicense.licenseSequence !== currentLicense.licenseSequence
         });
 
         if (this.props.syncCallback) {
@@ -119,8 +123,12 @@ class AppLicense extends Component {
       });
   }
 
+  hideNextStepModal = () => {
+    this.setState({ showNextStepModal: false });
+  }
+
   render() {
-    const { appLicense, loading, message, messageType } = this.state;
+    const { appLicense, loading, message, messageType, showNextStepModal } = this.state;
 
     if (!appLicense) {
       return (
@@ -132,7 +140,7 @@ class AppLicense extends Component {
 
     const { app } = this.props;
     const expiresAt = getLicenseExpiryDate(appLicense);
-
+    const gitops = app?.downstreams?.length && app.downstreams[0]?.gitops;
 
     return (
       <div className="flex flex-column justifyContent--center alignItems--center">
@@ -199,6 +207,37 @@ class AppLicense extends Component {
             <p className="u-fontSize--large u-color--dustyGray u-marginTop--15 u-lineHeight--more"> License data is not available on this application because it was installed via Helm </p>
           </div>
         }
+        <Modal
+          isOpen={showNextStepModal}
+          onRequestClose={this.hideNextStepModal}
+          shouldReturnFocusAfterClose={false}
+          contentLabel="Next step"
+          ariaHideApp={false}
+          className="Modal MediumSize"
+        >
+          {gitops?.enabled ?
+            <div className="Modal-body">
+              <p className="u-fontSize--large u-color--tuna u-lineHeight--medium u-marginBottom--20">
+                The license for {app.name} has been updated. A new commit has been made to the gitops repository with these changes. Please head to the <a className="link" target="_blank" href={gitops?.uri} rel="noopener noreferrer">repo</a> to see the diff.
+              </p>
+              <div className="flex justifyContent--flexEnd">
+                <button type="button" className="btn blue primary" onClick={this.hideNextStepModal}>Ok, got it!</button>
+              </div>
+            </div>
+            :
+            <div className="Modal-body">
+              <p className="u-fontSize--large u-color--tuna u-lineHeight--medium u-marginBottom--20">
+                The license for {app?.name} has been updated. A new version is available on the version history page with these changes.
+              </p>
+              <div className="flex justifyContent--flexEnd">
+                <button type="button" className="btn blue secondary u-marginRight--10" onClick={this.hideNextStepModal}>Cancel</button>
+                <Link to={`/app/${app?.slug}/version-history`}>
+                  <button type="button" className="btn blue primary">Go to new version</button>
+                </Link>
+              </div>
+            </div>
+          }
+        </Modal>
       </div>
     );
   }
