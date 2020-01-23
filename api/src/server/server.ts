@@ -151,7 +151,6 @@ export class Server extends ServerLoader {
         token = splitToken.pop()!;
       }
 
-      console.log("+++ HERE");
       const context = await Context.fetch(stores, token);
       res.locals.context = context;
 
@@ -220,10 +219,7 @@ export class Server extends ServerLoader {
   }
 
   async $onReady() {
-    this.expressApp.get("*", (req: Request, res: Response) => {
-      console.log("+++ 4040404")
-      res.sendStatus(404);
-    });
+    this.expressApp.get("*", (req: Request, res: Response) => res.sendStatus(404));
 
     if (process.env["S3_BUCKET_NAME"] === "ship-pacts") {
       logger.info({msg: "Not creating bucket because the desired name is ship-pacts. Consider using a different bucket name to make this work."});

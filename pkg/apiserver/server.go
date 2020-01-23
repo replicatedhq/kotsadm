@@ -40,6 +40,10 @@ func Start() {
 
 	r.Path("/api/v1/troubleshoot/supportbundle/{bundleId}/download").Methods("GET").HandlerFunc(handlers.NodeProxy(upstream))
 
+	r.Path("/api/v1/airgap").Methods("POST").HandlerFunc(handlers.NodeProxy(upstream))
+	r.Path("/api/v1/airgap/reset/{appSlug}").Methods("POST").HandlerFunc(handlers.NodeProxy(upstream))
+	r.Path("/api/v1/airgap/update").Methods("POST").HandlerFunc(handlers.NodeProxy(upstream))
+
 	// proxy for license/titled api
 	r.Path("/license/v1/license").Methods("GET").HandlerFunc(handlers.NodeProxy(upstream))
 
