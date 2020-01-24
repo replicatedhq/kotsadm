@@ -80,7 +80,7 @@ steps:
       - make -C web deps build-kotsadm
     plugins:
       - docker#v3.5.0:
-          image: replicated/gitops-builder:buildkite-go13
+          image: replicated/gitops-builder:buildkite
           workdir: /repo/web
           environment:
             - BUILDKITE_COMMIT
