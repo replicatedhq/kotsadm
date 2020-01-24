@@ -40,12 +40,8 @@ func Start() {
 
 	r.Path("/api/v1/troubleshoot/supportbundle/{bundleId}/download").Methods("GET").HandlerFunc(handlers.NodeProxy(upstream))
 
-	r.Path("/api/v1/kots/airgap").Methods("OPTIONS").HandlerFunc(handlers.CORS)
-	r.Path("/api/v1/kots/airgap").Methods("POST").HandlerFunc(handlers.NodeProxy(upstream))
-	r.Path("/api/v1/kots/airgap/reset/{appSlug}").Methods("OPTIONS").HandlerFunc(handlers.CORS)
-	r.Path("/api/v1/kots/airgap/reset/{appSlug}").Methods("POST").HandlerFunc(handlers.NodeProxy(upstream))
-	r.Path("/api/v1/kots/airgap/update").Methods("OPTIONS").HandlerFunc(handlers.CORS)
-	r.Path("/api/v1/kots/airgap/update").Methods("POST").HandlerFunc(handlers.NodeProxy(upstream))
+	r.PathPrefix("/api/v1/kots/").Methods("OPTIONS").HandlerFunc(handlers.CORS)
+	r.PathPrefix("/api/v1/kots/").Methods("HEAD", "GET", "POST", "PUT", "DELETE").HandlerFunc(handlers.NodeProxy(upstream))
 
 	// proxy for license/titled api
 	r.Path("/license/v1/license").Methods("GET").HandlerFunc(handlers.NodeProxy(upstream))
