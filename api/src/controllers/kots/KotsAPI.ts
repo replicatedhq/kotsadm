@@ -382,7 +382,7 @@ export class KotsAPI {
         // parse the dockerconfig secret
         const parsed = JSON.parse(base64Decode(res.body.data[".dockerconfigjson"]));
         const auths = parsed.auths;
-        for (const hostname of auths) {
+        for (const hostname of Object.keys(auths)) {
           const config = auths[hostname];
           if (config.username === "kurl") {
             registryHost = hostname;
