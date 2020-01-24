@@ -9,8 +9,6 @@ function AirgapUploadProgress(props) {
   const { total, sent, onProgressError, onProgressSuccess, smallSize } = props;
   const { getAirgapInstallStatus } = props.data;
 
-  console.log(getAirgapInstallStatus, JSON.stringify(getAirgapInstallStatus, null, 2));
-
   if (getAirgapInstallStatus?.installStatus === "installed") {
     // this conditional is really awkward but im keeping the functionality the same
     if (!smallSize) {
