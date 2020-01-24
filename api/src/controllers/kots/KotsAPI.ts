@@ -451,7 +451,6 @@ export class KotsAPI {
               return false;
             } else if (obj.status === "terminated") {
               if (obj.exit_code === 0) {
-                request.app.locals.stores.kotsAppStore.setAirgapInstallStatus(obj.display_message, "running");
                 resolve();
               } else {
                 reject(new Error(`process failed: ${obj.display_message}`));
