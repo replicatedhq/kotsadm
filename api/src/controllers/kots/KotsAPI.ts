@@ -441,7 +441,8 @@ export class KotsAPI {
 
           const statusServer = new StatusServer();
           await statusServer.start(dstDir.name);
-          kotsPullFromAirgap(statusServer.socketFilename, out, app, String(app.license), dstDir.name, downstream.title, request.app.locals.stores, registryHost, namespace, username, password);
+          // DO NOT DELETE: args are returned so they are not garbage collected before native code is done
+          const garbage = await kotsPullFromAirgap(statusServer.socketFilename, out, app, String(app.license), dstDir.name, downstream.title, request.app.locals.stores, registryHost, namespace, username, password);
           await statusServer.connection();
           await statusServer.termination((resolve, reject, obj): boolean => {
             // Return true if completed
@@ -450,6 +451,7 @@ export class KotsAPI {
               return false;
             } else if (obj.status === "terminated") {
               if (obj.exit_code === 0) {
+                request.app.locals.stores.kotsAppStore.setAirgapInstallStatus(obj.display_message, "running");
                 resolve();
               } else {
                 reject(new Error(`process failed: ${obj.display_message}`));
@@ -460,6 +462,7 @@ export class KotsAPI {
           });
 
           await request.app.locals.stores.kotsAppStore.setAirgapInstallStatus("Creating app...", "running");
+          await kotsAppFromAirgapData(out, app, request.app.locals.stores);
         } finally {
           tmpDstDir.removeCallback();
         }
@@ -543,7 +546,6 @@ export class KotsAPI {
     @Res() response: Response,
     @HeaderParams("Authorization") auth: string,
   ) {
-    console.log("+++ airgap/reset");
     const session: Session = await request.app.locals.stores.sessionStore.decode(auth);
     if (!session || !session.userId) {
       response.status(401);
