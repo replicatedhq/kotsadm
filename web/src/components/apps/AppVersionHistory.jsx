@@ -645,7 +645,7 @@ class AppVersionHistory extends Component {
     const {
       app,
       data,
-      match
+      match,
     } = this.props;
 
     const {
