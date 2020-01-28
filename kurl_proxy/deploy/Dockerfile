@@ -10,7 +10,7 @@ USER kotsadm
 ENV HOME /home/kotsadm
 
 COPY ./bin/kurl_proxy /kurl_proxy
-COPY ./kurl_proxy/assets /assets
+COPY ./assets /assets
 USER root
 RUN chmod a+x /kurl_proxy
 RUN chmod a+w /assets/*
