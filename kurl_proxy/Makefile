@@ -7,7 +7,7 @@ test:
 
 .PHONY: build
 build:
-	go build -o bin/kurl-proxy cmd/main.go
+	go build -o bin/kurl_proxy cmd/main.go
 
 .PHONY: up
 up:

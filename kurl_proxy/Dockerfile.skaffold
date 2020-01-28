@@ -11,4 +11,4 @@ RUN make build
 
 ADD assets /assets
 
-ENTRYPOINT ["./bin/kurl-proxy"]
+ENTRYPOINT ["./bin/kurl_proxy"]
