@@ -8,6 +8,7 @@ import Modal from "react-modal";
 import { uploadKotsLicense } from "../mutations/AppsMutations";
 import { getFileContent } from "../utilities/utilities";
 import CodeSnippet from "./shared/CodeSnippet";
+import LicenseUploadProgress from "./LicenseUploadProgress";
 
 import "../scss/components/troubleshoot/UploadSupportBundleModal.scss";
 import "../scss/components/Login.scss";
@@ -29,7 +30,11 @@ class UploadLicenseFile extends React.Component {
     const { onUploadSuccess, history } = this.props;
     const { licenseValue } = this.state;
 
-    this.setState({ fileUploading: true, errorMessage: "" });
+    this.setState({
+      fileUploading: true,
+      errorMessage: "",
+    });
+
     try {
       const resp = await this.props.uploadKotsLicense(licenseValue);
       const data = resp.data.uploadKotsLicense;
@@ -156,6 +161,11 @@ class UploadLicenseFile extends React.Component {
               </div>
             }
           </div>
+          {
+            fileUploading ?
+            <div><LicenseUploadProgress /></div> :
+            null
+          }
         </div>
 
         <Modal

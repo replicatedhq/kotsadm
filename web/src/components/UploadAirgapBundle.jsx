@@ -9,14 +9,16 @@ import Modal from "react-modal";
 import CodeSnippet from "@src/components/shared/CodeSnippet";
 import AirgapUploadProgress from "@src/components/AirgapUploadProgress";
 import { resumeInstallOnline } from "../mutations/AppsMutations";
-import "../scss/components/troubleshoot/UploadSupportBundleModal.scss";
-import "../scss/components/Login.scss";
+import LicenseUploadProgress from "./LicenseUploadProgress";
 import AirgapRegistrySettings from "./shared/AirgapRegistrySettings";
 import { Utilities } from "../utilities/utilities";
 import Loader from "./shared/Loader";
 import { validateRegistryInfo } from "../queries/UserQueries";
 import { getSupportBundleCommand } from "../queries/TroubleshootQueries";
 import { getKotsApp } from "../queries/AppsQueries";
+
+import "../scss/components/troubleshoot/UploadSupportBundleModal.scss";
+import "../scss/components/Login.scss";
 
 const COMMON_ERRORS = {
   "HTTP 401": "Registry credentials are invalid",
@@ -416,8 +418,13 @@ class UploadAirgapBundle extends React.Component {
         </div>
         <div className={classNames("u-marginTop--10 u-textAlign--center", { "u-marginBottom--20": !onlineInstallErrorMessage })}>
           {preparingOnlineInstall
-            ? <Loader size="40" />
-            : <span className="u-fontSize--small u-color--dustyGray u-fontWeight--medium" onClick={this.handleOnlineInstall}>Optionally you can <span className="replicated-link">download {appName} from the Internet</span></span>
+            ? (
+            <div>
+              <Loader size="40" />
+              <LicenseUploadProgress />
+            </div>
+            ) :
+            <span className="u-fontSize--small u-color--dustyGray u-fontWeight--medium" onClick={this.handleOnlineInstall}>Optionally you can <span className="replicated-link">download {appName} from the Internet</span></span>
           }
         </div>
         {onlineInstallErrorMessage && (
