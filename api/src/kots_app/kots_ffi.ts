@@ -422,7 +422,7 @@ async function saveUpdateVersion(archive: string, app: KotsApp, stores: Stores, 
   }
 }
 
-export async function kotsFinalizeApp(socket: string, out: string, kotsApp: KotsApp, downstreamName: string, stores: Stores) {
+export async function kotsPullFromLicense(socket: string, out: string, kotsApp: KotsApp, downstreamName: string, stores: Stores) {
   const namespace = getK8sNamespace();
 
   const socketParam = new GoString();

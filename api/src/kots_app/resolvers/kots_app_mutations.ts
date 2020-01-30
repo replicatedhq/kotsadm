@@ -10,7 +10,7 @@ import { Cluster } from "../../cluster";
 import { ReplicatedError } from "../../server/errors";
 import { uploadUpdate, syncLicense } from "../../controllers/kots/KotsAPI";
 import {
-  kotsFinalizeApp,
+  kotsPullFromLicense,
   kotsAppFromData,
   kotsAppCheckForUpdates,
   kotsRewriteVersion,
@@ -189,7 +189,7 @@ export function KotsMutations(stores: Stores) {
 
       try {
         context.requireSingleTenantSession();
-        
+
         const clusters = await stores.clusterStore.listAllUsersClusters();
         let downstream;
         for (const cluster of clusters) {
@@ -224,7 +224,7 @@ export function KotsMutations(stores: Stores) {
         } catch {
           // no need to handle, rbac problem or not a path we can read registry
         }
-    
+
         return {
           hasPreflight: kotsApp.hasPreflight,
           isAirgap: !!parsedLicense.spec.isAirgapSupported,
@@ -405,7 +405,7 @@ async function createKotsApp(stores: Stores, kotsApp: KotsApp, downstreamName: s
       const statusServer = new StatusServer();
       await statusServer.start(dstDir.name);
       // DO NOT DELETE: args are returned so they are not garbage collected before native code is done
-      const garbage = await kotsFinalizeApp(statusServer.socketFilename, out, kotsApp, downstreamName, stores);
+      const garbage = await kotsPullFromLicense(statusServer.socketFilename, out, kotsApp, downstreamName, stores);
 
       await statusServer.connection();
       await statusServer.termination((resolve, reject, obj): boolean => {
