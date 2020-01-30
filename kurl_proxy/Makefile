@@ -1,11 +1,5 @@
 SHELL := /bin/bash -o pipefail
-export GO111MODULE=off
-
-.PHONY: deps
-deps:
-	GO111MODULE=on go mod verify
-	GO111MODULE=on go mod tidy
-	GO111MODULE=on go mod vendor
+export GO111MODULE=on
 
 .PHONY: test
 test:

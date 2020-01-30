@@ -3,7 +3,8 @@ FROM golang:1.12
 ENV PROJECTPATH=/go/src/github.com/replicatedhq/kotsadm/kurl_proxy
 WORKDIR $PROJECTPATH
 ADD Makefile ./
-ADD vendor ./
+ADD go.mod ./
+ADD go.sum ./
 ADD cmd ./cmd
 
 RUN make build
