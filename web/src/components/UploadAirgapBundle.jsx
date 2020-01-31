@@ -433,7 +433,7 @@ class UploadAirgapBundle extends React.Component {
           <div className="u-marginTop--10 u-marginBottom--20">
             <span className="u-fontSize--small u-color--chestnut u-marginRight--5 u-fontWeight--bold">Unable to install license</span>
             <span
-              className="u-fontSize--small u-color--astral u-cursor--pointer u-fontWeight--bold u-textDecoration--underline"
+              className="u-fontSize--small replicated-link"
               onClick={this.toggleViewOnlineInstallErrorMessage}>
               view more
             </span>
