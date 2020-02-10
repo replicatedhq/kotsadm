@@ -10,6 +10,8 @@ spec:
     metadata:
       labels:
         app: kotsadm-operator
+      annotations:
+        prometheus.io/scrape: "true"
     spec:
       restartPolicy: Always
       containers:
@@ -23,6 +25,9 @@ spec:
             requests:
               cpu: 100m
               memory: 500Mi
+          ports:
+            - name: http
+              containerPort: 3000
           env:
             - name: KOTSADM_API_ENDPOINT
               value: http://kotsadm-api-node:3000
@@ -32,3 +37,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 2

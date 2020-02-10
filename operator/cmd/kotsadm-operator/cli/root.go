@@ -2,11 +2,13 @@ package cli
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/replicatedhq/kotsadm/operator/pkg/client"
+	"github.com/replicatedhq/kotsadm/operator/pkg/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -28,6 +30,11 @@ of a gitops pipeline without setting up a full end-to-end gitops delivery proces
 				Token:           v.GetString("token"),
 				TargetNamespace: v.GetString("target-namespace"),
 			}
+
+			go func() {
+				err := server.Serve()
+				log.Printf("Metrics server exited: %v", err)
+			}()
 
 			return c.Run()
 		},

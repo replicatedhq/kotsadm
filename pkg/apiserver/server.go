@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/replicatedhq/kotsadm/pkg/handlers"
 )
 
@@ -24,6 +25,7 @@ func Start() {
 	r.Use(mux.CORSMethodMiddleware(r))
 
 	r.HandleFunc("/healthz", handlers.Healthz)
+	r.Handle("/metrics", promhttp.Handler())
 
 	// proxy all graphql requests
 	r.Path("/graphql").Methods("OPTIONS").HandlerFunc(handlers.CORS)
