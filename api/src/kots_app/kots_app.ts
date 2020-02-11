@@ -248,7 +248,7 @@ export class KotsApp {
       const paths: string[] = await this.getFilesPaths(sequence);
       const files: FilesAsBuffers = await this.getFiles(sequence, paths);
 
-      const { configSpec, configValues, configValuesPath } = await this.getConfigDataFromFiles(files);
+      const { configSpec, configValues } = await this.getConfigDataFromFiles(files);
 
       const parsedConfig = yaml.safeLoad(configSpec);
       const parsedConfigValues = yaml.safeLoad(configValues);
@@ -654,6 +654,7 @@ export interface KotsConfigGroup {
   name: string;
   title: string;
   description: string;
+  when: string;
   items: KotsConfigItem[];
 }
 
