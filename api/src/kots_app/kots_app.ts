@@ -272,8 +272,8 @@ export class KotsApp {
             let configVal = {};
             if (item.value) {
               let value = item.value;
-              if (item.type === "password") {
-                value = encryptionKey !== "" ? await kotsEncryptString(encryptionKey, item.value) : item.value;
+              if (item.type === "password" && encryptionKey !== "") {
+                value = await kotsEncryptString(encryptionKey, item.value);
               }
               configVal["value"] = value;
             }
