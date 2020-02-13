@@ -7,7 +7,6 @@ import { kotsTemplateConfig, kotsEncryptString, kotsRewriteVersion } from "./kot
 import { ReplicatedError } from "../server/errors";
 import { uploadUpdate } from "../controllers/kots/KotsAPI";
 import { getS3 } from "../util/s3";
-import { logger } from "../server/logger";
 import tmp from "tmp";
 import fs from "fs";
 import path from "path";
@@ -19,6 +18,7 @@ import { putObject } from "../util/s3";
 import * as _ from "lodash";
 import yaml from "js-yaml";
 import { ApplicationSpec } from "./kots_app_spec";
+import { extractConfigValuesFromTarball } from "../util/tar";
 
 export class KotsApp {
   id: string;
@@ -301,7 +301,8 @@ export class KotsApp {
         const params = await Params.getParams();
         const objectStorePath = path.join(params.shipOutputBucket.trim(), appId, `${sequence}.tar.gz`);
         await putObject(params, objectStorePath, outputTgzBuffer, params.shipOutputBucket);
-        await stores.kotsAppStore.updateAppConfigValues(appId, sequence, updatedConfigValues);
+        const bufferConfigValues = await extractConfigValuesFromTarball(outputTgzBuffer);
+        await stores.kotsAppStore.updateAppConfigValues(appId, sequence, bufferConfigValues!);
       } else {
         await uploadUpdate(stores, slug, outputTgzBuffer, "Config Change");
       }
