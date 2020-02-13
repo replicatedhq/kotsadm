@@ -221,7 +221,9 @@ export class KotsApp {
     specConfigGroups.forEach(group => {
       group.items.forEach(item => {
         if (item.type === "password") {
-          item.value = this.getPasswordMask();
+          if (item.value) {
+            item.value = this.getPasswordMask();
+          }
         } else if (item.name in specConfigValues) {
           item.value = specConfigValues[item.name].value;
         }
@@ -248,7 +250,7 @@ export class KotsApp {
       const paths: string[] = await this.getFilesPaths(sequence);
       const files: FilesAsBuffers = await this.getFiles(sequence, paths);
 
-      const { configSpec, configValues, configValuesPath } = await this.getConfigDataFromFiles(files);
+      const { configSpec, configValues } = await this.getConfigDataFromFiles(files);
 
       const parsedConfig = yaml.safeLoad(configSpec);
       const parsedConfigValues = yaml.safeLoad(configValues);
@@ -266,23 +268,19 @@ export class KotsApp {
         for (let i = 0; i < group.items.length; i++) {
           const item = group.items[i];
           if (this.shouldUpdateConfigValues(specConfigGroups, specConfigValues, item)) {
-            if (item.type === "password") {
-              const passwordValue = encryptionKey !== "" ? await kotsEncryptString(encryptionKey, item.value) : item.value;
-              const configVal = {
-                value: passwordValue,
-              };
-              specConfigValues[item.name] = configVal;
-            } else {
-              // these are "omitempty" in Go, but TS adds "null" strings in.
-              let configVal = {};
-              if (item.value) {
-                configVal["value"] = item.value;
+            // these are "omitempty" in Go, but TS adds "null" strings in.
+            let configVal = {};
+            if (item.value) {
+              let value = item.value;
+              if (item.type === "password") {
+                value = encryptionKey !== "" ? await kotsEncryptString(encryptionKey, item.value) : item.value;
               }
-              if (item.default) {
-                configVal["default"] = item.default;
-              }
-              specConfigValues[item.name] = configVal;
+              configVal["value"] = value;
             }
+            if (item.default) {
+              configVal["default"] = item.default;
+            }
+            specConfigValues[item.name] = configVal;
           }
         }
       }
