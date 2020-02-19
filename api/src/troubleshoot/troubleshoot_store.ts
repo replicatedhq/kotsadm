@@ -146,7 +146,7 @@ spec:
         insight.severity = marshaledInsight.severity;
         insight.primary = marshaledInsight.insight.primary;
         insight.detail = marshaledInsight.insight.detail;
-        insight.icon = marshaledInsight.labels.icon;
+        insight.icon = marshaledInsight.labels.iconUri;
         insight.iconKey = marshaledInsight.labels.iconKey;
         insight.desiredPosition = marshaledInsight.labels.desiredPosition;
 
@@ -288,7 +288,7 @@ spec:
   }
 
   async getSupportBundleCommand(watchSlug?: string): Promise<string> {
-    let url = `${this.params.apiAdvertiseEndpoint}/api/v1/troubleshoot`;
+    let url = `API_ADDRESS/api/v1/troubleshoot`;
     if (watchSlug) {
       url = `${url}/${watchSlug}`;
     }
