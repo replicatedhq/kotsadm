@@ -24,6 +24,11 @@ build-ttl.sh:
 	docker build -f deploy/Dockerfile -t ttl.sh/${CURRENT_USER}/kotsadm:12h .
 	docker push ttl.sh/${CURRENT_USER}/kotsadm:12h
 
+.PHONY: build-ttl-github.sh
+build-ttl-github.sh:
+	docker build -f deploy/Dockerfile -t ttl.sh/${UUID}/kotsadm:12h .
+	docker push ttl.sh/${UUID}/kotsadm:12h
+
 .PHONY: build-alpha
 build-alpha:
 	docker build -f deploy/Dockerfile -t kotsadm/kotsadm:alpha .

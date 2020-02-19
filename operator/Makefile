@@ -37,6 +37,11 @@ build:
 run: bin
 	./bin/kotsadm-operator --api-endpoint http://localhost:30065 --token local
 
+.PHONY: build-ttl-github.sh
+build-ttl-github.sh:
+	docker build -f deploy/Dockerfile -t ttl.sh/${UUID}/kotsadm-operator:12h .
+	docker push ttl.sh/${UUID}/kotsadm-operator:12h
+
 .PHONY: build-alpha
 build-alpha:
 	docker build -f deploy/Dockerfile -t kotsadm/kotsadm-operator:alpha .

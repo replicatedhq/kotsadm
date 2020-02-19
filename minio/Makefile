@@ -7,6 +7,11 @@ publish:
 	docker build -f Dockerfile -t ${IMAGE} .
 	docker push ${IMAGE}
 
+.PHONY: build-ttl-github.sh
+build-ttl-github.sh:
+	docker build -f Dockerfile -t ttl.sh/${UUID}/${PROJECT_NAME}:12h .
+	docker push ttl.sh/${UUID}/${PROJECT_NAME}:12h
+
 .PHONY: publish-latest
 publish-latest: IMAGE_TAG = alpha
 publish-latest: publish
