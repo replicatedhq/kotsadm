@@ -122,6 +122,9 @@ code {
 .u-marginRight--15 {
   margin-right: 15px;
 }
+.u-marginRight--30 {
+  margin-right: 15px;
+}
 .u-marginTop--8 {
   margin-top: 8px;
 }
@@ -431,4 +434,68 @@ button.text-button:hover {
   margin-right: 10px;
   border-radius: 40px;
   box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.3);
+}
+
+.tls-upload-actions-wrapper {
+  margin-top: 15px;
+}
+
+.action-tab-bar .tab-item {
+  font-size: 12px;
+  font-weight: 500;
+  color: #9B9B9B;
+  padding: 0 10px;
+  border-right: 1px solid #DFDFDF;
+  line-height: 15px;
+  cursor: pointer;
+  transition: color .2s;
+  position: relative;  
+}
+
+.action-tab-bar .tab-item:hover {
+  color: #717171;
+}
+
+.action-tab-bar .tab-item:last-child {
+  border-right: none
+}
+
+.action-tab-bar .tab-item.tls-tab-is-active {
+  color: #4A4A4A;
+  font-weight: 600;
+}
+
+.action-tab-bar .tab-item.tls-tab-is-active::after {
+  content: "";
+  position: absolute;
+  bottom: -16px;
+  display: block;
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  background-color: #F5F8FC;
+  border-top: 1px solid #DFDFDF;
+  border-left: 1px solid #DFDFDF;
+  left: 50%;
+  margin-left: -4px;
+}
+
+.action-content {
+  margin-top: 12px;
+  background-color: #F5F8FC;
+  padding: 16px 14px;
+  border-top: 1px solid #DFDFDF;
+  border-radius: 0 0 4px 4px;
+}
+
+.lets-encrypt-logo {
+  background-image: url("../assets/images/letsencrypt-logo.svg");
+  background-size: 101px 25px;
+  width: 101px;
+  height: 25px;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  top: 2px;
+  margin-left: 15px;
 }

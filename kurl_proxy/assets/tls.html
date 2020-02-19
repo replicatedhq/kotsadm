@@ -37,21 +37,32 @@
               <input id="hostname" class="form-input larger" type="text" name="hostname" placeholder="app.yourdomain.com"
                 style="width: 250px; margin-bottom: 20px;" />
             </div>
-            <div class="flex upload-form">
-              <div class="u-position--relative flex-column flex-auto upload">
-                <div>
-                  <label class="tls-section-header2">Upload private key</label>
-                  <input type="file" name="key" id="key" class="inputkey" />
-                  <label for="key" class="btn secondary u-marginTop--8">Choose private key</label>
-                </div>
+
+
+            <div class="tls-upload-actions-wrapper flex-column">
+              <div class="flex action-tab-bar">
+                <span class="tab-item tls-tab-is-active" id="uploadCerts" onclick="setActiveTab('uploadCerts')">Upload Key & Cert</span>
+                <span class="tab-item" id="certsOnServer" onclick="setActiveTab('certsOnServer')">Key & Cert are On Server</span>
+                <span class="tab-item" id="generateCertsLetsEncrypt" onclick="setActiveTab('generateCertsLetsEncrypt')">Generate with LetsEncrypt</span>
               </div>
-              <div class="u-position--relative flex-column flex-auto u-marginRight--15 upload">
-                <div>
-                  <label class="tls-section-header2">Upload SSL certificate</label>
-                  <input type="file" name="cert" id="cert" class="inputcert" />
-                  <label for="cert" class="btn secondary u-marginTop--8">Choose SSL certificate</label>
+              <div id="upload-type-content-wrapper" class="flex flex1 action-content">
+                <div class="flex upload-form">
+                  <div class="u-position--relative flex-column flex-auto upload">
+                    <div>
+                      <label class="tls-section-header2">Upload private key</label>
+                      <input type="file" name="key" id="key" class="inputkey" />
+                      <label for="key" class="btn secondary u-marginTop--8">Choose private key</label>
+                    </div>
+                  </div>
+                  <div class="u-position--relative flex-column flex-auto u-marginRight--15 upload">
+                    <div>
+                      <label class="tls-section-header2">Upload SSL certificate</label>
+                      <input type="file" name="cert" id="cert" class="inputcert" />
+                      <label for="cert" class="btn secondary u-marginTop--8">Choose SSL certificate</label>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </div>  
             </div>
 
             <div id="error" style="display: none">
@@ -61,9 +72,9 @@
             </div>
 
             <div class="button-wrapper flex alignItems--center">
-              <button class="btn primary" type="submit">Upload &amp; continue</button>
+              <button id="formSubmitButton" class="btn primary" type="button" onclick="uploadAndWait()">Upload &amp; continue</button>
               <div class="flex-column justifyContent--center">
-                <button id="skip-button" class="text-button" type="submit" formaction="/tls/skip">Skip &amp;
+                <button id="skip-button" class="text-button" type="button" formaction="/tls/skip">Skip &amp;
                   continue</button>
               </div>
             </div>
