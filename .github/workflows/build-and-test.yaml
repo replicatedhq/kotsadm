@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: '10.x'
 
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
 
       - run: ./build-ttl-github.sh --uuid=automated-$GITHUB_RUN_ID
 
