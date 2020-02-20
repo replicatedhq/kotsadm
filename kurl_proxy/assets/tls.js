@@ -39,7 +39,7 @@ function uploadAndWait(e) {
 
   xhr.onloadend = function() {
     if (xhr.status === 200) {
-      redirectAfterRestart(hostnameInput.value, 10);
+      redirectAfterRestart(hostnameInput, 10);
       return;
     }
 
@@ -66,7 +66,7 @@ function skipAndWait(e) {
 
   xhr.onloadend = function() {
     if (xhr.status === 200) {
-      redirectAfterRestart(hostnameInput.value, 10);
+      redirectAfterRestart(hostnameInput, 10);
       return;
     }
     console.log("POST /tls/skip returned status code ", xhr.status);
