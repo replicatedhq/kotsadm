@@ -23,6 +23,11 @@ func GenerateNodeJoinCommandWorker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := requireValidSession(w, r); err != nil {
+		logger.Error(err)
+		return
+	}
+
 	client, err := k8s.Clientset()
 	if err != nil {
 		logger.Error(err)
@@ -48,6 +53,11 @@ func GenerateNodeJoinCommandMaster(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if err := requireValidSession(w, r); err != nil {
+		logger.Error(err)
 		return
 	}
 
