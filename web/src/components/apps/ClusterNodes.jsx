@@ -212,12 +212,11 @@ export class ClusterNodes extends Component {
                       )
                       : (
                         <Fragment>
-                          <div className="alignSelf--center u-marginTop--15">
-                            {generateCommandErrMsg
-                              ? <span className="u-color--chestnut">{generateCommandErrMsg}</span>
-                              : "This feature is not yet available"
-                            }
-                          </div>
+                          {generateCommandErrMsg &&
+                            <div className="alignSelf--center u-marginTop--15">
+                              <span className="u-color--chestnut">{generateCommandErrMsg}</span>
+                            </div>
+                          }
                         </Fragment>
                       )
                     }
