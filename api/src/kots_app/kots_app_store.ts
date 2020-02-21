@@ -1171,7 +1171,7 @@ order by adv.sequence desc`;
     await this.migrationEncryptRegistryCredentials(appId, regInfo);
     await this.decryptRegistryCredentials(appId, regInfo);
 
-    if (maskPassword) {
+    if (regInfo.registryPassword && maskPassword) {
       regInfo.registryPassword = this.getPasswordMask();
     }
 
@@ -1238,7 +1238,10 @@ order by adv.sequence desc`;
         appId,
       ];
     } else if (this.params.apiEncryptionKey) {
-      const passwordEnc = await kotsEncryptString(this.params.apiEncryptionKey, password);
+      let passwordEnc = "";
+      if (password) {
+        passwordEnc = await kotsEncryptString(this.params.apiEncryptionKey, password);
+      }
       q = `update app set registry_hostname = $1, registry_username = $2, registry_password = NULL, registry_password_enc = $3, namespace = $4, last_registry_sync = $5 where id = $6`;
       v = [
         hostname,

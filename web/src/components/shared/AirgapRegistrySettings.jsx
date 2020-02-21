@@ -56,7 +56,7 @@ class AirgapRegistrySettings extends Component {
     const { slug } = this.props.match.params;
     const appSlug = slug;
     try {
-      await this.props.updateRegistryDetails({ appSlug, hostname, username, password, namespace });
+      await this.props.updateRegistryDetails({ appSlug, hostname: hostname || "", username: username || "", password, namespace });
       await this.props.getKotsAppRegistryQuery.refetch();
 
       this.state.updateChecker.start(this.updateStatus, 1000);
