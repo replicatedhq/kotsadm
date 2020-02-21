@@ -15,8 +15,7 @@ type GenerateNodeJoinCommandResponse struct {
 }
 
 func GenerateNodeJoinCommandWorker(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "content-type, origin, accept")
+	CORSHeaders(w, r)
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
@@ -48,8 +47,7 @@ func GenerateNodeJoinCommandWorker(w http.ResponseWriter, r *http.Request) {
 }
 
 func GenerateNodeJoinCommandMaster(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "content-type, origin, accept")
+	CORSHeaders(w, r)
 
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)

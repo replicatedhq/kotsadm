@@ -22,11 +22,10 @@ type MetadataResponse struct {
 }
 
 func Metadata(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "content-type, origin, accept")
+	CORSHeaders(w, r)
 
 	if r.Method == "OPTIONS" {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 

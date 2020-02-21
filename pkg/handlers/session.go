@@ -9,6 +9,11 @@ import (
 )
 
 func requireValidSession(w http.ResponseWriter, r *http.Request) error {
+	if r.Header.Get("Authorization") == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return errors.New("authorization header empty")
+	}
+
 	sess, err := session.Parse(r.Header.Get("Authorization"))
 	if err != nil {
 		logger.Error(err)

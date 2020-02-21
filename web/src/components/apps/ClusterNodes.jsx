@@ -9,6 +9,7 @@ import NodeRow from "./NodeRow";
 import Loader from "../shared/Loader";
 import { kurl } from "../../queries/KurlQueries";
 import { drainNode, deleteNode } from "../../mutations/KurlMutations"
+import { Utilities } from "../../utilities/utilities";
 
 import "@src/scss/components/apps/ClusterNodes.scss";
 
@@ -45,6 +46,7 @@ export class ClusterNodes extends Component {
 
     fetch(`${window.env.API_ENDPOINT}/kurl/generate-node-join-command-worker`, {
       headers: {
+        "Authorization": `${Utilities.getToken()}`,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
@@ -66,6 +68,7 @@ export class ClusterNodes extends Component {
 
     fetch(`${window.env.API_ENDPOINT}/kurl/generate-node-join-command-master`, {
       headers: {
+        "Authorization": `${Utilities.getToken()}`,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
