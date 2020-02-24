@@ -46,10 +46,10 @@ function kots() {
     UpdateDownload: ["void", [GoString, GoString, GoString, GoString, GoString]],
     UpdateDownloadFromAirgap: ["void", [GoString, GoString, GoString, GoString, GoString]],
     RewriteVersion: ["void", [GoString, GoString, GoString, GoString, GoString, GoString, GoBool, GoBool, GoString]],
-    TemplateConfig: [GoString, [GoString, GoString]],
+    TemplateConfig: [GoString, [GoString, GoString, GoString, GoString, GoString, GoString]],
     EncryptString: [GoString, [GoString, GoString]],
     DecryptString: [GoString, [GoString, GoString]],
-    RenderFile: ["void", [GoString, GoString, GoString]],
+    RenderFile: ["void", [GoString, GoString, GoString, GoString, GoString, GoString, GoString]],
   });
 }
 
@@ -199,7 +199,7 @@ export async function kotsAppDownloadUpdateFromAirgap(airgapFile: string, app: K
   }
 }
 
-export async function kotsRenderFile(app: KotsApp, stores: Stores, input: string): Promise<string> {
+export async function kotsRenderFile(app: KotsApp, stores: Stores, input: string, registryHost: string, registryNamespace: string, registryUsername: string, registryPassword: string): Promise<string> {
   const filename = tmp.tmpNameSync();
   fs.writeFileSync(filename, input);
 
@@ -225,7 +225,23 @@ export async function kotsRenderFile(app: KotsApp, stores: Stores, input: string
     archivePathParam["p"] = archive;
     archivePathParam["n"] = archive.length;
 
-    kots().RenderFile(socketParam, filepathParam, archivePathParam);
+    const registryHostParam = new GoString();
+    registryHostParam["p"] = registryHost ? registryHost : "";
+    registryHostParam["n"] = registryHost ? registryHost.length : 0;
+
+    const registryNamespaceParam = new GoString();
+    registryNamespaceParam["p"] = registryNamespace ? registryNamespace : "";
+    registryNamespaceParam["n"] = registryNamespace ? registryNamespace.length : 0;
+
+    const registryUsernameParam = new GoString();
+    registryUsernameParam["p"] = registryUsername ? registryUsername : "";
+    registryUsernameParam["n"] = registryUsername ? registryUsername.length : 0;
+
+    const registryPasswordParam = new GoString();
+    registryPasswordParam["p"] = registryPassword ? registryPassword : "";
+    registryPasswordParam["n"] = registryPassword ? registryPassword.length : 0;
+
+    kots().RenderFile(socketParam, filepathParam, archivePathParam, registryHostParam, registryNamespaceParam, registryUsernameParam, registryPasswordParam);
     await statusServer.connection();
     await statusServer.termination((resolve, reject, obj): boolean => {
       // Return true if completed
@@ -537,7 +553,7 @@ export async function kotsTestRegistryCredentials(endpoint: string, username: st
   }
 }
 
-export async function kotsTemplateConfig(configSpec: string, configValues: string): Promise<any> {
+export async function kotsTemplateConfig(configSpec: string, configValues: string, registryHost: string, registryNamespace: string, registryUsername: string, registryPassword: string): Promise<any> {
   const configDataParam = new GoString();
   configDataParam["p"] = configSpec;
   configDataParam["n"] = String(configSpec).length;
@@ -546,7 +562,23 @@ export async function kotsTemplateConfig(configSpec: string, configValues: strin
   configValuesDataParam["p"] = configValues;
   configValuesDataParam["n"] = String(configValues).length;
 
-  const templatedConfig = kots().TemplateConfig(configDataParam, configValuesDataParam);
+  const registryHostParam = new GoString();
+  registryHostParam["p"] = registryHost ? registryHost : "";
+  registryHostParam["n"] = registryHost ? registryHost.length : 0;
+
+  const registryNamespaceParam = new GoString();
+  registryNamespaceParam["p"] = registryNamespace ? registryNamespace : "";
+  registryNamespaceParam["n"] = registryNamespace ? registryNamespace.length : 0;
+
+  const registryUsernameParam = new GoString();
+  registryUsernameParam["p"] = registryUsername ? registryUsername : "";
+  registryUsernameParam["n"] = registryUsername ? registryUsername.length : 0;
+
+  const registryPasswordParam = new GoString();
+  registryPasswordParam["p"] = registryPassword ? registryPassword : "";
+  registryPasswordParam["n"] = registryPassword ? registryPassword.length : 0;
+
+  const templatedConfig = kots().TemplateConfig(configDataParam, configValuesDataParam, registryHostParam, registryNamespaceParam, registryUsernameParam, registryPasswordParam);
   if (templatedConfig == "" || templatedConfig["p"] == "") {
     throw new ReplicatedError("failed to template config");
   }

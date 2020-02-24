@@ -35,7 +35,8 @@ export async function backup(stores: Stores, appId: string, scheduled: boolean):
   }
 
   const tmpl = await stores.snapshotsStore.getKotsBackupSpec(appId, kotsVersion.sequence);
-  const rendered = await kotsRenderFile(app, stores, tmpl);
+  // TODO: get this supported before snapshots go GA
+  const rendered = await kotsRenderFile(app, stores, tmpl, "", "", "", "");
   const base = yaml.safeLoad(rendered) as Backup;
   const spec = (base && base.spec) || {};
 
@@ -103,22 +104,22 @@ export function formatTTL(quantity: any, unit: any) {
   }
 
   switch (unit) {
-  case "seconds":
-    return `${n}s`;
-  case "minutes":
-    return `${n}m`;
-  case "hours":
-    return `${n}h`;
-  case "days":
-    return `${n * 24}h`;
-  case "weeks":
-    return `${n * 168}h`;
-  case "months":
-    return `${n * 720}h`;
-  case "years":
-    return `${n * 8766}h`;
-  default:
-    throw new ReplicatedError(`Invalid snapshot TTL: ${quantity} ${unit}`);
+    case "seconds":
+      return `${n}s`;
+    case "minutes":
+      return `${n}m`;
+    case "hours":
+      return `${n}h`;
+    case "days":
+      return `${n * 24}h`;
+    case "weeks":
+      return `${n * 168}h`;
+    case "months":
+      return `${n * 720}h`;
+    case "years":
+      return `${n * 8766}h`;
+    default:
+      throw new ReplicatedError(`Invalid snapshot TTL: ${quantity} ${unit}`);
   }
 }
 
@@ -135,28 +136,28 @@ export function parseTTL(s: string): ParsedTTL {
   }
   const quantity = parseInt(match[0], 10);
   switch (match[1]) {
-  case "s":
-    return { quantity: parseInt(match[0], 10), unit: "seconds" };
-  case "m":
-    return { quantity: parseInt(match[0], 10), unit: "minutes" };
-  case "h":
-    if (quantity / 8766 >= 1 && quantity % 8766 === 0) {
-      return { quantity: quantity / 8766, unit: "years" };
-    }
-    if (quantity / 720 >= 1 && quantity % 720 === 0) {
-      return { quantity: quantity / 720, unit: "months" };
-    }
-    if (quantity / 168 >= 1 && quantity % 168 === 0) {
-      return { quantity: quantity / 168, unit: "weeks" };
-    }
-    if (quantity / 24 >= 1 && quantity % 24 === 0) {
-      return { quantity: quantity / 24, unit: "days" };
-    }
-    return {
-      quantity,
-      unit: "hours",
-    };
-  default:
+    case "s":
+      return { quantity: parseInt(match[0], 10), unit: "seconds" };
+    case "m":
+      return { quantity: parseInt(match[0], 10), unit: "minutes" };
+    case "h":
+      if (quantity / 8766 >= 1 && quantity % 8766 === 0) {
+        return { quantity: quantity / 8766, unit: "years" };
+      }
+      if (quantity / 720 >= 1 && quantity % 720 === 0) {
+        return { quantity: quantity / 720, unit: "months" };
+      }
+      if (quantity / 168 >= 1 && quantity % 168 === 0) {
+        return { quantity: quantity / 168, unit: "weeks" };
+      }
+      if (quantity / 24 >= 1 && quantity % 24 === 0) {
+        return { quantity: quantity / 24, unit: "days" };
+      }
+      return {
+        quantity,
+        unit: "hours",
+      };
+    default:
     // continue
   }
 

@@ -200,8 +200,9 @@ export class KotsApp {
     return false;
   }
 
-  async applyConfigValues(configSpec: string, configValues: string): Promise<KotsConfigGroup[]> {
-    const templatedConfig = await kotsTemplateConfig(configSpec, configValues);
+  async applyConfigValues(stores: Stores, appId: string, configSpec: string, configValues: string): Promise<KotsConfigGroup[]> {
+    const registryDetails = await stores.kotsAppStore.getAppRegistryDetails(appId);
+    const templatedConfig = await kotsTemplateConfig(configSpec, configValues, registryDetails.registryHostname, registryDetails.namespace, registryDetails.registryUsername, registryDetails.registryPassword);
 
     if (!templatedConfig.spec || !templatedConfig.spec.groups) {
       throw new ReplicatedError("Config groups not found");
@@ -234,7 +235,7 @@ export class KotsApp {
     try {
       const configData = await stores.kotsAppStore.getAppConfigData(appId, sequence);
       const { configSpec, configValues } = configData!;
-      return await this.applyConfigValues(configSpec, configValues);
+      return await this.applyConfigValues(stores, appId, configSpec, configValues);
     } catch (err) {
       throw new ReplicatedError(`Failed to get config groups ${err}`);
     }
@@ -266,7 +267,7 @@ export class KotsApp {
     });
 
     const updatedConfigValues = yaml.safeDump(parsedConfigValues);
-    return await this.applyConfigValues(configSpec, updatedConfigValues);
+    return await this.applyConfigValues(stores, appId, configSpec, updatedConfigValues);
   }
 
   // Source files

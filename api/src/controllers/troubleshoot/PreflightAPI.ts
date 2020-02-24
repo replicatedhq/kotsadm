@@ -35,7 +35,9 @@ export class PreflightAPI {
       }
 
       // render the yaml with the full context
-      const renderedSpecYaml = await kotsRenderFile(app, request.app.locals.stores, preflightSpecYaml);
+      const registryInfo = await request.app.locals.stores.kotsAppStore.getAppRegistryDetails(app.id);
+
+      const renderedSpecYaml = await kotsRenderFile(app, request.app.locals.stores, preflightSpecYaml, registryInfo.registryHostname, registryInfo.registryNamespace, registryInfo.registryUsername, registryInfo.registryPassword);
 
       const specJson = jsYaml.load(renderedSpecYaml);
 
