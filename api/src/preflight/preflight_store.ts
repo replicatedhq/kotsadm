@@ -18,7 +18,7 @@ interface PreflightParams {
 export class PreflightStore {
   constructor(
     private readonly pool: pg.Pool
-  ) {}
+  ) { }
 
   async getKotsPreflightSpec(appId: string, sequence: number): Promise<string> {
     const q = `
@@ -28,7 +28,7 @@ export class PreflightStore {
     const result = await this.pool.query(q, [appId, sequence]);
 
     if (result.rows.length === 0) {
-      throw new ReplicatedError(`Unable to find Preflight Spec with appId ${appId}`);
+      throw new ReplicatedError(`Unable to find Preflight Spec with appId ${appId} and sequence ${sequence}`);
     }
 
     return result.rows[0].preflight_spec;
@@ -55,7 +55,7 @@ export class PreflightStore {
       sequence,
     ];
 
-    const result = await this.pool.query(q,v);
+    const result = await this.pool.query(q, v);
 
     if (result.rows.length === 0) {
       throw new Error(`Couldn't find preflight spec with appId: ${appId}, clusterId: ${clusterId}, sequence: ${sequence}`);
@@ -92,7 +92,7 @@ export class PreflightStore {
         app_downstream_version.app_id = $1 AND
         app_downstream_version.sequence = 0`;
 
-    const vv = [ appId ];
+    const vv = [appId];
     const result = await this.pool.query(qq, vv);
     const preflightResult = new PreflightResult();
     preflightResult.appSlug = result.rows[0].app_slug;
@@ -133,7 +133,7 @@ export class PreflightStore {
       } else {
         url = `${params.apiAdvertiseEndpoint}/api/v1/preflight/${appSlug}/${clusterSlug}/${sequence}`;
       }
-  
+
       const param: PreflightParams = {
         url: url,
         ignorePermissions: ignorePermissions,

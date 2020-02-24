@@ -25,8 +25,10 @@ export class PreflightAPI {
       // Fetch YAML from the database and return to client with injected key
       const appId = await request.app.locals.stores.kotsAppStore.getIdFromSlug(appSlug);
       const app = await request.app.locals.stores.kotsAppStore.getApp(appId);
+      const clusterId = await request.app.locals.stores.clusterStore.getIdFromSlug(clusterSlug)
+      const parentSequence = await request.app.locals.stores.kotsAppStore.getParentSequenceForDownstreamSequence(app.id, clusterId, seqInt);
 
-      const preflightSpecYaml = await request.app.locals.stores.preflightStore.getKotsPreflightSpec(appId, seqInt);
+      const preflightSpecYaml = await request.app.locals.stores.preflightStore.getKotsPreflightSpec(appId, parentSequence);
 
       if (!preflightSpecYaml) {
         console.log(`Preflight spec for slug: ${appSlug} not found`);

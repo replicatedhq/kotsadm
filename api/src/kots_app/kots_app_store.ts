@@ -880,6 +880,22 @@ order by sequence desc`;
     }
   }
 
+  async getParentSequenceForDownstreamSequence(appId: string, clusterId: string, downstreamSequence: number): Promise<number> {
+    const q = `select parent_sequence from app_downstream_version where cluster_id = $1 and app_id = $2 and sequence = $3`;
+    const v = [
+      clusterId,
+      appId,
+      downstreamSequence,
+    ];
+
+    const result = await this.pool.query(q, v);
+    if (result.rows.length === 0) {
+      throw new ReplicatedError(`No downstream version found`);
+    }
+
+    return parseInt(result.rows[0].parent_sequence);
+  }
+
   async getCurrentVersion(appId: string, clusterId: string): Promise<KotsVersion | undefined> {
     let q = `select current_sequence from app_downstream where app_id = $1 and cluster_id = $2`;
     let v = [
@@ -1530,10 +1546,10 @@ order by adv.sequence desc`;
         } catch (e) {
           console.log("no pending airgap install found, creating a new app");
         }
-  
+
         return await this.createKotsApp(name, `replicated://${parsedLicense.spec.appSlug}`, licenseData, true);
       }
-  
+
       return await this.createKotsApp(name, `replicated://${parsedLicense.spec.appSlug}`, licenseData, false);
     } else {
       throw new ReplicatedError("Uploaded license file is invalid")
@@ -1647,7 +1663,7 @@ order by adv.sequence desc`;
     await this.pool.query(q, v);
   }
 
-  async updateAppSnapshotSchedule(appId: string, snapshotSchedule: string|null): Promise<void> {
+  async updateAppSnapshotSchedule(appId: string, snapshotSchedule: string | null): Promise<void> {
     const q = `update app set snapshot_schedule = $1 where id = $2`;
     const v = [snapshotSchedule, appId];
     await this.pool.query(q, v);
