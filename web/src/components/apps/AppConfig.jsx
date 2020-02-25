@@ -75,16 +75,18 @@ class AppConfig extends Component {
   }
 
   markRequiredItems = requiredItems => {
+    const unsetRequiredItems = [];
     const configGroups = this.state.configGroups.slice();
     requiredItems.forEach(requiredItem => {
       configGroups.forEach(configGroup => {
         const item = configGroup.items.find(item => item.name === requiredItem);
         if (item) {
           item.error = "This item is required";
+          unsetRequiredItems.push(item);
         }
       });
     });
-    this.setState({ configGroups, unsetRequiredItems: requiredItems });
+    this.setState({ configGroups, unsetRequiredItems });
   }
 
   handleSave = async () => {
