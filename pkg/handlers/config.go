@@ -81,6 +81,25 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// check for unset required items
+	hasUnsetRequiredItems := false
+	for _, group := range updateAppConfigRequest.ConfigGroups {
+		for _, item := range group.Items {
+			isHidden := item.Hidden || item.When == "false"
+			hasNoValue := item.Value.Type == multitype.String && item.Value.String() == ""
+			hasNoDefault := item.Default.Type == multitype.String && item.Default.String() == ""
+			if item.Required && hasNoValue && hasNoDefault && !isHidden {
+				item.Error = "This field is required"
+				hasUnsetRequiredItems = true
+			}
+		}
+	}
+
+	if hasUnsetRequiredItems {
+		JSON(w, 400, updateAppConfigRequest.ConfigGroups)
+		return
+	}
+
 	// we don't merge, this is a wholesale replacement of the config values
 	// so we don't need the complex logic in kots, we can just write
 	values := kotsKinds.ConfigValues.Spec.Values
