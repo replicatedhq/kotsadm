@@ -78,7 +78,7 @@ class AppConfig extends Component {
     const configGroups = this.state.configGroups.slice();
     requiredItems.forEach(requiredItem => {
       configGroups.forEach(configGroup => {
-        const item = configGroup.items.find(item => item.name === requiredItem.name);
+        const item = configGroup.items.find(item => item.name === requiredItem);
         if (item) {
           item.error = "This item is required";
         }

@@ -27,8 +27,8 @@ type UpdateAppConfigRequest struct {
 }
 
 type UpdateAppConfigResponse struct {
-	Success       bool                     `json:"success"`
-	RequiredItems []kotsv1beta1.ConfigItem `json:"requiredItems,omitempty"`
+	Success       bool     `json:"success"`
+	RequiredItems []string `json:"requiredItems,omitempty"`
 }
 
 func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
@@ -86,12 +86,19 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 	unsetRequiredItems := make([]kotsv1beta1.ConfigItem, 0, 0)
 	for _, group := range updateAppConfigRequest.ConfigGroups {
 		for _, item := range group.Items {
-			isHidden := item.Hidden || item.When == "false"
-			hasNoValue := item.Value.Type == multitype.String && item.Value.String() == ""
-			hasNoDefault := item.Default.Type == multitype.String && item.Default.String() == ""
-			if item.Required && hasNoValue && hasNoDefault && !isHidden {
-				unsetRequiredItems = append(unsetRequiredItems, item)
+			if !item.Required {
+				continue
 			}
+			if item.Hidden || item.When == "false" {
+				continue
+			}
+			if !(item.Value.Type == multitype.String && item.Value.String() == "") {
+				continue
+			}
+			if !(item.Default.Type == multitype.String && item.Default.String() == "") {
+				continue
+			}
+			unsetRequiredItems = append(unsetRequiredItems, item)
 		}
 	}
 
