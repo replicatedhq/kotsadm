@@ -27,7 +27,8 @@ type UpdateAppConfigRequest struct {
 }
 
 type UpdateAppConfigResponse struct {
-	Success bool `json:"success"`
+	Success       bool                     `json:"success"`
+	RequiredItems []kotsv1beta1.ConfigItem `json:"requiredItems,omitempty"`
 }
 
 func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
@@ -82,21 +83,25 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check for unset required items
-	hasUnsetRequiredItems := false
+	unsetRequiredItems := make([]kotsv1beta1.ConfigItem, 0, 0)
 	for _, group := range updateAppConfigRequest.ConfigGroups {
 		for _, item := range group.Items {
 			isHidden := item.Hidden || item.When == "false"
 			hasNoValue := item.Value.Type == multitype.String && item.Value.String() == ""
 			hasNoDefault := item.Default.Type == multitype.String && item.Default.String() == ""
 			if item.Required && hasNoValue && hasNoDefault && !isHidden {
-				item.Error = "This field is required"
-				hasUnsetRequiredItems = true
+				unsetRequiredItems = append(unsetRequiredItems, item)
 			}
 		}
 	}
 
-	if hasUnsetRequiredItems {
-		JSON(w, 400, updateAppConfigRequest.ConfigGroups)
+	if len(unsetRequiredItems) > 0 {
+		logger.Error(errors.New("One or more required fields are not set"))
+		updateAppConfigResponse := UpdateAppConfigResponse{
+			Success:       false,
+			RequiredItems: unsetRequiredItems,
+		}
+		JSON(w, 400, updateAppConfigResponse)
 		return
 	}
 
