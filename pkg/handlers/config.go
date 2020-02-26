@@ -83,7 +83,7 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check for unset required items
-	unsetRequiredItems := make([]kotsv1beta1.ConfigItem, 0, 0)
+	unsetRequiredItems := make([]string, 0, 0)
 	for _, group := range updateAppConfigRequest.ConfigGroups {
 		for _, item := range group.Items {
 			if !item.Required {
@@ -98,7 +98,7 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 			if !(item.Default.Type == multitype.String && item.Default.String() == "") {
 				continue
 			}
-			unsetRequiredItems = append(unsetRequiredItems, item)
+			unsetRequiredItems = append(unsetRequiredItems, item.Name)
 		}
 	}
 
