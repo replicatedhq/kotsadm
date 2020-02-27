@@ -153,7 +153,7 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = foundApp.RenderDir(archiveDir)
-	if err == nil {
+	if err != nil {
 		logger.Error(err)
 		updateAppConfigResponse.Error = "failed to render archive directory"
 		JSON(w, 500, updateAppConfigResponse)
