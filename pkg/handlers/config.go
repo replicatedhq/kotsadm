@@ -106,10 +106,10 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 			if item.Hidden || item.When == "false" {
 				continue
 			}
-			if !(item.Value.Type == multitype.String && item.Value.String() == "") {
+			if item.Value.String() != "" {
 				continue
 			}
-			if !(item.Default.Type == multitype.String && item.Default.String() == "") {
+			if item.Default.String() != "" {
 				continue
 			}
 			requiredItems = append(requiredItems, item.Name)
@@ -122,10 +122,9 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(requiredItems) > 0 {
-		errMsg := fmt.Sprintf("The following fields are required: %s", strings.Join(requiredItemsTitles, ", "))
 		updateAppConfigResponse := UpdateAppConfigResponse{
 			Success:       false,
-			Error:         errMsg,
+			Error:         fmt.Sprintf("The following fields are required: %s", strings.Join(requiredItemsTitles, ", ")),
 			RequiredItems: requiredItems,
 		}
 		JSON(w, 400, updateAppConfigResponse)
@@ -216,7 +215,7 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		err := foundApp.UpdateConfigValuesInDB(archiveDir)
+		err := foundApp.UpdateConfigValuesInDB(archiveDir, int64(updateAppConfigRequest.Sequence))
 		if err != nil {
 			logger.Error(err)
 			updateAppConfigResponse.Error = "failed to update config values in db"
@@ -224,7 +223,7 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := app.CreateAppVersionArchive(foundApp.ID, int64(foundApp.CurrentSequence), archiveDir); err != nil {
+		if err := app.CreateAppVersionArchive(foundApp.ID, int64(updateAppConfigRequest.Sequence), archiveDir); err != nil {
 			logger.Error(err)
 			updateAppConfigResponse.Error = "failed to create app version archive"
 			JSON(w, 500, updateAppConfigResponse)
