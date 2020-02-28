@@ -1,12 +1,7 @@
-FROM golang:1.12 as deps
+FROM golang:1.14 as deps
 
 ENV PROJECTPATH=/go/src/github.com/replicatedhq/kotsadm
 WORKDIR $PROJECTPATH
-ADD Makefile $PROJECTPATH/
-# ADD go.mod $PROJECTPATH/
-# ADD go.sum $PROJECTPATH/
-
-ENV GO111MODULE=on
 
 # Install Kubectl 1.14
 ENV KUBECTL_1_14_VERSION=v1.14.9
@@ -37,7 +32,7 @@ RUN curl -L "https://github.com/kubernetes-sigs/kustomize/releases/download/kust
   rm /tmp/kustomize.tar.gz && \
   chmod a+x kustomize && \
   mv kustomize "/usr/local/bin/kustomize3.5.4"
-	
+
 # Install krew
 ADD ./deploy/install-krew.sh /install-krew.sh
 RUN /install-krew.sh
@@ -47,9 +42,17 @@ ENV PATH="/root/.krew/bin:$PATH"
 RUN kubectl krew install preflight
 RUN kubectl krew install support-bundle
 
-# ADD cmd $PROJECTPATH/cmd
-# ADD pkg $PROJECTPATH/pkg
+# build kotsadm
+ADD Makefile $PROJECTPATH/
+ADD go.mod $PROJECTPATH/
+ADD go.sum $PROJECTPATH/
+ADD cmd $PROJECTPATH/cmd
+ADD pkg $PROJECTPATH/pkg
+
+RUN make kotsadm
+
 # ADD web/dist $PROJECTPATH/web/dist
-ADD ./bin/kotsadm ./bin/kotsadm
+
+# ADD ./bin/kotsadm ./bin/kotsadm
 
 ENTRYPOINT ["./bin/kotsadm", "api"]

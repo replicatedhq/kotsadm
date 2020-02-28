@@ -32,7 +32,7 @@ require (
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
-	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
+	k8s.io/client-go v0.17.3
 	k8s.io/cluster-bootstrap v0.17.3
 	k8s.io/kubernetes v1.17.3
 	sigs.k8s.io/application v0.8.1
