@@ -70,7 +70,8 @@ function AirgapUploadProgress(props) {
   let statusMsg = getAirgapInstallStatus?.currentMessage;
   try {
     // Some of these messages will be JSON formatted progress reports.
-    const jsonMessage = JSON.parse(statusMsg);
+    let jsonMessage;
+    jsonMessage = JSON.parse(statusMsg);
     const type = get(jsonMessage, "type");
     if (type === "progressReport") {
       try {
