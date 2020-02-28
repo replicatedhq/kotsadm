@@ -111,7 +111,11 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 			if !(item.Default.Type == multitype.String && item.Default.String() == "") {
 				continue
 			}
-			unsetRequiredItems = append(unsetRequiredItems, item.Name)
+			if item.Title != "" {
+				unsetRequiredItems = append(unsetRequiredItems, item.Title)
+			} else {
+				unsetRequiredItems = append(unsetRequiredItems, item.Name)
+			}
 		}
 	}
 
