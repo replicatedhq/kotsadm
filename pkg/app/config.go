@@ -59,6 +59,22 @@ func templateConfig(config *kotsv1beta1.Config, configValues *kotsv1beta1.Config
 	return rendered, nil
 }
 
+func IsUnsetRequiredItem(item *kotsv1beta1.ConfigItem) bool {
+	if !item.Required {
+		return false
+	}
+	if item.Hidden || item.When == "false" {
+		return false
+	}
+	if item.Value.String() != "" {
+		return false
+	}
+	if item.Default.String() != "" {
+		return false
+	}
+	return true
+}
+
 func needsConfiguration(config *kotsv1beta1.Config, configValues *kotsv1beta1.ConfigValues, license *kotsv1beta1.License, encryptionKey string) (bool, error) {
 	rendered, err := templateConfig(config, configValues, license, encryptionKey)
 	if err != nil {
@@ -74,19 +90,9 @@ func needsConfiguration(config *kotsv1beta1.Config, configValues *kotsv1beta1.Co
 
 	for _, group := range renderedConfig.Spec.Groups {
 		for _, item := range group.Items {
-			if !item.Required {
-				continue
+			if IsUnsetRequiredItem(&item) {
+				return true, nil
 			}
-			if item.Hidden || item.When == "false" {
-				continue
-			}
-			if item.Value.String() != "" {
-				continue
-			}
-			if item.Default.String() != "" {
-				continue
-			}
-			return true, nil
 		}
 	}
 	return false, nil

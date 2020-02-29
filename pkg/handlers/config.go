@@ -100,23 +100,13 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 	requiredItemsTitles := make([]string, 0, 0)
 	for _, group := range updateAppConfigRequest.ConfigGroups {
 		for _, item := range group.Items {
-			if !item.Required {
-				continue
-			}
-			if item.Hidden || item.When == "false" {
-				continue
-			}
-			if item.Value.String() != "" {
-				continue
-			}
-			if item.Default.String() != "" {
-				continue
-			}
-			requiredItems = append(requiredItems, item.Name)
-			if item.Title != "" {
-				requiredItemsTitles = append(requiredItemsTitles, item.Title)
-			} else {
-				requiredItemsTitles = append(requiredItemsTitles, item.Name)
+			if app.IsUnsetRequiredItem(&item) {
+				requiredItems = append(requiredItems, item.Name)
+				if item.Title != "" {
+					requiredItemsTitles = append(requiredItemsTitles, item.Title)
+				} else {
+					requiredItemsTitles = append(requiredItemsTitles, item.Name)
+				}
 			}
 		}
 	}
