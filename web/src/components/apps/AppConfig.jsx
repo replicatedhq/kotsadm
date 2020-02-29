@@ -128,7 +128,7 @@ class AppConfig extends Component {
         const hasPreflight = fromLicenseFlow ? getKotsApp?.getKotsApp?.hasPreflight : this.props.app?.hasPreflight;
 
         if (!createNewVersion) {
-          const status = hasPreflight ? "pending_preflight" : fromLicenseFlow ? "deployed" : "pending";
+          const status = hasPreflight ? "pending_preflight" : "pending";
           await this.props.updateDownstreamsStatus(slug, sequence, status);
         }
 
