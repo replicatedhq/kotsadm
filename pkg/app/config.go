@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func IsRequiredItem(item *kotsv1beta1.ConfigItem) bool {
+func IsRequiredItem(item kotsv1beta1.ConfigItem) bool {
 	if !item.Required {
 		return false
 	}
@@ -21,7 +21,7 @@ func IsRequiredItem(item *kotsv1beta1.ConfigItem) bool {
 	return true
 }
 
-func IsUnsetItem(item *kotsv1beta1.ConfigItem) bool {
+func IsUnsetItem(item kotsv1beta1.ConfigItem) bool {
 	if item.Value.String() != "" {
 		return false
 	}
@@ -47,7 +47,7 @@ func needsConfiguration(configSpec string, configValuesSpec string, licenseSpec 
 
 	for _, group := range renderedConfig.Spec.Groups {
 		for _, item := range group.Items {
-			if IsRequiredItem(&item) && IsUnsetItem(&item) {
+			if IsRequiredItem(item) && IsUnsetItem(item) {
 				return true, nil
 			}
 		}
