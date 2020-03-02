@@ -105,29 +105,6 @@ func GetFromSlug(slug string) (*App, error) {
 	return Get(id)
 }
 
-// UpdateConfigValuesInDB it gets the config values from filesInDir and
-// updates the current sequence config values in the db
-func (a App) UpdateConfigValuesInDB(filesInDir string, sequence int64) error {
-	kotsKinds, err := kotsutil.LoadKotsKindsFromPath(filesInDir)
-	if err != nil {
-		return errors.Wrap(err, "failed to read kots kinds")
-	}
-
-	configValues, err := kotsKinds.Marshal("kots.io", "v1beta1", "ConfigValues")
-	if err != nil {
-		return errors.Wrap(err, "failed to marshal configvalues spec")
-	}
-
-	db := persistence.MustGetPGSession()
-	query := `update app_version set config_values = $1 where app_id = $2 and sequence = $3`
-	_, err = db.Exec(query, configValues, a.ID, sequence)
-	if err != nil {
-		return errors.Wrap(err, "failed to update config values in d")
-	}
-
-	return nil
-}
-
 // CreateFirstVersion works much likst CreateVersion except that it assumes version 0
 // and never attempts to calculate a diff, or look at previous versions
 func (a App) CreateFirstVersion(filesInDir string, source string) (int64, error) {
@@ -284,7 +261,7 @@ backup_spec = EXCLUDED.backup_spec`
 			diffSummary = string(b)
 
 			// check if version needs additional configuration
-			t, err := needsConfiguration(kotsKinds.Config, kotsKinds.ConfigValues, kotsKinds.License, kotsKinds.Installation.Spec.EncryptionKey)
+			t, err := needsConfiguration(configSpec, configValuesSpec, licenseSpec)
 			if err != nil {
 				return int64(0), errors.Wrap(err, "failed to check if version needs configuration")
 			}

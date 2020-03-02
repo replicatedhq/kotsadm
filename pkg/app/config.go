@@ -4,68 +4,24 @@ import (
 	"github.com/pkg/errors"
 	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
 	kotsconfig "github.com/replicatedhq/kots/pkg/config"
-	"github.com/replicatedhq/kots/pkg/crypto"
+	"github.com/replicatedhq/kots/pkg/logger"
 	"github.com/replicatedhq/kots/pkg/template"
+	"github.com/replicatedhq/kotsadm/pkg/kotsutil"
+	"github.com/replicatedhq/kotsadm/pkg/persistence"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func templateConfig(config *kotsv1beta1.Config, configValues *kotsv1beta1.ConfigValues, license *kotsv1beta1.License, encryptionKey string) (string, error) {
-	builder := template.Builder{}
-	builder.AddCtx(template.StaticCtx{})
-
-	var templateContext map[string]template.ItemValue
-	if configValues != nil {
-		ctx := map[string]template.ItemValue{}
-		for k, v := range configValues.Spec.Values {
-			ctx[k] = template.ItemValue{
-				Value:   v.Value,
-				Default: v.Default,
-			}
-		}
-		templateContext = ctx
-	} else {
-		templateContext = map[string]template.ItemValue{}
-	}
-
-	var cipher *crypto.AESCipher
-	if encryptionKey != "" {
-		c, err := crypto.AESCipherFromString(encryptionKey)
-		if err != nil {
-			return "", errors.Wrap(err, "failed to create cipher")
-		}
-		cipher = c
-	}
-
-	localRegistry := template.LocalRegistry{}
-
-	configCtx, err := builder.NewConfigContext(config.Spec.Groups, templateContext, localRegistry, cipher, license)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to create config context")
-	}
-
-	kotsconfig.ApplyValuesToConfig(config, configCtx.ItemValues)
-	configDocWithData, err := kotsconfig.MarshalConfig(config)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to marshal config")
-	}
-
-	builder.AddCtx(configCtx)
-
-	rendered, err := builder.RenderTemplate("config", string(configDocWithData))
-	if err != nil {
-		return "", errors.Wrap(err, "failed to render config template")
-	}
-
-	return rendered, nil
-}
-
-func IsUnsetRequiredItem(item *kotsv1beta1.ConfigItem) bool {
+func IsRequiredItem(item *kotsv1beta1.ConfigItem) bool {
 	if !item.Required {
 		return false
 	}
 	if item.Hidden || item.When == "false" {
 		return false
 	}
+	return true
+}
+
+func IsUnsetItem(item *kotsv1beta1.ConfigItem) bool {
 	if item.Value.String() != "" {
 		return false
 	}
@@ -75,8 +31,9 @@ func IsUnsetRequiredItem(item *kotsv1beta1.ConfigItem) bool {
 	return true
 }
 
-func needsConfiguration(config *kotsv1beta1.Config, configValues *kotsv1beta1.ConfigValues, license *kotsv1beta1.License, encryptionKey string) (bool, error) {
-	rendered, err := templateConfig(config, configValues, license, encryptionKey)
+func needsConfiguration(configSpec string, configValuesSpec string, licenseSpec string) (bool, error) {
+	localRegistry := template.LocalRegistry{}
+	rendered, err := kotsconfig.TemplateConfig(logger.NewLogger(), configSpec, configValuesSpec, licenseSpec, localRegistry)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to template config")
 	}
@@ -90,10 +47,33 @@ func needsConfiguration(config *kotsv1beta1.Config, configValues *kotsv1beta1.Co
 
 	for _, group := range renderedConfig.Spec.Groups {
 		for _, item := range group.Items {
-			if IsUnsetRequiredItem(&item) {
+			if IsRequiredItem(&item) && IsUnsetItem(&item) {
 				return true, nil
 			}
 		}
 	}
 	return false, nil
+}
+
+// UpdateConfigValuesInDB it gets the config values from filesInDir and
+// updates the app version config values in the db for the given sequence and app id
+func UpdateConfigValuesInDB(filesInDir string, appID string, sequence int64) error {
+	kotsKinds, err := kotsutil.LoadKotsKindsFromPath(filesInDir)
+	if err != nil {
+		return errors.Wrap(err, "failed to read kots kinds")
+	}
+
+	configValues, err := kotsKinds.Marshal("kots.io", "v1beta1", "ConfigValues")
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal configvalues spec")
+	}
+
+	db := persistence.MustGetPGSession()
+	query := `update app_version set config_values = $1 where app_id = $2 and sequence = $3`
+	_, err = db.Exec(query, configValues, appID, sequence)
+	if err != nil {
+		return errors.Wrap(err, "failed to update config values in d")
+	}
+
+	return nil
 }
