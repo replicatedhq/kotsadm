@@ -23,7 +23,7 @@ import (
 )
 
 type UpdateAppConfigRequest struct {
-	Sequence         int                        `json:"sequence"`
+	Sequence         int                        `json:"sequence"` // if CreateNewVersion is true, disregard this and instead use the latest app sequence
 	CreateNewVersion bool                       `json:"createNewVersion"`
 	ConfigGroups     []*kotsv1beta1.ConfigGroup `json:"configGroups"`
 }
@@ -78,7 +78,14 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	archiveDir, err := app.GetAppVersionArchive(foundApp.ID, updateAppConfigRequest.Sequence)
+	// if we're creating a new app version, we should base it on the most recent app version, not whatever the config screen thinks
+	// if we're updating an existing version, we should respect the request sequence
+	updatedSequence := updateAppConfigRequest.Sequence
+	if updateAppConfigRequest.CreateNewVersion {
+		updatedSequence = foundApp.CurrentSequence
+	}
+
+	archiveDir, err := app.GetAppVersionArchive(foundApp.ID, updatedSequence)
 	if err != nil {
 		logger.Error(err)
 		updateAppConfigResponse.Error = "failed to get app version archive"
@@ -205,7 +212,7 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		err := app.UpdateConfigValuesInDB(archiveDir, foundApp.ID, int64(updateAppConfigRequest.Sequence))
+		err := app.UpdateConfigValuesInDB(archiveDir, foundApp.ID, int64(updatedSequence))
 		if err != nil {
 			logger.Error(err)
 			updateAppConfigResponse.Error = "failed to update config values in db"
@@ -213,7 +220,7 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := app.CreateAppVersionArchive(foundApp.ID, int64(updateAppConfigRequest.Sequence), archiveDir); err != nil {
+		if err := app.CreateAppVersionArchive(foundApp.ID, int64(updatedSequence), archiveDir); err != nil {
 			logger.Error(err)
 			updateAppConfigResponse.Error = "failed to create app version archive"
 			JSON(w, 500, updateAppConfigResponse)
