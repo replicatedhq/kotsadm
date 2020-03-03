@@ -105,6 +105,18 @@ func GetFromSlug(slug string) (*App, error) {
 	return Get(id)
 }
 
+// UpdateDownstreamVersionStatus updates the status and status_info for the downstream version with the given sequence and app id
+func UpdateDownstreamVersionStatus(appID string, sequence int64, status string, statusInfo string) error {
+	db := persistence.MustGetPGSession()
+	query := `update app_downstream_version set status = $3, status_info = $4 where app_id = $1 and sequence = $2`
+	_, err := db.Exec(query, appID, sequence, status, statusInfo)
+	if err != nil {
+		return errors.Wrap(err, "failed to update config values in d")
+	}
+
+	return nil
+}
+
 // CreateFirstVersion works much likst CreateVersion except that it assumes version 0
 // and never attempts to calculate a diff, or look at previous versions
 func (a App) CreateFirstVersion(filesInDir string, source string) (int64, error) {
