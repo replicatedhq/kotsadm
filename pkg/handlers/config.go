@@ -212,15 +212,20 @@ func UpdateAppConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		downstreamStatus := "pending"
 		if kotsKinds.Preflight != nil {
-			downstreamStatus = "pending_preflight"
-		}
-		if err := app.UpdateDownstreamVersionStatus(foundApp.ID, int64(updateAppConfigRequest.Sequence), downstreamStatus, ""); err != nil {
-			logger.Error(err)
-			updateAppConfigResponse.Error = "failed to update downstream version status"
-			JSON(w, 500, updateAppConfigResponse)
-			return
+			if err := app.SetDownstreamVersionPendingPreflight(foundApp.ID, int64(updateAppConfigRequest.Sequence)); err != nil {
+				logger.Error(err)
+				updateAppConfigResponse.Error = "failed to set downstream version pending preflight"
+				JSON(w, 500, updateAppConfigResponse)
+				return
+			}
+		} else {
+			if err := app.SetDownstreamVersionReady(foundApp.ID, int64(updateAppConfigRequest.Sequence)); err != nil {
+				logger.Error(err)
+				updateAppConfigResponse.Error = "failed to set downstream version ready"
+				JSON(w, 500, updateAppConfigResponse)
+				return
+			}
 		}
 
 		if err := app.CreateAppVersionArchive(foundApp.ID, int64(updateAppConfigRequest.Sequence), archiveDir); err != nil {
