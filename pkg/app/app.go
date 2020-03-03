@@ -111,7 +111,7 @@ func UpdateDownstreamVersionStatus(appID string, sequence int64, status string, 
 	query := `update app_downstream_version set status = $3, status_info = $4 where app_id = $1 and sequence = $2`
 	_, err := db.Exec(query, appID, sequence, status, statusInfo)
 	if err != nil {
-		return errors.Wrap(err, "failed to update config values in d")
+		return errors.Wrap(err, "failed to update downstream version status")
 	}
 
 	return nil
