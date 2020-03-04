@@ -363,7 +363,7 @@ class UploadAirgapBundle extends React.Component {
 
     let logoUri;
     let applicationName;
-    if (appsListLength && appsListLength > 0) {
+    if (appsListLength && appsListLength > 1) {
       logoUri = "https://cdn2.iconfinder.com/data/icons/mixd/512/16_kubernetes-512.png";
       applicationName = "";
     } else {
