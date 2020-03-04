@@ -435,7 +435,7 @@ class UploadAirgapBundle extends React.Component {
                         :
                         <div className="u-textAlign--center">
                           <p className="u-fontSize--normal u-color--tundora u-fontWeight--medium u-lineHeight--normal">Drag your airgap bundle here or <span className="u-color--astral u-fontWeight--medium u-textDecoration--underlineOnHover">choose a bundle to upload</span></p>
-                          <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--normal u-lineHeight--normal u-marginTop--10">This will be a .airgap file{applicationName && applicationName.length > 0 ? ` ${applicationName} provided` : ""}. Please contact your account rep if you are unable to locate your .airgap file.</p>
+                          <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--normal u-lineHeight--normal u-marginTop--10">This will be a .airgap file{applicationName?.length > 0 ? ` ${applicationName} provided` : ""}. Please contact your account rep if you are unable to locate your .airgap file.</p>
                         </div>
                       }
                     </Dropzone>
@@ -487,7 +487,7 @@ class UploadAirgapBundle extends React.Component {
           </div>
         </div>
         <div className={classNames("u-marginTop--10 u-textAlign--center", { "u-marginBottom--20": !onlineInstallErrorMessage }, { "u-display--none": preparingOnlineInstall })}>
-          <span className="u-fontSize--small u-color--dustyGray u-fontWeight--medium" onClick={this.handleOnlineInstall}>Optionally you can <span className="replicated-link">download {applicationName && applicationName.length > 0 ? applicationName : "this application"} from the Internet</span></span>
+          <span className="u-fontSize--small u-color--dustyGray u-fontWeight--medium" onClick={this.handleOnlineInstall}>Optionally you can <span className="replicated-link">download {applicationName?.length > 0 ? applicationName : "this application"} from the Internet</span></span>
         </div>
         {onlineInstallErrorMessage && (
           <div className="u-marginTop--10 u-marginBottom--20">
