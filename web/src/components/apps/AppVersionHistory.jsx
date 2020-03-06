@@ -501,7 +501,20 @@ class AppVersionHistory extends Component {
       method: "POST",
     })
       .then(async (res) => {
-        this.state.updateChecker.start(this.updateStatus, 1000);
+        const response = await res.json();
+        if (response.availableUpdates === 0) {
+          this.setState({
+            checkingForUpdates: false,
+            noUpdateAvailiableText: "There are no updates available",
+          });
+          setTimeout(() => {
+            this.setState({
+              noUpdateAvailiableText: null,
+            });
+          }, 3000);
+        } else {
+          this.state.updateChecker.start(this.updateStatus, 1000);
+        }
       })
       .catch((err) => {
         this.setState({
@@ -710,7 +723,8 @@ class AppVersionHistory extends Component {
       secondSequence,
       uploadingAirgapFile,
       uploadTotal,
-      uploadSent
+      uploadSent,
+      noUpdateAvailiableText
     } = this.state;
 
     if (!app) {
@@ -742,8 +756,8 @@ class AppVersionHistory extends Component {
         </div>
       );
     }
-
-    let updateText = <p className="u-marginTop--10 u-fontSize--small u-color--dustyGray u-fontWeight--medium">Last checked {dayjs(app.lastUpdateCheck).fromNow()}</p>;
+    console.log(app.lastUpdateCheckAt)
+    let updateText;
     if (airgapUploadError) {
       updateText = <p className="u-marginTop--10 u-fontSize--small u-color--chestnut u-fontWeight--medium">{airgapUploadError}</p>;
     } else if (uploadingAirgapFile) {
@@ -766,8 +780,17 @@ class AppVersionHistory extends Component {
       updateText = <p className="u-marginTop--10 u-fontSize--small u-color--chestnut u-fontWeight--medium">Error checking for updates, please try again</p>
     } else if (checkingForUpdates) {
       updateText = <p className="u-marginTop--10 u-fontSize--small u-color--dustyGray u-fontWeight--medium">{checkingUpdateTextShort}</p>
-    } else if (!app.lastUpdateCheck) {
+    } else if (app.lastUpdateCheckAt && !noUpdateAvailiableText) {
+      updateText = <p className="u-marginTop--10 u-fontSize--small u-color--dustyGray u-fontWeight--medium">Last checked {dayjs(app.lastUpdateCheckAt).fromNow()}</p>;
+    } else if (!app.lastUpdateCheckat) {
       updateText = null;
+    }
+
+    let noUpdateAvailiableMsg;
+    if (noUpdateAvailiableText) {
+      noUpdateAvailiableMsg = <p className="u-marginTop--10 u-fontSize--small u-color--dustyGray u-fontWeight--medium">{noUpdateAvailiableText}</p>
+    } else {
+      noUpdateAvailiableMsg = null;
     }
 
     const showAirgapUI = app.isAirgap && !isBundleUploading;
@@ -827,6 +850,7 @@ class AppVersionHistory extends Component {
                       : null
                 }
                 {updateText}
+                {noUpdateAvailiableMsg}
               </div>
             }
           </div>

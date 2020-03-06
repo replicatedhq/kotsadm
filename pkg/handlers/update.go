@@ -58,6 +58,14 @@ func AppUpdateCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// update last updated at time
+	t := app.LastUpdateAtTime(foundApp.ID)
+	if t != nil {
+		logger.Error(t)
+		w.WriteHeader(500)
+		return
+	}
+
 	appUpdateCheckResponse := AppUpdateCheckResponse{
 		AvailableUpdates: 0,
 	}
