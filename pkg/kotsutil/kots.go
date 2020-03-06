@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
@@ -197,8 +198,10 @@ func LoadKotsKindsFromPath(fromDir string) (*KotsKinds, error) {
 			if err != nil {
 				return err
 			}
+			r := strings.NewReplacer("repl{{", "{{repl")
+			c := r.Replace(string(contents))
 
-			decoded, gvk, err := decode(contents, nil, nil)
+			decoded, gvk, err := decode([]byte(c), nil, nil)
 			if err != nil {
 				return nil // not an error because the file might not be yaml
 			}
