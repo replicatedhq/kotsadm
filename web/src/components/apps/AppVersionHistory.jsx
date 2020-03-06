@@ -501,6 +501,7 @@ class AppVersionHistory extends Component {
       method: "POST",
     })
       .then(async (res) => {
+        this.props.refreshAppData();
         const response = await res.json();
         if (response.availableUpdates === 0) {
           this.setState({

@@ -58,14 +58,6 @@ func AppUpdateCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// update last updated at time
-	t := app.LastUpdateAtTime(foundApp.ID)
-	if t != nil {
-		logger.Error(t)
-		w.WriteHeader(500)
-		return
-	}
-
 	appUpdateCheckResponse := AppUpdateCheckResponse{
 		AvailableUpdates: 0,
 	}
@@ -116,6 +108,14 @@ func AppUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	updates, err := kotspull.GetUpdates(fmt.Sprintf("replicated://%s", kotsKinds.License.Spec.AppSlug), getUpdatesOptions)
 	if err != nil {
 		logger.Error(err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// update last updated at time
+	t := app.LastUpdateAtTime(foundApp.ID)
+	if t != nil {
+		logger.Error(t)
 		w.WriteHeader(500)
 		return
 	}
