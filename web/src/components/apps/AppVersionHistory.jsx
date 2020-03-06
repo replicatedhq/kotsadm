@@ -756,7 +756,7 @@ class AppVersionHistory extends Component {
         </div>
       );
     }
-    console.log(app.lastUpdateCheckAt)
+
     let updateText;
     if (airgapUploadError) {
       updateText = <p className="u-marginTop--10 u-fontSize--small u-color--chestnut u-fontWeight--medium">{airgapUploadError}</p>;
