@@ -219,7 +219,7 @@ function injectRookCollectors(parsedSpec: any): any {
   const logCollectors = _.map(names, (name) => {
     return {
       logs: {
-        name: "kots/rook/logs",
+        name: "rook/logs",
         collectorName: name,
         selector: [`app=${name}`],
         namespace: "rook-ceph",
@@ -227,34 +227,9 @@ function injectRookCollectors(parsedSpec: any): any {
     };
   });
 
-  const cmds: string[][] = [
-    ["status"],         // full cmd: `ceph status`
-    ["fs", "status"],   // full cmd: `ceph fs status`
-    ["fs", "ls"],
-    ["osd", "status"],
-    ["osd", "tree"],
-    ["osd", "pool", "ls", "detail"],
-    ["health", "detail"],
-    ["auth", "ls"],
-  ];
-  const statusCollectors = _.map(cmds, (cmd) => {
-    return {
-      exec: {
-        name: "kots/rook/status",
-        collectorName: "ceph-" + cmd.join("-"),
-        selector: [`app=rook-ceph-operator`],
-        namespace: "rook-ceph",
-        command: ['ceph'],
-        args: ["-f", "json"].concat(cmd),
-        timeout: "10s",
-      },
-    };
-  });
-  
   const collectors = _.concat(
     _.get(parsedSpec, "spec.collectors", []) as any[],
     logCollectors,
-    statusCollectors,
   );
   _.set(parsedSpec, "spec.collectors", collectors);
 

@@ -25,8 +25,8 @@ export async function injectKotsAnalyzers(parsedSpec: any): Promise<any> {
   spec = await injectAPIReplicasAnalyzer(spec);
   spec = await injectOperatorReplicasAnalyzer(spec);
   spec = await injectNoGvisorAnalyzer(spec);
-
   spec = await injectIfMissingKubernetesVersionAnalyzer(spec);
+  spec = await injectCephAnalyzer(spec);
 
   return spec;
 }
@@ -148,6 +148,40 @@ async function injectAPIReplicasAnalyzer(parsedSpec: any): Promise<any> {
           when: "= 0",
           message: "There are no replicas of the Admin Console API running and ready",
         },
+      }],
+    }
+  };
+
+  let analyzers = _.get(parsedSpec, "spec.analyzers") as any[];
+  if (!analyzers) {
+    analyzers = [];
+  }
+
+  analyzers.push(newAnalyzer);
+  _.set(parsedSpec, "spec.analyzers", analyzers);
+
+  return parsedSpec;
+}
+
+
+async function injectCephAnalyzer(parsedSpec: any): Promise<any> {
+  const newAnalyzer = {
+    rookStatus: {
+      outcomes: [{
+        fail: {
+          when: "Status = HEALTH_ERR",
+          message: "Rook status has errors",
+        },
+      },{
+        warn: {
+          when: "Status = HEALTH_WARN",
+          message: "Rook status has warnings",
+        },
+      },{
+        pass: {
+          when: "Status = HEALTH_OK",
+          message: "Rook status is healthy",
+        }
       }],
     }
   };

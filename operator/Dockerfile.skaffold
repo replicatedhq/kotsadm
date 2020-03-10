@@ -34,7 +34,7 @@ RUN curl -L "https://github.com/replicatedhq/troubleshoot/releases/download/v${T
 
 RUN curl -L "https://github.com/replicatedhq/troubleshoot/releases/download/v${TROUBLESHOOT_VERSION}/support-bundle_linux_amd64.tar.gz" > /tmp/support-bundle.tar.gz && \
   cd /tmp && tar xzvf support-bundle.tar.gz && \
-  mv /tmp/support-bundle /root/.krew/bin/kubectl-support_bundle
+  mv /tmp/support-bundle /usr/local/bin/kubectl-support_bundle
 
 ENV PROJECTPATH=/go/src/github.com/replicatedhq/kotsadm/operator
 WORKDIR $PROJECTPATH
@@ -47,6 +47,6 @@ ADD pkg ./pkg
 RUN make build
 
 # COPY ./preflight /root/.krew/bin/kubectl-preflight
-# COPY ./support-bundle /root/.krew/bin/kubectl-support_bundle
+# COPY ./support-bundle /usr/local/bin/kubectl-support_bundle
 
 ENTRYPOINT ["./bin/kotsadm-operator"]
