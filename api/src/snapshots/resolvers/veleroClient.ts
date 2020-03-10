@@ -455,11 +455,11 @@ export class VeleroClient {
       case SnapshotProvider.S3AWS:
         const {accessKeyID, accessKeySecret} = await readAWSCredentialsSecret(corev1, this.ns);
 
-        if (bsl.spec.config.endpoint) {
+        if (bsl.spec.config.s3Url) {
           store.provider = SnapshotProvider.S3Compatible
           store.s3Compatible = {
             region: bsl.spec.config.region,
-            endpoint: bsl.spec.config.endpoint,
+            endpoint: bsl.spec.config.s3Url,
             accessKeyID: accessKeyID,
           };
           if (accessKeySecret) {
@@ -505,6 +505,14 @@ export class VeleroClient {
 
   // tslint:disable-next-line
   async saveSnapshotStore(store: SnapshotStore): Promise<void> {
+    let currentSpec: any;
+    try {
+      const body = await this.request("GET", `backupstoragelocations/${backupStorageLocationName}`);
+      currentSpec = body.spec;
+    } catch(e) {
+      // TODO verify it was a 404 error
+    }
+
     const backupStorageLocation = {
       apiVersion: "velero.io/v1",
       kind: "BackupStorageLocation",
@@ -518,7 +526,7 @@ export class VeleroClient {
           bucket: store.bucket,
           prefix: store.path,
         },
-        config: {},
+        config: currentSpec ? currentSpec.config : {},
       },
     };
     const corev1 = this.kc.makeApiClient(CoreV1Api);
@@ -539,10 +547,9 @@ export class VeleroClient {
       if (!_.isObject(store.s3Compatible)) {
         throw new ReplicatedError("s3Compatible store configuration is required");
       }
-      backupStorageLocation.spec.config = {
-        region: store.s3Compatible!.region,
-        endpoint: store.s3Compatible!.endpoint,
-      };
+      backupStorageLocation.spec.config.region = store.s3Compatible!.region;
+      backupStorageLocation.spec.config.s3Url = store.s3Compatible!.endpoint;
+
       credentialsSecret = await awsCredentialsSecret(corev1, this.ns, store.s3Compatible!);
       break;
 
