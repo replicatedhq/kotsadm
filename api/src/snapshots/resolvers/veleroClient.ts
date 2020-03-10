@@ -452,28 +452,27 @@ export class VeleroClient {
     };
 
     switch (store.provider) {
-    case SnapshotProvider.S3AWS:
-      const {accessKeyID, accessKeySecret} = await readAWSCredentialsSecret(corev1, this.ns);
+      case SnapshotProvider.S3AWS:
+        const {accessKeyID, accessKeySecret} = await readAWSCredentialsSecret(corev1, this.ns);
 
-      store.s3AWS = {
-        region: bsl.spec.config.region,
-        accessKeyID,
-      };
-      if (accessKeySecret) {
-        store.s3AWS.accessKeySecret = redacted;
-      }
-      break;
-
-      case SnapshotProvider.S3Compatible:
-        const s3Creds = await readAWSCredentialsSecret(corev1, this.ns);
-
-        store.s3Compatible = {
-          region: bsl.spec.config.region,
-          endpoint: bsl.spec.config.endpoint,
-          accessKeyID: s3Creds.accessKeyID,
-        };
-        if (s3Creds.accessKeySecret) {
-          store.s3Compatible.accessKeySecret = redacted;
+        if (bsl.spec.config.endpoint) {
+          store.provider = SnapshotProvider.S3Compatible
+          store.s3Compatible = {
+            region: bsl.spec.config.region,
+            endpoint: bsl.spec.config.endpoint,
+            accessKeyID: accessKeyID,
+          };
+          if (accessKeySecret) {
+            store.s3Compatible.accessKeySecret = redacted;
+          }
+        } else {
+          store.s3AWS = {
+            region: bsl.spec.config.region,
+            accessKeyID,
+          };
+          if (accessKeySecret) {
+            store.s3AWS.accessKeySecret = redacted;
+          }
         }
         break;
 
