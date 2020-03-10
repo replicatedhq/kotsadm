@@ -506,11 +506,9 @@ export class VeleroClient {
   // tslint:disable-next-line
   async saveSnapshotStore(store: SnapshotStore): Promise<void> {
     let currentSpec: any;
-    try {
-      const body = await this.request("GET", `backupstoragelocations/${backupStorageLocationName}`);
-      currentSpec = body.spec;
-    } catch(e) {
-      // TODO verify it was a 404 error
+    const currentBSLResponse = await this.unhandledRequest("GET", `backupstoragelocations/${backupStorageLocationName}`);
+    if (currentBSLResponse.statusCode === 200) {
+      currentSpec = currentBSLResponse.body.spec;
     }
 
     const backupStorageLocation = {
