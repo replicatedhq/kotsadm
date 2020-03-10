@@ -218,7 +218,7 @@ export class KotsApp {
       const registryInfo = await stores.kotsAppStore.getAppRegistryDetails(app.id);
       const configData = await stores.kotsAppStore.getAppConfigData(appId, sequence);
       const { configSpec, configValues } = configData!;
-      return await this.applyConfigValues(configSpec, configValues, String(app.license), registryInfo);
+      return await this.applyConfigValues(configSpec, configValues, app.license!, registryInfo);
     } catch (err) {
       throw new ReplicatedError(`Failed to get config groups ${err}`);
     }
@@ -252,7 +252,7 @@ export class KotsApp {
 
     const updatedConfigValues = yaml.safeDump(parsedConfigValues);
     const registryInfo = await stores.kotsAppStore.getAppRegistryDetails(app.id);
-    return await this.applyConfigValues(configSpec, updatedConfigValues, String(app.license), registryInfo);
+    return await this.applyConfigValues(configSpec, updatedConfigValues, app.license!, registryInfo);
   }
 
   // Source files
