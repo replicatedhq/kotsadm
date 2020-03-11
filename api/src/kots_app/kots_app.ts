@@ -485,13 +485,12 @@ export class KotsApp {
     if (!partOfLicenseYaml) {
       return false;
     }
-
-    const currentAppVersion = await stores.kotsAppStore.getCurrentAppVersion(this.id);
-    if (!currentAppVersion || !currentAppVersion.backupSpec) {
-      return false
+    const tmpl = await stores.kotsAppStore.getDeployedVersionBackup(this.id);
+    if (!tmpl) {
+      return false;
     }
     const registryInfo = await stores.kotsAppStore.getAppRegistryDetails(this.id);
-    const rendered = await kotsRenderFile(this, stores, currentAppVersion.backupSpec, registryInfo);
+    const rendered = await kotsRenderFile(this, stores, tmpl, registryInfo);
     const backup = yaml.safeLoad(rendered);
     const annotations = _.get(backup, "metadata.annotations") as any;
     if (!_.isPlainObject(annotations)) {

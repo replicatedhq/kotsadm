@@ -880,6 +880,22 @@ order by sequence desc`;
     }
   }
 
+  async getDeployedVersionBackup(appId: string): Promise<string|void> {
+    let q = `select app_version.backup_spec from app_version
+      inner join app_downstream on
+        app_version.sequence = app_downstream.current_sequence AND
+        app_version.app_id = app_downstream.app_id
+      where app_version.app_id = $1`;
+    let v = [
+      appId,
+    ];
+    let result = await this.pool.query(q, v);
+    if (result.rows.length === 0) {
+      return;
+    }
+    return result.rows[0].backup_spec;
+  }
+
   async getCurrentVersion(appId: string, clusterId: string): Promise<KotsVersion | undefined> {
     let q = `select current_sequence from app_downstream where app_id = $1 and cluster_id = $2`;
     let v = [
