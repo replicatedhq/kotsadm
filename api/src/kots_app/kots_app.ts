@@ -3,7 +3,7 @@ import { Stores } from "../schema/stores";
 import zlib from "zlib";
 import { KotsAppStore } from "./kots_app_store";
 import { eq, eqIgnoringLeadingSlash, FilesAsBuffers, TarballUnpacker, isTgzByName } from "../troubleshoot/util";
-import { kotsTemplateConfig } from "./kots_ffi";
+import { kotsRenderFile, kotsTemplateConfig } from "./kots_ffi";
 import { ReplicatedError } from "../server/errors";
 import { getS3 } from "../util/s3";
 import tmp from "tmp";
@@ -481,17 +481,32 @@ export class KotsApp {
   }
 
   private async isAllowSnapshots(stores: Stores): Promise<boolean> {
-    const parsedKotsAppSpec = await stores.kotsAppStore.getKotsAppSpec(this.id, this.currentSequence!);
     const partOfLicenseYaml = await stores.kotsAppStore.isAllowSnapshotsPartOfLicenseYaml(this.id, this.currentSequence!);
-
-    try {
-      if (parsedKotsAppSpec && parsedKotsAppSpec.allowSnapshots && partOfLicenseYaml) {
-        return true;
-      }
-    } catch {
-      /* not a valid app spec */
+    if (!partOfLicenseYaml) {
+      return false;
     }
-    return false;
+
+    const currentAppVersion = await stores.kotsAppStore.getCurrentAppVersion(this.id);
+    if (!currentAppVersion || !currentAppVersion.backupSpec) {
+      return false
+    }
+    const registryInfo = await stores.kotsAppStore.getAppRegistryDetails(this.id);
+    const rendered = await kotsRenderFile(this, stores, currentAppVersion.backupSpec, registryInfo);
+    const backup = yaml.safeLoad(rendered);
+    const annotations = _.get(backup, "metadata.annotations") as any;
+    if (!_.isPlainObject(annotations)) {
+      // Backup exists and there are no annotation overrides so snapshots are enabled
+      return true;
+    }
+    const exclude = annotations["kots.io/exclude"];
+    if (exclude === "true" || exclude === true) {
+      return false;
+    }
+    const when = annotations["kots.io/when"];
+    if (when === "false" || when === false) {
+      return false;
+    }
+    return true;
   }
 
   private async getKotsLicenseType(stores: Stores): Promise<string> {
@@ -567,6 +582,7 @@ export interface KotsVersion {
   diffSummary?: string;
   commitUrl?: string;
   gitDeployable?: boolean;
+  backupSpec?: string;
 }
 
 export interface AppRegistryDetails {

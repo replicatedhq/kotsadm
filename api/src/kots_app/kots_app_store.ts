@@ -954,7 +954,7 @@ order by adv.sequence desc`;
       return;
     }
 
-    q = `select created_at, version_label, release_notes, status, sequence, applied_at from app_version where app_id = $1 and sequence = $2`;
+    q = `select created_at, version_label, release_notes, status, sequence, applied_at, backup_spec from app_version where app_id = $1 and sequence = $2`;
     v = [
       appId,
       sequence,
@@ -979,6 +979,7 @@ order by adv.sequence desc`;
       deployedAt: row.applied_at,
       preflightResult: row.preflight_result,
       preflightResultCreatedAt: row.preflight_result_created_at,
+      backupSpec: row.backup_spec,
     };
 
     return versionItem;
