@@ -116,6 +116,12 @@ function main() {
           process.exit(137);
         }, 100);
       });
+      process.on('unhandledRejection', (reason, p) => {
+        console.error('Unhandled Rejection at Promise', p, reason);
+      });
+      process.on('uncaughtException', err => {
+        console.error('Uncaught Exception thrown', err);
+      });
     })
     .catch(err => {
       console.log("received error...", err);
