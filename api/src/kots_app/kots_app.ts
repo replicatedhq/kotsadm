@@ -480,12 +480,16 @@ export class KotsApp {
     return false;
   }
 
-  private async isAllowSnapshots(stores: Stores): Promise<boolean> {
+  private async isAllowSnapshots(stores: Stores, downstreams: Cluster[]): Promise<boolean> {
     const partOfLicenseYaml = await stores.kotsAppStore.isAllowSnapshotsPartOfLicenseYaml(this.id, this.currentSequence!);
     if (!partOfLicenseYaml) {
       return false;
     }
-    const tmpl = await stores.kotsAppStore.getDeployedVersionBackup(this.id);
+    if (!downstreams.length) {
+      return false;
+    }
+    const clusterID = downstreams[0].id;
+    const tmpl = await stores.kotsAppStore.getDeployedVersionBackup(this.id, clusterID);
     if (!tmpl) {
       return false;
     }
@@ -542,7 +546,7 @@ export class KotsApp {
       ...this,
       isGitOpsSupported: () => this.isGitOpsSupported(stores),
       allowRollback: () => this.isAllowRollback(stores),
-      allowSnapshots: () => this.isAllowSnapshots(stores),
+      allowSnapshots: () => this.isAllowSnapshots(stores, downstreams),
       currentVersion: () => this.getCurrentAppVersion(stores),
       licenseType: () => this.getKotsLicenseType(stores),
       downstreams: _.map(downstreams, (downstream) => {
