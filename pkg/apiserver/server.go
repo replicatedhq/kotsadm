@@ -20,6 +20,8 @@ func Start() {
 	}
 	upstream := httputil.NewSingleHostReverseProxy(u)
 
+	fmt.Printf("andrewl\n")
+
 	r := mux.NewRouter()
 	r.Use(mux.CORSMethodMiddleware(r))
 
