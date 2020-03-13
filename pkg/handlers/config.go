@@ -193,6 +193,7 @@ func updateAppConfig(updateApp *app.App, seq int, req UpdateAppConfigRequest, is
 					// encrypt using the key
 					cipher, err := crypto.AESCipherFromString(kotsKinds.Installation.Spec.EncryptionKey)
 					if err != nil {
+						fmt.Printf("failed to get cipher from %s\n", kotsKinds.Installation.Spec.EncryptionKey)
 						updateAppConfigResponse.Error = "failed to get encryption cipher"
 						return updateAppConfigResponse, err
 					}
