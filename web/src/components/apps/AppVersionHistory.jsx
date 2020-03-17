@@ -491,6 +491,7 @@ class AppVersionHistory extends Component {
       checkingForUpdates: true,
       checkingForUpdateError: false,
       errorCheckingUpdate: false,
+      checkingUpdateMessage: "",
     });
 
     fetch(`${window.env.API_ENDPOINT}/app/${app.slug}/updatecheck`, {
@@ -501,12 +502,36 @@ class AppVersionHistory extends Component {
       method: "POST",
     })
       .then(async (res) => {
-        this.state.updateChecker.start(this.updateStatus, 1000);
+        if (!res.ok) {
+          const text = await res.text();
+          this.setState({
+            errorCheckingUpdate: true,
+            checkingForUpdates: false,
+            checkingUpdateMessage: text,
+          });
+          return;
+        }
+        this.props.refreshAppData();
+        const response = await res.json();
+        if (response.availableUpdates === 0) {
+          this.setState({
+            checkingForUpdates: false,
+            noUpdateAvailiableText: "There are no updates available",
+          });
+          setTimeout(() => {
+            this.setState({
+              noUpdateAvailiableText: null,
+            });
+          }, 3000);
+        } else {
+          this.state.updateChecker.start(this.updateStatus, 1000);
+        }
       })
       .catch((err) => {
         this.setState({
           errorCheckingUpdate: true,
           checkingForUpdates: false,
+          checkingUpdateMessage: String(err),
         });
       });
   }
@@ -743,7 +768,9 @@ class AppVersionHistory extends Component {
       );
     }
 
-    let updateText = <p className="u-marginTop--10 u-fontSize--small u-color--dustyGray u-fontWeight--medium">Last checked {dayjs(app.lastUpdateCheck).fromNow()}</p>;
+    const errorText = checkingUpdateMessage ? checkingUpdateMessage : "Error checking for updates, please try again";
+
+    let updateText;
     if (airgapUploadError) {
       updateText = <p className="u-marginTop--10 u-fontSize--small u-color--chestnut u-fontWeight--medium">{airgapUploadError}</p>;
     } else if (uploadingAirgapFile) {
@@ -763,7 +790,7 @@ class AppVersionHistory extends Component {
           smallSize={true}
         />);
     } else if (errorCheckingUpdate) {
-      updateText = <p className="u-marginTop--10 u-fontSize--small u-color--chestnut u-fontWeight--medium">Error checking for updates, please try again</p>
+      updateText = <p className="u-marginTop--10 u-fontSize--small u-color--chestnut u-fontWeight--medium">{errorText}</p>
     } else if (checkingForUpdates) {
       updateText = <p className="u-marginTop--10 u-fontSize--small u-color--dustyGray u-fontWeight--medium">{checkingUpdateTextShort}</p>
     } else if (!app.lastUpdateCheck) {
