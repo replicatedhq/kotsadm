@@ -511,21 +511,7 @@ class AppVersionHistory extends Component {
           });
           return;
         }
-        this.props.refreshAppData();
-        const response = await res.json();
-        if (response.availableUpdates === 0) {
-          this.setState({
-            checkingForUpdates: false,
-            noUpdateAvailiableText: "There are no updates available",
-          });
-          setTimeout(() => {
-            this.setState({
-              noUpdateAvailiableText: null,
-            });
-          }, 3000);
-        } else {
-          this.state.updateChecker.start(this.updateStatus, 1000);
-        }
+        this.state.updateChecker.start(this.updateStatus, 1000);
       })
       .catch((err) => {
         this.setState({
