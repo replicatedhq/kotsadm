@@ -23,7 +23,7 @@ export function SnapshotQueries(stores: Stores, params: Params) {
       return velero.isVeleroInstalled();
     },
 
-    async snapshotConfig(root: any, args: any, context: Context): Promise<SnapshotConfig|undefined> {
+    async snapshotConfig(root: any, args: any, context: Context): Promise<SnapshotConfig> {
       context.requireSingleTenantSession();
 
       const appId = await stores.kotsAppStore.getIdFromSlug(args.slug);
