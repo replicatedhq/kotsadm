@@ -278,6 +278,7 @@ export class KotsDeploySocketService {
 
               const args = {
                 app_id: app.id,
+                app_slug: app.slug,
                 kubectl_version: kotsAppSpec ? kotsAppSpec.kubectlVersion : "",
                 additional_namespaces: kotsAppSpec ? kotsAppSpec.additionalNamespaces : [],
                 image_pull_secret: imagePullSecret,

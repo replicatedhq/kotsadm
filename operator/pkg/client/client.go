@@ -29,6 +29,7 @@ var (
 
 type ApplicationManifests struct {
 	AppID                string   `json:"app_id"`
+	AppSlug              string   `json:"app_slug"`
 	KubectlVersion       string   `json:"kubectl_version"`
 	AdditionalNamespaces []string `json:"additional_namespaces"`
 	ImagePullSecret      string   `json:"image_pull_secret"`
