@@ -18,7 +18,6 @@ import (
 )
 
 func DownloadSnapshotLogs(w http.ResponseWriter, r *http.Request) {
-	println("here here")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "content-type, origin, accept, authorization")
 
@@ -118,8 +117,8 @@ func DownloadSnapshotLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	w.Header().Set("Content-Disposition", "attachment; filename=backup-logs.tar.gz")
-	w.Header().Set("Content-Type", "application/gzip")
+	w.Header().Set("Content-Disposition", "attachment; filename=snapshot-logs.tar.gz")
+	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
 	w.Header().Set("Content-Length", resp.Header.Get("Content-Length"))
 
 	_, err = io.Copy(w, resp.Body)
