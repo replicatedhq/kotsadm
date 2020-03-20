@@ -14,7 +14,7 @@ import (
 	"github.com/vmware-tanzu/velero/pkg/label"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 func DownloadSnapshotLogs(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +32,7 @@ func DownloadSnapshotLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config, err := rest.InClusterConfig()
+	cfg, err := config.GetConfig
 	if err != nil {
 		logger.Error(err)
 		w.WriteHeader(500)
@@ -76,7 +76,8 @@ func DownloadSnapshotLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer watcher.Stop()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	// generally takes less than a second
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	for {
 		if signedURL != "" {
@@ -121,10 +122,10 @@ func DownloadSnapshotLogs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
 	w.Header().Set("Content-Length", resp.Header.Get("Content-Length"))
 
+	w.WriteHeader(200)
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
 		logger.Error(err)
-		w.WriteHeader(500)
 		return
 	}
 }

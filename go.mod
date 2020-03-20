@@ -10,7 +10,6 @@ require (
 	github.com/docker/docker v1.13.1 // indirect
 	github.com/frankban/quicktest v1.7.3 // indirect
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
-	github.com/google/martian v2.1.0+incompatible
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/websocket v1.4.0
 	github.com/klauspost/cpuid v1.2.1 // indirect
