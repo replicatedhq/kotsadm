@@ -134,7 +134,6 @@ class AppSnapshotDetail extends Component {
       method: "GET",
       headers: {
         "Authorization": `${Utilities.getToken()}`,
-        "Content-Type": "application/gzip",
       },
     });
   }

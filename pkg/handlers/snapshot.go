@@ -117,7 +117,7 @@ func DownloadSnapshotLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	w.Header().Set("Content-Disposition", "attachment; filename=snapshot-logs.tar.gz")
+	w.Header().Set("Content-Disposition", "attachment; filename=snapshot-logs.gz")
 	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
 	w.Header().Set("Content-Length", resp.Header.Get("Content-Length"))
 
