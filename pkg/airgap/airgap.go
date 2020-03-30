@@ -18,6 +18,7 @@ import (
 	"github.com/replicatedhq/kotsadm/pkg/app"
 	"github.com/replicatedhq/kotsadm/pkg/logger"
 	"github.com/replicatedhq/kotsadm/pkg/persistence"
+	"github.com/replicatedhq/kotsadm/pkg/preflight"
 	"github.com/replicatedhq/kotsadm/pkg/registry"
 	"github.com/replicatedhq/kotsadm/pkg/task"
 	"github.com/replicatedhq/kotsadm/pkg/version"
@@ -271,6 +272,11 @@ func CreateAppFromAirgap(pendingApp *PendingApp, airgapBundle multipart.File, re
 	if err := version.CreateAppVersionArchive(pendingApp.ID, newSequence, tmpRoot); err != nil {
 		finalError = err
 		return errors.Wrap(err, "failed to create app version archive")
+	}
+
+	if err := preflight.Run(a.ID, newSequence, tmpRoot); err != nil {
+		finalError = err
+		return errors.Wrap(err, "failed to start preflights")
 	}
 
 	return nil
