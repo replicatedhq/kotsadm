@@ -266,6 +266,15 @@ export class VeleroClient {
     throw new Error(`Read Restore ${name} from namespace ${this.ns}: ${response.statusCode}`);
   }
 
+  async listRestoreNamespaces(name: string): Promise<string[]> {
+    const restore = await this.readRestore(name);
+    if (!restore) {
+      return [];
+    }
+    const backup = await this.readBackup(restore.spec.backupName);
+    return backup.spec.includedNamespaces || [];
+  }
+
   async listRestoreVolumes(name: string): Promise<RestoreVolume[]> {
     const q = {
       labelSelector: `velero.io/restore-name=${getValidName(name)}`,

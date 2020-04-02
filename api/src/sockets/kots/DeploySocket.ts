@@ -69,7 +69,7 @@ export class KotsDeploySocketService {
     }
 
     const cluster = await this.clusterStore.getFromDeployToken(socket.handshake.query.token);
-    console.log(`Cluster ${cluster.id} joined`);
+    logger.info(`Cluster ${cluster.id} joined`);
     socket.join(cluster.id);
 
     this.clusterSocketHistory.push({
@@ -138,7 +138,9 @@ export class KotsDeploySocketService {
         // retry undeploy every minute since socket.io is not bi-directional
         const lastUndeployInterval = new Date().getTime() - this.lastUndeployTime;
         if (lastUndeployInterval >= oneMinuteInMilliseconds) {
-          await this.undeployApp(app, cluster);
+          const veleroClient = new VeleroClient("velero"); // TODO velero namespace
+          const clearNamespaces  = await veleroClient.listRestoreNamespaces(app.restoreInProgressName);
+          await this.undeployApp(app, cluster, clearNamespaces);
           this.lastUndeployTime = new Date().getTime();
         }
         break;
@@ -154,12 +156,14 @@ export class KotsDeploySocketService {
 
       default:
         // start undeploy
-        await this.undeployApp(app, cluster);
+        const velero = new VeleroClient("velero"); // TODO velero namespace
+        const restoreNamespaces  = await velero.listRestoreNamespaces(app.restoreInProgressName);
+        await this.undeployApp(app, cluster, restoreNamespaces);
         this.lastUndeployTime = new Date().getTime();
     }
   }
 
-  async undeployApp(app: KotsApp, cluster: Cluster): Promise<void> {
+  async undeployApp(app: KotsApp, cluster: Cluster, clearNamespaces: string[]): Promise<void> {
     logger.info(`Starting restore, undeploying app ${app.name}`);
 
     const desiredNamespace = ".";
@@ -172,12 +176,14 @@ export class KotsDeploySocketService {
     // make operator prune everything
     const args = {
       app_id: app.id,
+      app_slug: app.slug,
       kubectl_version: kotsAppSpec ? kotsAppSpec.kubectlVersion : "",
       namespace: desiredNamespace,
       manifests: "",
       previous_manifests: b.toString("base64"),
       result_callback: "/api/v1/undeploy/result",
       wait: true,
+      clearNamespaces,
     };
 
     this.io.in(cluster.id).emit("deploy", args);
@@ -315,7 +321,7 @@ export class KotsDeploySocketService {
                 await this.kotsAppStatusStore.setKotsAppStatus(app.id, DefaultReadyState, new Date());
               }
             } catch (err) {
-              console.log(err);
+              logger.error(err);
             }
           }
         }

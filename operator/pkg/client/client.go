@@ -38,6 +38,7 @@ type ApplicationManifests struct {
 	Manifests            string   `json:"manifests"`
 	Wait                 bool     `json:"wait"`
 	ResultCallback       string   `json:"result_callback"`
+	ClearNamespaces      []string `json:"clear_namespaces"`
 }
 
 // DesiredState is what we receive from the kotsadm-api server
@@ -215,6 +216,7 @@ func (c *Client) registerHandlers(socketClient *socket.Client) error {
 
 	err = socketClient.On("deploy", func(h *socket.Channel, args ApplicationManifests) {
 		log.Println("received a deploy request")
+
 		if args.PreviousManifests != "" {
 			if err := c.diffAndRemovePreviousManifests(args); err != nil {
 				log.Printf("error diffing and removing previous manifests: %s", err.Error())

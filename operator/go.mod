@@ -27,6 +27,7 @@ require (
 	k8s.io/apimachinery v0.17.4
 	k8s.io/client-go v0.17.4
 	k8s.io/helm v2.14.3+incompatible
+	sigs.k8s.io/controller-runtime v0.4.0
 )
 
 replace github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n v1.10.1

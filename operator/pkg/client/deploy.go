@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -13,8 +14,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kuberneteserrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 func (c *Client) diffAndRemovePreviousManifests(applicationManifests ApplicationManifests) error {
@@ -77,6 +81,24 @@ func (c *Client) diffAndRemovePreviousManifests(applicationManifests Application
 				log.Printf("manifest(s) deleted: %s/%s/%s", gv, k, n)
 			}
 		}
+	}
+
+	for _, namespace := range applicationManifests.ClearNamespaces {
+		log.Printf("Ensuring all %s objects have been removed from namespace %s\n", applicationManifests.AppSlug, namespace)
+		for i := 10; i >= 0; i-- {
+			gone, err := c.isAppRemovedFromNamespace(applicationManifests.AppSlug, namespace)
+			if err != nil {
+				log.Printf("Failed to check if app %s objects have been removed from namespace %s\n", applicationManifests.AppSlug, namespace)
+			} else if gone {
+				break
+			}
+			if i == 0 {
+				return fmt.Errorf("Failed to clear app %s from namespace %s\n", applicationManifests.AppSlug, namespace)
+			}
+			log.Printf("Namespace % still has objects from app %s: sleeping...\n", namespace, applicationManifests.AppSlug)
+			time.Sleep(time.Second * 2)
+		}
+		log.Printf("Namepsace %s successfully cleared of app %s\n", namespace, applicationManifests.AppSlug)
 	}
 
 	return nil
@@ -231,4 +253,46 @@ func (c *Client) ensureResourcesPresent(applicationManifests ApplicationManifest
 	}
 
 	return nil
+}
+
+func (c *Client) isAppRemovedFromNamespace(slug string, namespace string) (bool, error) {
+	cfg, err := config.GetConfig()
+	if err != nil {
+		return false, errors.Wrap(err, "failed to get config")
+	}
+	disc, err := discovery.NewDiscoveryClientForConfig(cfg)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to create discovery client")
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to create dynamic client")
+	}
+	resourceList, err := disc.ServerPreferredNamespacedResources()
+	if err != nil {
+		// An application can define an APIService handled by a Deployment in the application itself.
+		// In that case there will be a race condition listing resources in that API group and there
+		// could be an error here. Most of the API groups would still be in the resource list so the
+		// error is not terminal.
+		log.Printf("Failed to list all resources: %v", err)
+	}
+	gvrs, err := discovery.GroupVersionResources(resourceList)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to convert resource list to groupversionresource map")
+	}
+	for gvr := range gvrs {
+		unstructuredList, err := dyn.Resource(gvr).Namespace(namespace).List(metav1.ListOptions{})
+		if err != nil {
+			return false, errors.Wrapf(err, "failed to list %s", gvr)
+		}
+		for _, u := range unstructuredList.Items {
+			annotations := u.GetAnnotations()
+			if annotations["kots.io/app-slug"] == slug {
+				log.Printf("Resource %s (%s) in namepsace %s not yet deleted\n", u.GetName(), gvr, namespace)
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
 }
