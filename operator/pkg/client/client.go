@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os/exec"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/mitchellh/hashstructure"
@@ -101,6 +102,7 @@ func (c *Client) Run() error {
 func (c *Client) runAppStateMonitor() error {
 	m := map[string]func(f func()){}
 	hash := map[string]uint64{}
+	var mtx sync.Mutex
 
 	for appStatus := range c.appStateMonitor.AppStatusChan() {
 		throttled, ok := m[appStatus.AppID]
@@ -109,9 +111,11 @@ func (c *Client) runAppStateMonitor() error {
 			m[appStatus.AppID] = throttled
 		}
 		throttled(func() {
+			mtx.Lock()
 			lastHash := hash[appStatus.AppID]
 			nextHash, _ := hashstructure.Hash(appStatus, nil)
 			hash[appStatus.AppID] = nextHash
+			mtx.Unlock()
 			if lastHash != nextHash {
 				b, _ := json.Marshal(appStatus)
 				log.Printf("Sending app status %s", b)

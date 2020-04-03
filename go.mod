@@ -3,7 +3,6 @@ module github.com/replicatedhq/kotsadm
 go 1.12
 
 require (
-	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Microsoft/hcsshim v0.8.8-0.20200225064221-b400e4ffeccc // indirect
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/aws/aws-sdk-go v1.25.18
@@ -13,7 +12,6 @@ require (
 	github.com/go-logr/zapr v0.1.1 // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/websocket v1.4.0
-	github.com/huandu/xstrings v1.3.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kubernetes-sigs/application v0.8.1 // indirect
 	github.com/lib/pq v1.3.0
