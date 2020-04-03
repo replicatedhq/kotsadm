@@ -150,7 +150,7 @@ export class KotsDeploySocketService {
         break;
 
       case UndeployStatus.Failed:
-        logger.warn(`Restore ${app.restoreInProgressName} falied`);
+        logger.warn(`Restore ${app.restoreInProgressName} failed`);
         // TODO
         break;
 
