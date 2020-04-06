@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kuberneteserrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -83,19 +84,21 @@ func (c *Client) diffAndRemovePreviousManifests(applicationManifests Application
 		}
 	}
 
+	// TODO remove
+	log.Printf("ClearNamespace: %+v", applicationManifests.ClearNamespaces)
 	for _, namespace := range applicationManifests.ClearNamespaces {
 		log.Printf("Ensuring all %s objects have been removed from namespace %s\n", applicationManifests.AppSlug, namespace)
 		for i := 10; i >= 0; i-- {
-			gone, err := c.isAppRemovedFromNamespace(applicationManifests.AppSlug, namespace)
+			gone, err := c.clearNamespace(applicationManifests.AppSlug, namespace)
 			if err != nil {
-				log.Printf("Failed to check if app %s objects have been removed from namespace %s\n", applicationManifests.AppSlug, namespace)
+				log.Printf("Failed to check if app %s objects have been removed from namespace %s: %v\n", applicationManifests.AppSlug, namespace, err)
 			} else if gone {
 				break
 			}
 			if i == 0 {
 				return fmt.Errorf("Failed to clear app %s from namespace %s\n", applicationManifests.AppSlug, namespace)
 			}
-			log.Printf("Namespace % still has objects from app %s: sleeping...\n", namespace, applicationManifests.AppSlug)
+			log.Printf("Namespace %s still has objects from app %s: sleeping...\n", namespace, applicationManifests.AppSlug)
 			time.Sleep(time.Second * 2)
 		}
 		log.Printf("Namepsace %s successfully cleared of app %s\n", namespace, applicationManifests.AppSlug)
@@ -255,7 +258,7 @@ func (c *Client) ensureResourcesPresent(applicationManifests ApplicationManifest
 	return nil
 }
 
-func (c *Client) isAppRemovedFromNamespace(slug string, namespace string) (bool, error) {
+func (c *Client) clearNamespace(slug string, namespace string) (bool, error) {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		return false, errors.Wrap(err, "failed to get config")
@@ -280,19 +283,44 @@ func (c *Client) isAppRemovedFromNamespace(slug string, namespace string) (bool,
 	if err != nil {
 		return false, errors.Wrap(err, "failed to convert resource list to groupversionresource map")
 	}
+	// skip resources that don't have API endpoints or don't have applied objects
+	var skip = sets.NewString(
+		"/v1/bindings",
+		"/v1/events",
+		"extensions/v1beta1/replicationcontrollers",
+		"apps/v1/controllerrevisions",
+		"authentication.k8s.io/v1/tokenreviews",
+		"authorization.k8s.io/v1/localsubjectaccessreviews",
+		"authorization.k8s.io/v1/subjectaccessreviews",
+		"authorization.k8s.io/v1/selfsubjectaccessreviews",
+		"authorization.k8s.io/v1/selfsubjectrulesreviews",
+	)
+	clear := true
 	for gvr := range gvrs {
-		unstructuredList, err := dyn.Resource(gvr).Namespace(namespace).List(metav1.ListOptions{})
-		if err != nil {
-			return false, errors.Wrapf(err, "failed to list %s", gvr)
+		s := fmt.Sprintf("%s/%s/%s", gvr.Group, gvr.Version, gvr.Resource)
+		log.Println(s)
+		if skip.Has(s) {
+			continue
 		}
+		// there may be other resources that can't be listed besides what's in the skip set so ignore error
+		unstructuredList, _ := dyn.Resource(gvr).Namespace(namespace).List(metav1.ListOptions{})
 		for _, u := range unstructuredList.Items {
 			annotations := u.GetAnnotations()
 			if annotations["kots.io/app-slug"] == slug {
-				log.Printf("Resource %s (%s) in namepsace %s not yet deleted\n", u.GetName(), gvr, namespace)
-				return false, nil
+				clear = false
+				if u.GetDeletionTimestamp() != nil {
+					log.Printf("%s %s is pending deletion\n", gvr, u.GetName())
+					continue
+				}
+				log.Printf("Deleting %s/%s/%s\n", namespace, gvr, u.GetName())
+				err := dyn.Resource(gvr).Namespace(namespace).Delete(u.GetName(), &metav1.DeleteOptions{})
+				if err != nil {
+					log.Printf("Resource %s (%s) in namepsace %s could not be deleted: %v\n", u.GetName(), gvr, namespace, err)
+					return false, err
+				}
 			}
 		}
 	}
 
-	return true, nil
+	return clear, nil
 }

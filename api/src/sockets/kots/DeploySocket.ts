@@ -138,9 +138,7 @@ export class KotsDeploySocketService {
         // retry undeploy every minute since socket.io is not bi-directional
         const lastUndeployInterval = new Date().getTime() - this.lastUndeployTime;
         if (lastUndeployInterval >= oneMinuteInMilliseconds) {
-          const veleroClient = new VeleroClient("velero"); // TODO velero namespace
-          const clearNamespaces  = await veleroClient.listRestoreNamespaces(app.restoreInProgressName);
-          await this.undeployApp(app, cluster, clearNamespaces);
+          await this.undeployApp(app, cluster);
           this.lastUndeployTime = new Date().getTime();
         }
         break;
@@ -157,13 +155,12 @@ export class KotsDeploySocketService {
       default:
         // start undeploy
         const velero = new VeleroClient("velero"); // TODO velero namespace
-        const restoreNamespaces  = await velero.listRestoreNamespaces(app.restoreInProgressName);
-        await this.undeployApp(app, cluster, restoreNamespaces);
+        await this.undeployApp(app, cluster);
         this.lastUndeployTime = new Date().getTime();
     }
   }
 
-  async undeployApp(app: KotsApp, cluster: Cluster, clearNamespaces: string[]): Promise<void> {
+  async undeployApp(app: KotsApp, cluster: Cluster): Promise<void> {
     logger.info(`Starting restore, undeploying app ${app.name}`);
 
     const desiredNamespace = ".";
@@ -173,6 +170,8 @@ export class KotsDeploySocketService {
     const b = new Buffer(rendered);
 
 
+    const veleroClient = new VeleroClient("velero"); // TODO velero namespace
+    const backup = await veleroClient.readBackup(getSnapshotNameFromRestoreName(app.restoreInProgressName!));
     // make operator prune everything
     const args = {
       app_id: app.id,
@@ -183,7 +182,7 @@ export class KotsDeploySocketService {
       previous_manifests: b.toString("base64"),
       result_callback: "/api/v1/undeploy/result",
       wait: true,
-      clearNamespaces,
+      clear_namespaces: backup.spec.includedNamespaces,
     };
 
     this.io.in(cluster.id).emit("deploy", args);
