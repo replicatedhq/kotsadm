@@ -84,8 +84,6 @@ func (c *Client) diffAndRemovePreviousManifests(applicationManifests Application
 		}
 	}
 
-	// TODO remove
-	log.Printf("ClearNamespace: %+v", applicationManifests.ClearNamespaces)
 	for _, namespace := range applicationManifests.ClearNamespaces {
 		log.Printf("Ensuring all %s objects have been removed from namespace %s\n", applicationManifests.AppSlug, namespace)
 		for i := 10; i >= 0; i-- {
@@ -298,7 +296,6 @@ func (c *Client) clearNamespace(slug string, namespace string) (bool, error) {
 	clear := true
 	for gvr := range gvrs {
 		s := fmt.Sprintf("%s/%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-		log.Println(s)
 		if skip.Has(s) {
 			continue
 		}

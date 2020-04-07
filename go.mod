@@ -20,6 +20,7 @@ require (
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedhq/kots v1.14.2
+	github.com/replicatedhq/kotsadm/operator v0.0.0-20200407003758-1a04f863fce5 // indirect
 	github.com/replicatedhq/troubleshoot v0.9.27
 	github.com/replicatedhq/yaml/v3 v3.0.0-beta5-replicatedhq
 	github.com/segmentio/ksuid v1.0.2
