@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import filter from "lodash/filter";
 import sortBy from "lodash/sortBy";
 import isEmpty from "lodash/isEmpty";
-import { Utilities } from "../../utilities/utilities";
+import { Utilities, parseIconUri } from "../../utilities/utilities";
 // import { VendorUtilities } from "../../utilities/VendorUtilities";
 
 class SupportBundleRow extends React.Component {
@@ -93,20 +93,26 @@ class SupportBundleRow extends React.Component {
                 </div>
                 <div className="flex u-marginTop--10">
                   {bundle?.analysis?.insights?.length ?
-                    <div className="flex flex1 u-marginRight--5">
-                      {sortBy(filter(bundle?.analysis?.insights, (i) => i.level !== "debug"), ["desiredPosition"]).map((insight, i) => (
-                        <div key={i} className="analysis-icon-wrapper">
-                          {insight.icon_key ?
-                            <span className={`icon clickable analysis-${insight.icon_key}`} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></span>
-                            : insight.icon ?
-                              <span className="u-cursor--pointer" style={{ backgroundImage: `url(${insight.icon})` }} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></span>
-                              : null
-                          }
-                          <ReactTooltip id={`${bundle.id}-${i}-${insight.key}`} effect="solid" className="replicated-tooltip">
-                            <span>{insight.detail}</span>
-                          </ReactTooltip>
-                        </div>
-                      ))}
+                    <div className="flex flex1 u-marginRight--5 alignItems--center">
+                      {sortBy(filter(bundle?.analysis?.insights, (i) => i.level !== "debug"), ["desiredPosition"]).map((insight, i) => {
+                        let iconObj;
+                        if (insight.icon) {
+                          iconObj = parseIconUri(insight.icon);
+                        }
+                        return (
+                          <div key={i} className="analysis-icon-wrapper">
+                            {insight.icon ?
+                              <div className="tile-icon" style={{ backgroundImage: `url(${iconObj.uri})`, width: `${iconObj.dimensions?.w}px`, height: `${iconObj.dimensions?.h}px` }} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></div>
+                              : insight.icon_key ?
+                                <span className={`icon clickable analysis-${insight.icon_key}`} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></span>
+                                : null
+                            }
+                            <ReactTooltip id={`${bundle.id}-${i}-${insight.key}`} effect="solid" className="replicated-tooltip">
+                              <span>{insight.detail}</span>
+                            </ReactTooltip>
+                          </div>
+                        )
+                      })}
                     </div>
                     :
                     noInsightsMessage
