@@ -47,6 +47,19 @@ class SupportBundleRow extends React.Component {
     iframe.src = url;
   }
 
+  renderInsightIcon = (bundle, i, insight) => {
+    if (insight.icon) {
+      const iconObj = parseIconUri(insight.icon);
+      return (
+        <div className="tile-icon" style={{ backgroundImage: `url(${iconObj.uri})`, width: `${iconObj.dimensions?.w}px`, height: `${iconObj.dimensions?.h}px` }} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></div>
+      )
+    } else {
+      return (
+        <span className={`icon clickable analysis-${insight.icon_key}`} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></span>
+      )
+    }
+  }
+
   render() {
     const { bundle } = this.props;
 
@@ -95,18 +108,9 @@ class SupportBundleRow extends React.Component {
                   {bundle?.analysis?.insights?.length ?
                     <div className="flex flex1 u-marginRight--5 alignItems--center">
                       {sortBy(filter(bundle?.analysis?.insights, (i) => i.level !== "debug"), ["desiredPosition"]).map((insight, i) => {
-                        let iconObj;
-                        if (insight.icon) {
-                          iconObj = parseIconUri(insight.icon);
-                        }
                         return (
                           <div key={i} className="analysis-icon-wrapper">
-                            {insight.icon ?
-                              <div className="tile-icon" style={{ backgroundImage: `url(${iconObj.uri})`, width: `${iconObj.dimensions?.w}px`, height: `${iconObj.dimensions?.h}px` }} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></div>
-                              : insight.icon_key ?
-                                <span className={`icon clickable analysis-${insight.icon_key}`} data-tip={`${bundle.id}-${i}-${insight.key}`} data-for={`${bundle.id}-${i}-${insight.key}`}></span>
-                                : null
-                            }
+                            {this.renderInsightIcon(bundle, i, insight)}
                             <ReactTooltip id={`${bundle.id}-${i}-${insight.key}`} effect="solid" className="replicated-tooltip">
                               <span>{insight.detail}</span>
                             </ReactTooltip>
