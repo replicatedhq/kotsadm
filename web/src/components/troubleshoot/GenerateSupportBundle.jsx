@@ -2,7 +2,7 @@ import * as React from "react";
 import Helmet from "react-helmet";
 import { withRouter, Link } from "react-router-dom";
 import { compose, withApollo, graphql } from "react-apollo";
-
+import AceEditor from "react-ace";
 import Modal from "react-modal";
 
 import Loader from "../shared/Loader";
@@ -13,7 +13,19 @@ import { collectSupportBundle } from "../../mutations/TroubleshootMutations";
 
 import "../../scss/components/troubleshoot/GenerateSupportBundle.scss";
 
+import "brace/mode/text";
+import "brace/mode/yaml";
+import "brace/theme/chrome";
+
 const NEW_CLUSTER = "Create a new downstream cluster";
+const CUSTOM_SPEC_TEMPLATE = `
+apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Redactor
+metadata:
+  name: my-application-name
+spec:
+  redacts:
+`;
 
 class GenerateSupportBundle extends React.Component {
   constructor(props) {
@@ -27,6 +39,16 @@ class GenerateSupportBundle extends React.Component {
       totalBundles: null,
       showRunCommand: false,
       isGeneratingBundle: false,
+      showRedactors: false,
+      activeRedactorTab: "linkSpec",
+      redactorUri: "",
+      customRedactorSpec: CUSTOM_SPEC_TEMPLATE,
+      specUriSaved: false,
+      errorSavingSpecUri: false,
+      specSaved: false,
+      errorSavingSpec: false,
+      savingSpecUriError: "this is an error",
+      savingSpecError: ""
     };
   }
 
@@ -93,10 +115,10 @@ class GenerateSupportBundle extends React.Component {
     }
   }
 
-  toggleShowRun = (ev) => {
+  toggleShow = (ev, section) => {
     ev.preventDefault();
     this.setState({
-      showRunCommand: !this.state.showRunCommand,
+      [section]: !this.state[section],
     });
   }
 
@@ -135,14 +157,104 @@ class GenerateSupportBundle extends React.Component {
     }
   }
 
+  toggleRedactorAction = (active) => {
+    this.setState({
+      activeRedactorTab: active,
+    });
+  }
+
   toggleModal = () => {
     this.setState({
       displayUploadModal: !this.state.displayUploadModal
     })
   }
 
+  handleFormChange = (field, val) => {
+    let nextState = {};
+    nextState[field] = val;
+    this.setState(nextState);
+  }
+
+  onRedactorChange = (value) => {
+    this.setState({
+      customRedactorSpec: value,
+    });
+  }
+
+  renderRedactorTab = () => {
+    const { activeRedactorTab, redactorUri, customRedactorSpec } = this.state;
+    switch (activeRedactorTab) {
+      case "linkSpec":
+        return (
+          <div className="flex1">
+            <p className="u-fontSize--normal u-color--tuna u-fontWeight--bold u-lineHeight--normal u-marginBottom--5">Where is your spec located</p>
+            <p className="u-lineHeight--normal u-fontSize--small u-color--dustyGray u-fontWeight--medium u-marginBottom--10">Provide the URI where your redactor spec is located.</p>
+            <input type="text" className="Input" placeholder="github.com/org/myrepo/redactor.yaml" value={redactorUri} autoComplete="" onChange={(e) => { this.handleFormChange("redactorUri", e.target.value) }} />
+            <div className="u-marginTop--10 flex alignItems--center">
+              <button className="btn secondary blue" onClick={this.saveRedactorUri}>Save</button>
+              {this.state.specUriSaved &&
+                <span className="u-marginLeft--10 flex alignItems--center">
+                  <span className="icon checkmark-icon u-marginRight--5" />
+                  <span className="u-color--chateauGreen u-fontSize--small u-fontWeight--medium u-lineHeight--normal">Saved</span>
+                </span>
+              }
+              {this.state.errorSavingSpecUri &&
+                <span className="u-marginLeft--10 flex alignItems--center">
+                  <span className="u-color--chestnut u-fontSize--small u-fontWeight--medium u-lineHeight--normal">{this.state.savingSpecUriError}</span>
+                </span>
+              }
+            </div>
+          </div>
+        );
+      case "writeSpec":
+        return (
+          <div>
+            <div className="flex1 u-border--gray">
+              <AceEditor
+                ref={(input) => this.refAceEditor = input}
+                mode="yaml"
+                theme="chrome"
+                className="flex1 flex"
+                readOnly={true}
+                value={customRedactorSpec}
+                height="380px"
+                width="100%"
+                markers={this.state.activeMarkers}
+                editorProps={{
+                  $blockScrolling: Infinity,
+                  useSoftTabs: true,
+                  tabSize: 2,
+                }}
+                onChange={(value) => this.onRedactorChange(value)}
+                setOptions={{
+                  scrollPastEnd: false,
+                  showGutter: true,
+                }}
+              />
+            </div>
+            <div className="u-marginTop--10 flex alignItems--center">
+              <button className="btn secondary blue" onClick={this.saveRedactorSpec}>Save spec</button>
+              {this.state.specSaved &&
+                <span className="u-marginLeft--10 flex alignItems--center">
+                  <span className="icon checkmark-icon u-marginRight--5" />
+                  <span className="u-color--chateauGreen u-fontSize--small u-fontWeight--medium u-lineHeight--normal">Spec saved</span>
+                </span>
+              }
+              {this.state.errorSavingSpec &&
+                <span className="u-marginLeft--10 flex alignItems--center">
+                  <span className="u-color--chestnut u-fontSize--small u-fontWeight--medium u-lineHeight--normal">{this.state.savingSpecError}</span>
+                </span>
+              }
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  }
+
   render() {
-    const { selectedCluster, displayUploadModal, showRunCommand, isGeneratingBundle } = this.state;
+    const { selectedCluster, displayUploadModal, showRunCommand, isGeneratingBundle, showRedactors } = this.state;
     const { watch } = this.props;
     const watchClusters = watch.downstreams;
     const selectedWatch = watchClusters.find(c => c.cluster.id === selectedCluster.id);
@@ -199,7 +311,26 @@ class GenerateSupportBundle extends React.Component {
               :
                 <div>
                   <div className="u-marginTop--40">
-                    If you'd prefer, <a href="#" className="replicated-link" onClick={this.toggleShowRun}>click here</a> to get a command to manually generate a support bundle.
+                    If you'd prefer, <a href="#" className="replicated-link" onClick={(e) => this.toggleShow(e, "showRunCommand")}>click here</a> to get a command to manually generate a support bundle.
+                  </div>
+                </div>
+              }
+              {showRedactors ?
+                <div>
+                  <div className="u-marginTop--40">
+                    <div className="flex action-tab-bar">
+                      <span className={`${this.state.activeRedactorTab === "linkSpec" ? "is-active" : ""} tab-item`} onClick={() => this.toggleRedactorAction("linkSpec")}>Link to a spec</span>
+                      <span className={`${this.state.activeRedactorTab === "writeSpec" ? "is-active" : ""} tab-item`} onClick={() => this.toggleRedactorAction("writeSpec")}>Write your own spec</span>
+                    </div>
+                    <div className="flex-column flex1 action-content">
+                      {this.renderRedactorTab()}
+                    </div>
+                  </div>
+                </div>
+              :
+                <div>
+                  <div className="u-marginTop--40">
+                    If you would like to use custom redactors, <a href="#" className="replicated-link" onClick={(e) => this.toggleShow(e, "showRedactors")}>click here</a> to link to a redactor file or you can write your own.
                   </div>
                 </div>
               }
