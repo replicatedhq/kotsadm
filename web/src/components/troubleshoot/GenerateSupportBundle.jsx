@@ -5,6 +5,7 @@ import { compose, withApollo, graphql } from "react-apollo";
 import AceEditor from "react-ace";
 import Modal from "react-modal";
 
+import { Utilities } from "../../utilities/utilities";
 import Loader from "../shared/Loader";
 import CodeSnippet from "@src/components/shared/CodeSnippet";
 import UploadSupportBundleModal from "../troubleshoot/UploadSupportBundleModal";
@@ -48,7 +49,8 @@ class GenerateSupportBundle extends React.Component {
       specSaved: false,
       errorSavingSpec: false,
       savingSpecUriError: "this is an error",
-      savingSpecError: ""
+      savingSpecError: "",
+      savingRedactor: false
     };
   }
 
@@ -59,6 +61,7 @@ class GenerateSupportBundle extends React.Component {
       const watchClusters = clusters.map(c => c.cluster);
       const NEW_ADDED_CLUSTER = { title: NEW_CLUSTER };
       this.setState({ clusters: [NEW_ADDED_CLUSTER, ...watchClusters] });
+      this.getRedactor();
     }
   }
 
@@ -160,6 +163,10 @@ class GenerateSupportBundle extends React.Component {
   toggleRedactorAction = (active) => {
     this.setState({
       activeRedactorTab: active,
+      specSaved: false,
+      errorSavingSpec: false,
+      savingSpecError: "",
+      savingSpecUriError: ""
     });
   }
 
@@ -181,8 +188,69 @@ class GenerateSupportBundle extends React.Component {
     });
   }
 
-  renderRedactorTab = () => {
+  getRedactor = () => {
+    fetch(`${window.env.API_ENDPOINT}/redact/get`, {
+      headers: {
+        "Authorization": `${Utilities.getToken()}`,
+        "Content-Type": "application/json",
+      },
+      method: "GET",
+    })
+      .then(async (res) => {
+        // TODO set proper redactor spec
+        console.log(await res.json());
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  saveRedactor = () => {
     const { activeRedactorTab, redactorUri, customRedactorSpec } = this.state;
+    const isRedactorLink = activeRedactorTab === "linkSpec";
+    this.setState({ errorSavingSpec: false, savingSpecError: "", savingSpecUriError: "" });
+
+    let payload;
+    if (isRedactorLink) {
+      if (!redactorUri.length || redactorUri === "") {
+        return this.setState({ errorSavingSpecUri: true, savingSpecUriError: "No uri was provided" })
+      }
+      payload = {
+        redactSpecUri: redactorUri
+      };
+    } else {
+      payload = {
+        redactSpec: customRedactorSpec
+      };
+    }
+
+    this.setState({ savingRedactor: true });
+    fetch(`${window.env.API_ENDPOINT}/redact/set`, {
+      headers: {
+        "Authorization": `${Utilities.getToken()}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      method: "PUT",
+      body: JSON.stringify(payload)
+    })
+      .then(() => {
+        this.setState({ savingRedactor: false, specSaved: true });
+        setTimeout(() => {
+          this.setState({ specSaved: false });
+        }, 3000);
+      })
+      .catch((err) => {
+        if (isRedactorLink) {
+          this.setState({ savingRedactor: false, errorSavingSpecUri: true, savingSpecUriError: err });
+        } else {
+          this.setState({ savingRedactor: false, errorSavingSpec: true, savingSpecError: err });
+        }
+      });
+  }
+
+  renderRedactorTab = () => {
+    const { activeRedactorTab, redactorUri, customRedactorSpec, savingRedactor } = this.state;
     switch (activeRedactorTab) {
       case "linkSpec":
         return (
@@ -191,8 +259,8 @@ class GenerateSupportBundle extends React.Component {
             <p className="u-lineHeight--normal u-fontSize--small u-color--dustyGray u-fontWeight--medium u-marginBottom--10">Provide the URI where your redactor spec is located.</p>
             <input type="text" className="Input" placeholder="github.com/org/myrepo/redactor.yaml" value={redactorUri} autoComplete="" onChange={(e) => { this.handleFormChange("redactorUri", e.target.value) }} />
             <div className="u-marginTop--10 flex alignItems--center">
-              <button className="btn secondary blue" onClick={this.saveRedactorUri}>Save</button>
-              {this.state.specUriSaved &&
+              <button className="btn secondary blue" onClick={this.saveRedactor} disabled={savingRedactor}>{savingRedactor ? "Saving" : "Save"}</button>
+              {this.state.specSaved &&
                 <span className="u-marginLeft--10 flex alignItems--center">
                   <span className="icon checkmark-icon u-marginRight--5" />
                   <span className="u-color--chateauGreen u-fontSize--small u-fontWeight--medium u-lineHeight--normal">Saved</span>
@@ -233,7 +301,7 @@ class GenerateSupportBundle extends React.Component {
               />
             </div>
             <div className="u-marginTop--10 flex alignItems--center">
-              <button className="btn secondary blue" onClick={this.saveRedactorSpec}>Save spec</button>
+              <button className="btn secondary blue" onClick={this.saveRedactor} disabled={savingRedactor}>{savingRedactor ? "Saving spec" : "Save spec"}</button>
               {this.state.specSaved &&
                 <span className="u-marginLeft--10 flex alignItems--center">
                   <span className="icon checkmark-icon u-marginRight--5" />
