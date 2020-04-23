@@ -202,9 +202,9 @@ class GenerateSupportBundle extends React.Component {
         try {
           const r = yaml.safeLoad(response.updatedSpec);
           if (typeof r === "object") {
-            this.setState({ customRedactorSpec: response.updatedSpec });
+            this.setState({ customRedactorSpec: response.updatedSpec, showRedactors: response.updatedSpec !== "", activeRedactorTab: "writeSpec" });
           } else {
-            this.setState({ redactorUri: response.updatedSpec });
+            this.setState({ redactorUri: response.updatedSpec, showRedactors: response.updatedSpec !== "", activeRedactorTab: "linkSpec" });
           }
         } catch (e) {
           console.log(e);
