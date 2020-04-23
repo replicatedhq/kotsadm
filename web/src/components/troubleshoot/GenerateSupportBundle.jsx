@@ -4,6 +4,7 @@ import { withRouter, Link } from "react-router-dom";
 import { compose, withApollo, graphql } from "react-apollo";
 import AceEditor from "react-ace";
 import Modal from "react-modal";
+import yaml from "js-yaml";
 
 import { Utilities } from "../../utilities/utilities";
 import Loader from "../shared/Loader";
@@ -197,8 +198,17 @@ class GenerateSupportBundle extends React.Component {
       method: "GET",
     })
       .then(async (res) => {
-        // TODO set proper redactor spec
-        console.log(await res.json());
+        const response = await res.json();
+        try {
+          const r = yaml.safeLoad(response.updatedSpec);
+          if (typeof r === "object") {
+            this.setState({ customRedactorSpec: response.updatedSpec });
+          } else {
+            this.setState({ redactorUri: response.updatedSpec });
+          }
+        } catch (e) {
+          console.log(e);
+        }
       })
       .catch((err) => {
         console.log(err);
@@ -216,7 +226,7 @@ class GenerateSupportBundle extends React.Component {
         return this.setState({ errorSavingSpecUri: true, savingSpecUriError: "No uri was provided" })
       }
       payload = {
-        redactSpecUri: redactorUri
+        redactSpecUrl: redactorUri
       };
     } else {
       payload = {
