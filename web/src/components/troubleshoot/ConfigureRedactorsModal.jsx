@@ -66,12 +66,12 @@ export default class ConfigureRedactorsModal extends Component {
           }
         } catch (e) {
           console.log(e);
-          this.setState({ loadingRedactor: false });
+          this.setState({ loadingRedactor: false, errFetchingRedactors: true });
         }
       })
       .catch((err) => {
         console.log(err);
-        this.setState({ loadingRedactor: false });
+        this.setState({ loadingRedactor: false, errFetchingRedactors: true });
       });
   }
 
@@ -210,21 +210,27 @@ export default class ConfigureRedactorsModal extends Component {
       >
         <div className="Modal-body">
           <p className="u-fontSize--largest u-fontWeight--bold u-lineHeight--default u-color--tuna u-marginBottom--small">Configure your redactor spec</p>
-          <div className="u-marginTop--40">
-            <div className="flex action-tab-bar">
-              <span className={`${this.state.activeRedactorTab === "linkSpec" ? "is-active" : ""} tab-item`} onClick={() => this.toggleRedactorAction("linkSpec")}>Link to a spec</span>
-              <span className={`${this.state.activeRedactorTab === "writeSpec" ? "is-active" : ""} tab-item`} onClick={() => this.toggleRedactorAction("writeSpec")}>Write your own spec</span>
+          {this.state.errFetchingRedactors ? 
+            <div className="u-marginTop--40 flex justifyContent--center">
+              <span className="u-fontSize--large u-fontWeight--medium u-color--chestnut u-lineHeight--normal">Failed to fetch custom redactors</span>
             </div>
-            <div className="flex-column flex1 action-content">
-              {this.state.loadingRedactor ?
-                <div className="flex1 flex-column justifyContent--center alignItems--center">
-                  <Loader size="60" />
-                </div> 
-              : 
-               this.renderRedactorTab()
-              }
+          :
+            <div className="u-marginTop--40">
+              <div className="flex action-tab-bar">
+                <span className={`${this.state.activeRedactorTab === "linkSpec" ? "is-active" : ""} tab-item`} onClick={() => this.toggleRedactorAction("linkSpec")}>Link to a spec</span>
+                <span className={`${this.state.activeRedactorTab === "writeSpec" ? "is-active" : ""} tab-item`} onClick={() => this.toggleRedactorAction("writeSpec")}>Write your own spec</span>
+              </div>
+              <div className="flex-column flex1 action-content">
+                {this.state.loadingRedactor ?
+                  <div className="flex1 flex-column justifyContent--center alignItems--center">
+                    <Loader size="60" />
+                  </div> 
+                : 
+                this.renderRedactorTab()
+                }
+              </div>
             </div>
-          </div>
+          }
         </div>
       </Modal>
     )
