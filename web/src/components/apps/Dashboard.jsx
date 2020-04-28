@@ -180,7 +180,8 @@ class Dashboard extends Component {
           if (this.props.updateCallback) {
             this.props.updateCallback();
           }
-          // this.props.data.refetch();
+          
+          this.props.refreshAppData();
         }
 
         resolve();
