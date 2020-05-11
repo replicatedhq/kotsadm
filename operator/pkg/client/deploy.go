@@ -85,18 +85,25 @@ func (c *Client) diffAndRemovePreviousManifests(applicationManifests Application
 		obj, gvk, err := parseK8sYaml([]byte(oldContents))
 		if err != nil {
 			log.Printf("deleting unidentified manifest. unable to parse error: %s", err.Error())
-		} else {
-			log.Printf("deleting manifest(s): %s/%s/%s", gvk.Group, gvk.Kind, getObjectName(obj))
 		}
 
-		pvcs, err := getPVCs(obj, gvk)
-		if err != nil {
-			return errors.Wrap(err, "failed to list PVCs")
+		group := ""
+		kind := ""
+
+		if obj != nil && gvk != nil {
+			group = gvk.Group
+			kind = gvk.Kind
+			log.Printf("deleting manifest(s): %s/%s/%s", group, kind, getObjectName(obj))
+
+			pvcs, err := getPVCs(targetNamespace, obj, gvk)
+			if err != nil {
+				return errors.Wrap(err, "failed to list PVCs")
+			}
+			allPVCs = append(allPVCs, pvcs...)
 		}
-		allPVCs = append(allPVCs, pvcs...)
 
 		wait := applicationManifests.Wait
-		if gvk.Kind == "PersistentVolumeClaim" {
+		if gvk != nil && gvk.Kind == "PersistentVolumeClaim" {
 			// blocking on PVC delete will create a deadlock if
 			// it's used by a pod that has not been deleted yet.
 			wait = false
@@ -108,7 +115,7 @@ func (c *Client) diffAndRemovePreviousManifests(applicationManifests Application
 			log.Printf("stderr (delete) = %s", stderr)
 			log.Printf("error: %s", err.Error())
 		} else {
-			log.Printf("manifest(s) deleted: %s/%s/%s", gvk.Group, gvk.Kind, getObjectName(obj))
+			log.Printf("manifest(s) deleted: %s/%s/%s", group, kind, getObjectName(obj))
 		}
 	}
 
@@ -378,45 +385,47 @@ func getObjectName(obj k8sruntime.Object) string {
 	return ""
 }
 
-func getPVCs(obj k8sruntime.Object, gvk *k8sschema.GroupVersionKind) ([]string, error) {
+func getPVCs(targetNamespace string, obj k8sruntime.Object, gvk *k8sschema.GroupVersionKind) ([]string, error) {
 	var err error
 	var pods []*corev1.Pod
+
+	ns := func(objNs string) string {
+		if objNs != "" {
+			return objNs
+		}
+		return targetNamespace
+	}
+
 	if gvk.Group == "apps" && gvk.Version == "v1" && gvk.Kind == "Deployment" {
 		o := obj.(*appsv1.Deployment)
-		pods, err = findPodsByOwner(o.Name, o.Namespace, gvk)
+		pods, err = findPodsByOwner(o.Name, ns(o.Namespace), gvk)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to find pods for deployment %s", o.Name)
 		}
 	} else if gvk.Group == "apps" && gvk.Version == "v1" && gvk.Kind == "StatefulSet" {
 		o := obj.(*appsv1.StatefulSet)
-		pods, err = findPodsByOwner(o.Name, o.Namespace, gvk)
+		pods, err = findPodsByOwner(o.Name, ns(o.Namespace), gvk)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to find pods for deployment %s", o.Name)
+			return nil, errors.Wrapf(err, "failed to find pods for stateful set %s", o.Name)
 		}
 	} else if gvk.Group == "batch" && gvk.Version == "v1" && gvk.Kind == "Job" {
 		o := obj.(*batchv1.Job)
-		pods, err = findPodsByOwner(o.Name, o.Namespace, gvk)
+		pods, err = findPodsByOwner(o.Name, ns(o.Namespace), gvk)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to find pods for deployment %s", o.Name)
-		}
-	} else if gvk.Group == "batch" && gvk.Version == "v1" && gvk.Kind == "Job" {
-		o := obj.(*batchv1.Job)
-		pods, err = findPodsByOwner(o.Name, o.Namespace, gvk)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to find pods for deployment %s", o.Name)
+			return nil, errors.Wrapf(err, "failed to find pods for job %s", o.Name)
 		}
 	} else if gvk.Group == "batch" && gvk.Version == "v1beta1" && gvk.Kind == "CronJob" {
 		o := obj.(*batchv1beta1.CronJob)
-		pods, err = findPodsByOwner(o.Name, o.Namespace, gvk)
+		pods, err = findPodsByOwner(o.Name, ns(o.Namespace), gvk)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to find pods for deployment %s", o.Name)
+			return nil, errors.Wrapf(err, "failed to find pods for cron job %s", o.Name)
 		}
 	} else if gvk.Group == "" && gvk.Version == "v1" && gvk.Kind == "Pod" {
 		o := obj.(*corev1.Pod)
-		pod, err := findPodByName(o.Name, o.Namespace)
+		pod, err := findPodByName(o.Name, ns(o.Namespace))
 		if err != nil {
 			if !kuberneteserrors.IsNotFound(err) {
-				return nil, errors.Wrapf(err, "failed to find pods for deployment %s", o.Name)
+				return nil, errors.Wrapf(err, "failed to find pod %s", o.Name)
 			}
 		}
 		pods = []*corev1.Pod{pod}
