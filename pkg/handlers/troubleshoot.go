@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/replicatedhq/kots/pkg/template"
 	"github.com/replicatedhq/kotsadm/pkg/app"
 	"github.com/replicatedhq/kotsadm/pkg/license"
 	"github.com/replicatedhq/kotsadm/pkg/logger"
@@ -152,32 +153,36 @@ func populateNamespaces(existingSpec *v1beta1.Collector) *v1beta1.Collector {
 		return existingSpec
 	}
 
+	builder := template.Builder{}
+	builder.AddCtx(template.StaticCtx{})
+
+	ns := func(ns string) string {
+		templated, err := builder.RenderTemplate("ns", ns)
+		if err != nil {
+			logger.Error(err)
+		}
+		if templated != "" {
+			return templated
+		}
+		return os.Getenv("POD_NAMESPACE")
+	}
+
 	collects := []*v1beta1.Collect{}
 	for _, collect := range existingSpec.Spec.Collectors {
 		if collect.Secret != nil {
-			if collect.Secret.Namespace == "" {
-				collect.Secret.Namespace = os.Getenv("POD_NAMESPACE")
-			}
+			collect.Secret.Namespace = ns(collect.Secret.Namespace)
 		}
 		if collect.Run != nil {
-			if collect.Run.Namespace == "" {
-				collect.Run.Namespace = os.Getenv("POD_NAMESPACE")
-			}
+			collect.Run.Namespace = ns(collect.Run.Namespace)
 		}
 		if collect.Logs != nil {
-			if collect.Logs.Namespace == "" {
-				collect.Logs.Namespace = os.Getenv("POD_NAMESPACE")
-			}
+			collect.Logs.Namespace = ns(collect.Logs.Namespace)
 		}
 		if collect.Exec != nil {
-			if collect.Exec.Namespace == "" {
-				collect.Exec.Namespace = os.Getenv("POD_NAMESPACE")
-			}
+			collect.Exec.Namespace = ns(collect.Exec.Namespace)
 		}
 		if collect.Copy != nil {
-			if collect.Copy.Namespace == "" {
-				collect.Copy.Namespace = os.Getenv("POD_NAMESPACE")
-			}
+			collect.Copy.Namespace = ns(collect.Copy.Namespace)
 		}
 		collects = append(collects, collect)
 	}
