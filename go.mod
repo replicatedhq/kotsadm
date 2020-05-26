@@ -23,7 +23,7 @@ require (
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/replicatedhq/kots v1.15.3
+	github.com/replicatedhq/kots v1.15.5
 	github.com/replicatedhq/troubleshoot v0.9.31
 	github.com/replicatedhq/yaml/v3 v3.0.0-beta5-replicatedhq
 	github.com/segmentio/ksuid v1.0.2
@@ -87,3 +87,5 @@ replace (
 	k8s.io/sample-controller => k8s.io/sample-controller v0.17.3
 	k8s.io/utils => k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
 )
+
+replace github.com/replicatedhq/kots => ../kots
