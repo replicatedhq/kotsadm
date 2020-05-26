@@ -87,5 +87,3 @@ replace (
 	k8s.io/sample-controller => k8s.io/sample-controller v0.17.3
 	k8s.io/utils => k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
 )
-
-replace github.com/replicatedhq/kots => ../kots
