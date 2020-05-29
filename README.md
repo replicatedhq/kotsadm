@@ -1,3 +1,5 @@
+# THIS REPO HAS BEEN MIGRATED TO https://github.com/replicatedhq/kots
+
 # Kotsadm
 
 Kotsadm is an installable admin console for managing Kubernetes Off-The-Shelf (KOTS) software. Kotsadm provides a nextgen admin experience for any KOTS application, designed to meet the needs of a wide spectrum of enterprise IT admins, from a “click-to-deploy” model to “automated operations”.
